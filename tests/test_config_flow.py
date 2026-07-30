@@ -135,8 +135,8 @@ async def test_distinct_timings_ask_then_create(hass: HomeAssistant) -> None:
     assert result["data"]["genus"] == "Hydrangea"
 
 
-async def test_not_sure_aborts_until_manual_add_exists(hass: HomeAssistant) -> None:
-    """The 'I am not sure' option aborts for now; manual add arrives in a later slice."""
+async def test_not_sure_goes_to_manual(hass: HomeAssistant) -> None:
+    """The 'I am not sure' option routes into manual add."""
     entry = await _entry_with(
         hass,
         [
@@ -152,8 +152,7 @@ async def test_not_sure_aborts_until_manual_add_exists(hass: HomeAssistant) -> N
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"choice": "unsure"}
     )
-    assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "manual_not_ready"
+    assert result["step_id"] == "manual"
 
 
 async def test_shared_timing_does_not_ask(hass: HomeAssistant) -> None:
@@ -182,8 +181,8 @@ async def test_shared_timing_does_not_ask(hass: HomeAssistant) -> None:
     assert result["step_id"] == "name"
 
 
-async def test_no_match_shows_an_error(hass: HomeAssistant) -> None:
-    """A name not in the dataset re-shows the search step with an error."""
+async def test_no_match_goes_to_manual(hass: HomeAssistant) -> None:
+    """A name not in the dataset routes into manual add."""
     entry = await _entry_with(
         hass, [_row("Hydrangea", [_SPRING], species="paniculata")]
     )
@@ -192,5 +191,64 @@ async def test_no_match_shows_an_error(hass: HomeAssistant) -> None:
         result["flow_id"], {"query": "quercus robur"}
     )
     assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "user"
-    assert result["errors"] == {"base": "not_found"}
+    assert result["step_id"] == "manual"
+
+
+async def test_manual_borrow_creates_a_plant(hass: HomeAssistant) -> None:
+    """Manual add with borrow stores windows_like and marks the plant not-in-dataset."""
+    entry = await _entry_with(
+        hass,
+        [
+            _row(
+                "Wisteria",
+                [_SUMMER],
+                names={"nl": ["Blauwe regen"], "en": ["Wisteria"]},
+            )
+        ],
+    )
+    result = await _start(hass, entry)
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"query": "Quercus robur"}
+    )
+    assert result["step_id"] == "manual"
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"botanical": "Quercus robur", "display_name": "The oak"}
+    )
+    assert result["type"] is FlowResultType.MENU
+    assert result["step_id"] == "timing"
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"next_step_id": "borrow"}
+    )
+    assert result["step_id"] == "borrow"
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"borrowed": "0"}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["title"] == "The oak"
+    data = result["data"]
+    assert data["genus"] == "Quercus"
+    assert data["species"] == "robur"
+    assert data["matched_on"] == "manual"
+    assert data["in_dataset"] is False
+    assert data["windows_like"] == {
+        "genus": "Wisteria",
+        "species": None,
+        "variant": None,
+    }
+
+
+async def test_author_is_not_ready(hass: HomeAssistant) -> None:
+    """Choosing to author your own timing aborts until that slice exists."""
+    entry = await _entry_with(hass, [_row("Wisteria", [_SUMMER])])
+    result = await _start(hass, entry)
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"query": "Quercus"}
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"botanical": "Quercus", "display_name": "Oak"}
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"next_step_id": "author"}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "author_not_ready"

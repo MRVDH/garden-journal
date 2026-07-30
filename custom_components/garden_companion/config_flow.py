@@ -27,7 +27,7 @@ from homeassistant.helpers.selector import (
 
 from .const import DOMAIN
 from .models import Species
-from .resolver import Resolver, timing_signature
+from .resolver import Resolver, normalise, timing_signature
 
 
 class GardenCompanionConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -72,11 +72,16 @@ def _candidate_label(species: Species, language: str) -> str:
         text = species.distinguish.get(language) or species.distinguish.get("en")
         if text:
             return text
+    return _borrow_label(species, language)
+
+
+def _borrow_label(species: Species, language: str) -> str:
+    """Label a plant in a picker: common name plus botanical name."""
     botanical = species.genus
     if species.species:
         botanical += f" {species.species}"
     common = _default_display_name(species, language)
-    return f"{botanical}, {common}" if common != botanical else botanical
+    return f"{common} ({botanical})" if common != botanical else botanical
 
 
 def _distinct_by_timing(candidates: list[Species]) -> list[Species]:
@@ -85,6 +90,16 @@ def _distinct_by_timing(candidates: list[Species]) -> list[Species]:
     for candidate in candidates:
         groups.setdefault(timing_signature(candidate), candidate)
     return list(groups.values())
+
+
+def _parse_botanical(botanical: str) -> tuple[str, str | None]:
+    """Split a free-text botanical name into a (genus, species) pair."""
+    tokens = normalise(botanical).split()
+    if not tokens:
+        return botanical.strip(), None
+    genus = tokens[0].capitalize()
+    species = tokens[1] if len(tokens) > 1 else None
+    return genus, species
 
 
 def _stored_plant(species: Species, display_name: str) -> dict[str, Any]:
@@ -109,37 +124,66 @@ def _stored_plant(species: Species, display_name: str) -> dict[str, Any]:
     }
 
 
+def _stored_borrow(
+    botanical: str, display_name: str, borrowed: Species
+) -> dict[str, Any]:
+    """Build stored data for a manual plant that borrows another plant's timing (3.2, 3.7)."""
+    genus, species = _parse_botanical(botanical)
+    return {
+        "genus": genus,
+        "species": species,
+        "variant": None,
+        "display_name": display_name,
+        "matched_on": "manual",
+        "in_dataset": False,
+        "windows_like": {
+            "genus": borrowed.genus,
+            "species": borrowed.species,
+            "variant": borrowed.variant,
+        },
+        "windows": None,
+        "source": None,
+        "image_url": None,
+    }
+
+
 class PlantSubentryFlow(ConfigSubentryFlow):
     """Add or reconfigure one plant."""
 
     _match: Species | None = None
     _candidates: list[Species] | None = None
+    _query: str | None = None
+    _botanical: str | None = None
+    _display: str | None = None
+
+    def _species(self) -> list[Species]:
+        """Return the config entry's cached dataset."""
+        return self._get_entry().runtime_data.species
 
     def _resolver(self) -> Resolver:
         """Build a resolver over the config entry's cached dataset."""
-        return Resolver(self._get_entry().runtime_data.species)
+        return Resolver(self._species())
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
         """Search for a plant by botanical or common name."""
-        errors: dict[str, str] = {}
         if user_input is not None:
             groups = _distinct_by_timing(self._resolver().search(user_input["query"]))
             if not groups:
-                errors["base"] = "not_found"
-            elif len(groups) == 1:
+                # No match: offer manual add, seeding the botanical name (3.6).
+                self._query = user_input["query"]
+                return await self.async_step_manual()
+            if len(groups) == 1:
                 # One answer (a single row, or several that share timing).
                 self._match = groups[0]
                 return await self.async_step_name()
-            else:
-                self._candidates = groups
-                return await self.async_step_disambiguate()
+            self._candidates = groups
+            return await self.async_step_disambiguate()
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({vol.Required("query"): str}),
-            errors=errors,
         )
 
     async def async_step_disambiguate(
@@ -150,8 +194,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
         if user_input is not None:
             choice = user_input["choice"]
             if choice == "unsure":
-                # Manual add is the destination here; it arrives in a later slice.
-                return self.async_abort(reason="manual_not_ready")
+                return await self.async_step_manual()
             self._match = candidates[int(choice)]
             return await self.async_step_name()
 
@@ -177,7 +220,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     async def async_step_name(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Name the plant, then create the subentry."""
+        """Name a dataset plant, then create the subentry."""
         if self._match is None:
             return await self.async_step_user()
         if user_input is not None:
@@ -193,3 +236,64 @@ class PlantSubentryFlow(ConfigSubentryFlow):
                 {vol.Required("display_name", default=default): str}
             ),
         )
+
+    async def async_step_manual(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Collect a botanical name and display name for a plant not in the dataset (3.7)."""
+        if user_input is not None:
+            self._botanical = user_input["botanical"]
+            self._display = user_input["display_name"]
+            return await self.async_step_timing()
+
+        return self.async_show_form(
+            step_id="manual",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("botanical", default=self._query or ""): str,
+                    vol.Required("display_name"): str,
+                }
+            ),
+        )
+
+    async def async_step_timing(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Offer to borrow another plant's timing or author your own (3.7)."""
+        return self.async_show_menu(step_id="timing", menu_options=["borrow", "author"])
+
+    async def async_step_borrow(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Reuse an existing plant's timing for the manual plant (3.7)."""
+        species = self._species()
+        if user_input is not None:
+            borrowed = species[int(user_input["borrowed"])]
+            return self.async_create_entry(
+                title=self._display or "",
+                data=_stored_borrow(
+                    self._botanical or "", self._display or "", borrowed
+                ),
+            )
+
+        language = self.hass.config.language
+        options = [
+            SelectOptionDict(value=str(index), label=_borrow_label(row, language))
+            for index, row in enumerate(species)
+        ]
+        return self.async_show_form(
+            step_id="borrow",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("borrowed"): SelectSelector(
+                        SelectSelectorConfig(options=options)
+                    )
+                }
+            ),
+        )
+
+    async def async_step_author(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Abort for now; authoring your own windows arrives in a later slice."""
+        return self.async_abort(reason="author_not_ready")

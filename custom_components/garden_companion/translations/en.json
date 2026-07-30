@@ -34,13 +34,33 @@
           "data": {
             "display_name": "Display name"
           }
+        },
+        "manual": {
+          "title": "Add a plant manually",
+          "description": "This plant is not in the dataset yet. Give its botanical name and a name to show.",
+          "data": {
+            "botanical": "Botanical name",
+            "display_name": "Display name"
+          }
+        },
+        "timing": {
+          "title": "How should its pruning be timed?",
+          "description": "Borrow the timing of a plant pruned the same way, or enter your own.",
+          "menu_options": {
+            "borrow": "Borrow another plant's timing",
+            "author": "Enter my own timing"
+          }
+        },
+        "borrow": {
+          "title": "Borrow timing from",
+          "description": "Pick a plant that is pruned like yours.",
+          "data": {
+            "borrowed": "Plant"
+          }
         }
       },
-      "error": {
-        "not_found": "No plant matched that name."
-      },
       "abort": {
-        "manual_not_ready": "Adding a plant that is not in the dataset arrives in a later build step.",
+        "author_not_ready": "Entering your own timing arrives in a later build step.",
         "reconfigure_successful": "Plant updated."
       }
     }
