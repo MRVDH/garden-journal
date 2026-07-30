@@ -20,6 +20,9 @@ from homeassistant.config_entries import (
 )
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
@@ -147,6 +150,64 @@ def _stored_borrow(
     }
 
 
+_MONTHS = (
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
+_DAYS_IN_MONTH = {
+    1: 31,
+    2: 28,
+    3: 31,
+    4: 30,
+    5: 31,
+    6: 30,
+    7: 31,
+    8: 31,
+    9: 30,
+    10: 31,
+    11: 30,
+    12: 31,
+}
+
+
+def _valid_day(month: int, day: int) -> bool:
+    """Return whether day is a real day of the month, with February capped at 28."""
+    return 1 <= day <= _DAYS_IN_MONTH.get(month, 0)
+
+
+def _stored_author(
+    botanical: str,
+    display_name: str,
+    windows: list[dict[str, Any]],
+    source: str | None,
+    image_url: str | None,
+) -> dict[str, Any]:
+    """Build stored data for a manual plant with its own authored windows (3.2, 3.7)."""
+    genus, species = _parse_botanical(botanical)
+    return {
+        "genus": genus,
+        "species": species,
+        "variant": None,
+        "display_name": display_name,
+        "matched_on": "manual",
+        "in_dataset": False,
+        "windows_like": None,
+        "windows": windows,
+        "source": source,
+        "image_url": image_url,
+    }
+
+
 class PlantSubentryFlow(ConfigSubentryFlow):
     """Add or reconfigure one plant."""
 
@@ -155,6 +216,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     _query: str | None = None
     _botanical: str | None = None
     _display: str | None = None
+    _windows: list[dict[str, Any]] | None = None
 
     def _species(self) -> list[Species]:
         """Return the config entry's cached dataset."""
@@ -295,5 +357,94 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     async def async_step_author(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Abort for now; authoring your own windows arrives in a later slice."""
-        return self.async_abort(reason="author_not_ready")
+        """Start authoring one or more pruning windows (3.7)."""
+        self._windows = []
+        return await self.async_step_window()
+
+    async def async_step_window(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Collect one window: a start and end date and what to do (3.7)."""
+        if self._windows is None:
+            self._windows = []
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            start_month = int(user_input["start_month"])
+            start_day = int(user_input["start_day"])
+            end_month = int(user_input["end_month"])
+            end_day = int(user_input["end_day"])
+            if not _valid_day(start_month, start_day) or not _valid_day(
+                end_month, end_day
+            ):
+                errors["base"] = "invalid_date"
+            else:
+                language = self.hass.config.language
+                self._windows.append(
+                    {
+                        "when": {
+                            "start": f"{start_month:02d}-{start_day:02d}",
+                            "end": f"{end_month:02d}-{end_day:02d}",
+                        },
+                        "description": {language: user_input["description"]},
+                    }
+                )
+                return await self.async_step_window_menu()
+
+        months = SelectSelector(
+            SelectSelectorConfig(
+                options=[
+                    SelectOptionDict(value=str(number), label=name)
+                    for number, name in enumerate(_MONTHS, start=1)
+                ]
+            )
+        )
+        day = NumberSelector(
+            NumberSelectorConfig(min=1, max=31, step=1, mode=NumberSelectorMode.BOX)
+        )
+        return self.async_show_form(
+            step_id="window",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("start_month"): months,
+                    vol.Required("start_day"): day,
+                    vol.Required("end_month"): months,
+                    vol.Required("end_day"): day,
+                    vol.Required("description"): str,
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_window_menu(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Offer another window or finishing up (3.7)."""
+        return self.async_show_menu(
+            step_id="window_menu", menu_options=["window", "details"]
+        )
+
+    async def async_step_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Ask for an optional source and photo, then create the plant (3.7)."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title=self._display or "",
+                data=_stored_author(
+                    self._botanical or "",
+                    self._display or "",
+                    self._windows or [],
+                    user_input.get("source") or None,
+                    user_input.get("image_url") or None,
+                ),
+            )
+
+        return self.async_show_form(
+            step_id="details",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional("source"): str,
+                    vol.Optional("image_url"): str,
+                }
+            ),
+        )

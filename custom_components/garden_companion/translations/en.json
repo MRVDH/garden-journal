@@ -57,10 +57,38 @@
           "data": {
             "borrowed": "Plant"
           }
+        },
+        "window": {
+          "title": "Add a pruning window",
+          "description": "Enter when to prune and what to do. Leave the year out; an end before the start wraps past New Year.",
+          "data": {
+            "start_month": "Start month",
+            "start_day": "Start day",
+            "end_month": "End month",
+            "end_day": "End day",
+            "description": "What to do"
+          }
+        },
+        "window_menu": {
+          "title": "Add another window?",
+          "menu_options": {
+            "window": "Add another window",
+            "details": "Done"
+          }
+        },
+        "details": {
+          "title": "Source and photo (optional)",
+          "description": "Where the timing came from, and a link to a photo. Both optional.",
+          "data": {
+            "source": "Source URL",
+            "image_url": "Photo URL"
+          }
         }
       },
+      "error": {
+        "invalid_date": "That is not a real date. Check the day against the month; there is no 31 February or 29 February."
+      },
       "abort": {
-        "author_not_ready": "Entering your own timing arrives in a later build step.",
         "reconfigure_successful": "Plant updated."
       }
     }

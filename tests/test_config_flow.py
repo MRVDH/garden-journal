@@ -237,18 +237,82 @@ async def test_manual_borrow_creates_a_plant(hass: HomeAssistant) -> None:
     }
 
 
-async def test_author_is_not_ready(hass: HomeAssistant) -> None:
-    """Choosing to author your own timing aborts until that slice exists."""
+async def _reach_author(hass: HomeAssistant) -> dict[str, Any]:
+    """Drive the flow to the first authored-window form."""
     entry = await _entry_with(hass, [_row("Wisteria", [_SUMMER])])
     result = await _start(hass, entry)
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"query": "Quercus"}
     )
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"botanical": "Quercus", "display_name": "Oak"}
+        result["flow_id"], {"botanical": "Quercus robur", "display_name": "Oak"}
     )
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"next_step_id": "author"}
     )
-    assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "author_not_ready"
+    assert result["step_id"] == "window"
+    return result
+
+
+async def test_author_two_windows_creates_a_plant(hass: HomeAssistant) -> None:
+    """Authoring two windows stores them with matched_on manual and no windows_like."""
+    result = await _reach_author(hass)
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"],
+        {
+            "start_month": "7",
+            "start_day": 15,
+            "end_month": "8",
+            "end_day": 31,
+            "description": "Shorten side shoots",
+        },
+    )
+    assert result["type"] is FlowResultType.MENU
+    assert result["step_id"] == "window_menu"
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"next_step_id": "window"}
+    )
+    assert result["step_id"] == "window"
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"],
+        {
+            "start_month": "1",
+            "start_day": 15,
+            "end_month": "2",
+            "end_day": 15,
+            "description": "Cut back to spurs",
+        },
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"next_step_id": "details"}
+    )
+    assert result["step_id"] == "details"
+    result = await hass.config_entries.subentries.async_configure(result["flow_id"], {})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    data = result["data"]
+    assert data["matched_on"] == "manual"
+    assert data["in_dataset"] is False
+    assert data["windows_like"] is None
+    assert [w["when"] for w in data["windows"]] == [
+        {"start": "07-15", "end": "08-31"},
+        {"start": "01-15", "end": "02-15"},
+    ]
+    assert data["source"] is None
+
+
+async def test_author_rejects_an_impossible_date(hass: HomeAssistant) -> None:
+    """31 February is refused with an error, staying on the window form."""
+    result = await _reach_author(hass)
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"],
+        {
+            "start_month": "2",
+            "start_day": 31,
+            "end_month": "3",
+            "end_day": 1,
+            "description": "x",
+        },
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "window"
+    assert result["errors"] == {"base": "invalid_date"}
