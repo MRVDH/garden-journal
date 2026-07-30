@@ -1,0 +1,73 @@
+# Garden Companion species dataset.
+#
+# One record per plant, keyed on (genus, species, variant). Windows are inline.
+# when.start / when.end are quoted "MM-DD" strings on purpose: PyYAML is YAML 1.1,
+# so bare dates and unquoted no/yes/on/off would parse as the wrong type. See
+# plan.md sections 2.3 to 2.5 for the schema.
+#
+# Fixture for build step 2: three researched rows that exercise the mechanisms
+# (new-wood shrub, two windows, a variant with distinguish). Timing follows the
+# cited Groei & Bloei pages. The full sixteen-row dataset and the horticultural
+# review arrive in step 11.
+
+- genus: Hydrangea
+  species: paniculata
+  names:
+    nl: [Pluimhortensia]
+    en: [Panicle hydrangea]
+  source: https://groei.nl/tuin/tuinonderhoud/snoeien/pluimhortensia-snoeien-stekken
+  windows:
+    - when: { start: "03-01", end: "04-15" }
+      description:
+        nl: >-
+          Snoei stevig terug tot een laag raamwerk voordat de groei begint. Hij
+          bloeit op scheuten van dit jaar, dus een stevige voorjaarssnoei kost
+          geen bloei en geeft grotere pluimen.
+        en: >-
+          Cut back hard to a low framework before growth starts. It flowers on
+          this year's shoots, so a hard spring prune costs no bloom and gives
+          larger heads.
+
+- genus: Wisteria
+  names:
+    nl: [Blauwe regen]
+    en: [Wisteria]
+  source: https://groei.nl/artikel/blauweregen-snoeien-in-de-zomer
+  windows:
+    - when: { start: "07-15", end: "08-31" }
+      description:
+        nl: >-
+          Kort de lange zomeruitlopers in tot ongeveer vijf bladeren. Dit remt
+          de groei en stuurt energie naar de bloemknoppen.
+        en: >-
+          Shorten this summer's whippy side shoots to about five leaves. This
+          checks the growth and pushes energy into flower buds.
+    - when: { start: "01-15", end: "02-15" }
+      description:
+        nl: >-
+          Snoei diezelfde zijscheuten terug tot twee of drie knoppen als de
+          plant kaal is, om de bloeisporen op te bouwen.
+        en: >-
+          Cut the same side shoots back to two or three buds while the plant is
+          bare, building up the flowering spurs.
+
+- genus: Rosa
+  variant: bush
+  names:
+    nl: [Roos, Rozen]
+    en: [Rose]
+  distinguish:
+    nl: Staat op zichzelf, niet tegen een muur of boog
+    en: Stands on its own, not tied to a wall or arch
+  source: https://groei.nl/artikel/roos-snoeien
+  windows:
+    - when: { start: "03-01", end: "03-31" }
+      description:
+        nl: >-
+          Snoei tot een naar buiten gerichte knop zodra de ergste vorst voorbij
+          is. Knip in de zomer uitgebloeide bloemen weg om de bloei door te
+          laten gaan; dat is doorlopend onderhoud, geen snoeimoment.
+        en: >-
+          Prune to an outward-facing bud once the worst frost has passed.
+          Through summer, deadhead spent flowers to keep it blooming; that is
+          ongoing care, not a pruning window.

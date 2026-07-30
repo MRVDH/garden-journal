@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# HACS validate is deliberately absent: it requires a public repository with a
+# description and topics, so it cannot pass before build step 12. It gets added
+# there rather than sitting red until then.
+
+jobs:
+  lint:
+    name: Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v9
+      # Running the same script a developer runs, so CI and local cannot drift.
+      - run: scripts/setup
+      - run: .venv/bin/ruff check .
+      - run: .venv/bin/ruff format --check .
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v9
+      - run: scripts/setup
+      - run: .venv/bin/pytest
+
+  hassfest:
+    name: hassfest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: home-assistant/actions/hassfest@master
+
+  dataset:
+    name: Validate dataset
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v9
+      - run: scripts/setup
+      - run: .venv/bin/python scripts/validate.py

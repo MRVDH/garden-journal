@@ -1,0 +1,11 @@
+{
+  "domain": "garden_companion",
+  "name": "Garden Companion",
+  "codeowners": ["@MRVDH"],
+  "config_flow": true,
+  "documentation": "https://github.com/MRVDH/garden-companion",
+  "iot_class": "calculated",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.0.0"
+}

@@ -1,0 +1,9 @@
+# Development environment for Garden Companion.
+# Install with scripts/setup, which creates .venv from these pins.
+#
+# homeassistant and pytest-homeassistant-custom-component are pinned together:
+# the test plugin tracks a specific core release (0.13.348 -> 2026.7.4), and
+# mismatching them produces confusing import errors. Bump both or neither.
+homeassistant==2026.7.4
+pytest-homeassistant-custom-component==0.13.348
+ruff==0.16.0

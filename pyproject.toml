@@ -1,0 +1,61 @@
+# Tooling config only. This repo is a Home Assistant custom integration, not a
+# published Python package, so there is no [project] section and nothing to build.
+
+[tool.ruff]
+target-version = "py314"
+
+[tool.ruff.lint]
+# An HA-flavoured subset of home-assistant/core's own rule set. Core selects
+# around forty rule categories with sixty exceptions, which is more than is
+# useful on a codebase this size: the signal gets lost. These are the categories
+# that catch mistakes rather than enforce house style.
+select = [
+    "ASYNC", # blocking calls in async code, the classic HA integration bug
+    "B",     # bugbear: mutable defaults, unused loop variables
+    "C4",    # comprehension simplifications
+    "D",     # docstrings, which HA requires everywhere
+    "E",     # pycodestyle errors
+    "F",     # pyflakes: unused imports and names
+    "G",     # logging call format, no f-strings in log messages
+    "I",     # import sorting
+    "LOG",   # logging misuse
+    "PERF",  # obvious performance traps
+    "PIE",   # misc lints
+    "PT",    # pytest style
+    "PTH",   # prefer pathlib over os.path
+    "RET",   # return-statement simplifications
+    "RUF",   # ruff's own rules
+    "SIM",   # simplifications
+    "T20",   # no stray print() calls
+    "TRY",   # exception-handling antipatterns
+    "UP",    # pyupgrade, keeps syntax current with 3.14
+    "W",     # pycodestyle warnings
+]
+ignore = [
+    "D202",   # no blank lines after a docstring, as core ignores
+    "D203",   # conflicts with D211
+    "D213",   # conflicts with D212
+    "D406",   # section name should end with a newline
+    "D407",   # dashed underline after section
+    "D417",   # documenting every argument is not worth it here
+    "E501",   # line length is the formatter's job
+    "ISC001", # conflicts with the formatter
+    "TRY003", # long messages inside raise are clearer than a class per error
+    "TRY400", # logger.error over logger.exception is sometimes the right call
+]
+
+[tool.ruff.lint.per-file-ignores]
+# validate.py is a CLI: printing its report to stdout is the point.
+"scripts/*" = ["T20"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.pytest.ini_options]
+# pytest-homeassistant-custom-component registers itself through a pytest11
+# entry point, so it needs no pytest_plugins line anywhere.
+asyncio_mode = "auto"
+testpaths = ["tests"]

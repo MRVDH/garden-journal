@@ -1,0 +1,23 @@
+# Working documents, kept local
+plan.md
+handoff.md
+
+# Claude Code local settings (personal, not shared)
+.claude/settings.local.json
+
+# Dev Home Assistant instance created by scripts/develop
+config/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Tooling caches and coverage
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/

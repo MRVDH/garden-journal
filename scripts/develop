@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Run a throwaway Home Assistant that loads this repo's integration.
+#
+# The config directory is gitignored, so deleting it is how you reset the
+# instance: plants, onboarding, everything.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+ROOT="$(pwd)"
+CONFIG="${ROOT}/config"
+DOMAIN="garden_companion"
+
+if [ ! -x "${ROOT}/.venv/bin/hass" ]; then
+    echo "No virtualenv found. Run scripts/setup first." >&2
+    exit 1
+fi
+
+mkdir -p "${CONFIG}/custom_components"
+
+# Deliberately minimal, and deliberately without default_config: that would pull
+# in integrations wanting ffmpeg, libturbojpeg and libpcap, which this venv has
+# no reason to carry. frontend brings http, auth, config, lovelace, onboarding
+# and websocket_api with it, which is everything needed to click a config flow.
+if [ ! -f "${CONFIG}/configuration.yaml" ]; then
+    cat >"${CONFIG}/configuration.yaml" <<'YAML'
+homeassistant:
+  name: Garden Companion Dev
+  time_zone: Europe/Amsterdam
+  country: NL
+  currency: EUR
+  latitude: 52.0907
+  longitude: 5.1214
+  unit_system: metric
+
+frontend:
+
+logger:
+  default: warning
+  logs:
+    custom_components.garden_companion: debug
+YAML
+    echo "Wrote ${CONFIG}/configuration.yaml"
+fi
+
+# Symlink rather than copy, so an edit is live on the next restart.
+if [ -d "${ROOT}/custom_components/${DOMAIN}" ]; then
+    ln -sfn "${ROOT}/custom_components/${DOMAIN}" \
+        "${CONFIG}/custom_components/${DOMAIN}"
+else
+    echo "Note: custom_components/${DOMAIN} does not exist yet (build step 1)."
+    echo "Starting Home Assistant without it."
+fi
+
+echo "Starting Home Assistant on http://localhost:8123"
+exec "${ROOT}/.venv/bin/hass" --config "${CONFIG}" --debug
