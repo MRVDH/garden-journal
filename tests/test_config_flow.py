@@ -374,6 +374,16 @@ async def test_reconfigure_repicks_the_species(hass: HomeAssistant) -> None:
     subentry_id = await _add_plant(hass, entry, "hydrangea", choice="0", display="Mine")
     assert entry.subentries[subentry_id].data["species"] == "paniculata"
 
+    # The entry's runtime data holds the packaged dataset; inject the ambiguous
+    # one so re-picking has more than one species to choose between.
+    species, _ = build_dataset(
+        [
+            _row("Hydrangea", [_SPRING], species="paniculata"),
+            _row("Hydrangea", [_APRIL], species="macrophylla"),
+        ]
+    )
+    entry.runtime_data = GardenCompanionData(species=species)
+
     result = await hass.config_entries.subentries.async_init(
         (entry.entry_id, "plant"),
         context={"source": "reconfigure", "subentry_id": subentry_id},

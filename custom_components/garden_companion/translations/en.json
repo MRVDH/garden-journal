@@ -12,6 +12,11 @@
       "next_pruning": {
         "name": "Next pruning"
       }
+    },
+    "binary_sensor": {
+      "prune_now": {
+        "name": "Prune now"
+      }
     }
   },
   "config_subentries": {

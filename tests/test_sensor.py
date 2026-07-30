@@ -11,6 +11,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigSubentryData
 from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.garden_companion.const import DOMAIN
@@ -73,3 +74,26 @@ async def test_unknown_plant_sensor_is_unknown(hass: HomeAssistant) -> None:
     assert state is not None
     assert state.state == "unknown"
     assert state.attributes["botanical_name"] == "Quercus robur"
+
+
+async def test_adding_a_plant_creates_its_entities(hass: HomeAssistant) -> None:
+    """Adding a plant reloads the entry so its entities appear without a restart."""
+    entry = MockConfigEntry(domain=DOMAIN, title="Garden Companion")
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    result = await hass.config_entries.subentries.async_init(
+        (entry.entry_id, "plant"), context={"source": "user"}
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"query": "hortensia"}
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"display_name": "New plant"}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+
+    assert hass.states.get("sensor.new_plant_next_pruning") is not None
+    assert hass.states.get("binary_sensor.new_plant_prune_now") is not None

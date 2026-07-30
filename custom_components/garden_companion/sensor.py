@@ -1,8 +1,8 @@
 """Next-pruning sensor: one per plant, the date it should next be pruned (3.3).
 
 The value is computed locally from the resolved windows; there is no polling and
-no coordinator (3.5). It recomputes when read, and step 7 schedules a refresh at
-local midnight and on start.
+no coordinator (3.5). It refreshes at local midnight (see the base entity) and
+when the config entry reloads on a plant change.
 """
 
 from __future__ import annotations
@@ -12,14 +12,13 @@ from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN
 from .dataset import GardenCompanionConfigEntry
+from .entity import PlantEntity
 from .models import Window
-from .resolver import Resolver, resolve_windows
+from .resolver import Resolver
 from .windows import next_pruning, occurrence_end
 
 
@@ -50,30 +49,22 @@ async def async_setup_entry(
         )
 
 
-class NextPruningSensor(SensorEntity):
+class NextPruningSensor(PlantEntity, SensorEntity):
     """The date a plant should next be pruned (3.3)."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = "next_pruning"
     _attr_device_class = SensorDeviceClass.DATE
-    _attr_should_poll = False
 
     def __init__(
         self, subentry_id: str, title: str, data: dict[str, Any], resolver: Resolver
     ) -> None:
         """Set up the sensor for one plant."""
-        self._data = data
-        self._resolver = resolver
+        super().__init__(subentry_id, title, data, resolver)
         self._attr_unique_id = f"{subentry_id}_next_pruning"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, subentry_id)},
-            name=title,
-            entry_type=DeviceEntryType.SERVICE,
-        )
 
     def _current(self) -> tuple[date, Window] | None:
         """Return the (start date, window) of the next pruning, or None if unknown."""
-        windows = resolve_windows(self._data, self._resolver)
+        windows = self._windows()
         if not windows:
             return None
         return next_pruning(windows, dt_util.now().date())

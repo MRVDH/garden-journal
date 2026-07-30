@@ -270,7 +270,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     def _apply_repick(self, species: Species) -> SubentryFlowResult:
         """Re-map an existing plant to a dataset row, keeping its name (3.6)."""
         subentry = self._get_reconfigure_subentry()
-        return self.async_update_reload_and_abort(
+        return self.async_update_and_abort(
             self._get_entry(),
             subentry,
             data={
