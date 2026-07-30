@@ -15,6 +15,8 @@ from custom_components.garden_companion.windows import (
     next_pruning,
     next_start,
     occurrence_end,
+    occurrence_start,
+    occurrences_in_range,
 )
 
 
@@ -119,3 +121,35 @@ def test_occurrence_end_non_wrapping() -> None:
 def test_occurrence_end_wrapping() -> None:
     """A wrapping window ends in the year after it started."""
     assert occurrence_end(_w("12-01", "02-28"), date(2025, 12, 1)) == date(2026, 2, 28)
+
+
+def test_occurrence_start() -> None:
+    """The occurrence start is the window's month and day in the given year."""
+    assert occurrence_start(_w("07-15", "08-31"), 2026) == date(2026, 7, 15)
+
+
+def test_occurrences_in_range_one_per_year() -> None:
+    """A window overlapping two summers yields both years, ends inclusive."""
+    result = occurrences_in_range(_w("07-15", "08-31"), date(2026, 1, 1), date(2027, 12, 31))
+    assert result == [
+        (2026, date(2026, 7, 15), date(2026, 8, 31)),
+        (2027, date(2027, 7, 15), date(2027, 8, 31)),
+    ]
+
+
+def test_occurrences_in_range_excludes_the_open_end() -> None:
+    """range_end is exclusive: a window starting on it is not included."""
+    result = occurrences_in_range(_w("07-15", "08-31"), date(2026, 1, 1), date(2026, 7, 15))
+    assert result == []
+
+
+def test_occurrences_in_range_includes_a_partial_overlap() -> None:
+    """A window is included when only its tail falls inside the range."""
+    result = occurrences_in_range(_w("07-15", "08-31"), date(2026, 8, 20), date(2026, 9, 30))
+    assert result == [(2026, date(2026, 7, 15), date(2026, 8, 31))]
+
+
+def test_occurrences_in_range_wrapping_window() -> None:
+    """A wrapping occurrence is keyed to its start year and ends the next year."""
+    result = occurrences_in_range(_w("12-01", "02-28"), date(2026, 1, 1), date(2026, 3, 31))
+    assert result == [(2025, date(2025, 12, 1), date(2026, 2, 28))]

@@ -17,6 +17,11 @@
       "prune_now": {
         "name": "Prune now"
       }
+    },
+    "calendar": {
+      "garden_companion": {
+        "name": "Garden Companion"
+      }
     }
   },
   "config_subentries": {

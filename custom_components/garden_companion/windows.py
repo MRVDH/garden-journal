@@ -71,8 +71,32 @@ def is_pruning_now(windows: list[Window], today: date) -> bool:
     return any(contains(window, today) for window in windows)
 
 
+def occurrence_start(window: Window, year: int) -> date:
+    """Return the start date of the window occurrence that begins in the given year."""
+    month, day = _month_day(window.start)
+    return date(year, month, day)
+
+
 def occurrence_end(window: Window, start: date) -> date:
     """Return the end date of the window occurrence that began on start."""
     month, day = _month_day(window.end)
     year = start.year + 1 if wraps(window) else start.year
     return date(year, month, day)
+
+
+def occurrences_in_range(
+    window: Window, range_start: date, range_end: date
+) -> list[tuple[int, date, date]]:
+    """Return each yearly occurrence overlapping the half-open range (3.4).
+
+    Each is (start year, start date, end date), with the end inclusive of the
+    last pruning day. range_end is exclusive. A caller wanting the iCal all-day
+    end adds a day to the inclusive end.
+    """
+    occurrences: list[tuple[int, date, date]] = []
+    for year in range(range_start.year - 1, range_end.year + 2):
+        start = occurrence_start(window, year)
+        end = occurrence_end(window, start)
+        if start < range_end and end >= range_start:
+            occurrences.append((year, start, end))
+    return occurrences
