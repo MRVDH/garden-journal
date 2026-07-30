@@ -1,0 +1,41 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Garden Companion",
+        "description": "Add your plants after setup to get pruning reminders tuned to the Dutch climate."
+      }
+    }
+  },
+  "config_subentries": {
+    "plant": {
+      "initiate_flow": {
+        "user": "Add plant"
+      },
+      "entry_type": "Plant",
+      "step": {
+        "user": {
+          "title": "Add a plant",
+          "description": "Type a botanical or common name, for example Hydrangea, Blauwe regen or Rose.",
+          "data": {
+            "query": "Plant name"
+          }
+        },
+        "name": {
+          "title": "Name this plant",
+          "description": "This name labels the plant's device and entities. You can change it later.",
+          "data": {
+            "display_name": "Display name"
+          }
+        }
+      },
+      "error": {
+        "not_found": "No plant matched that name.",
+        "ambiguous": "Several plants match with different pruning times."
+      },
+      "abort": {
+        "reconfigure_successful": "Plant updated."
+      }
+    }
+  }
+}

@@ -198,6 +198,28 @@ def test_search_common_name_is_one_to_many() -> None:
     assert len({timing_signature(h) for h in hits}) == 1
 
 
+def test_search_matches_a_common_name_substring() -> None:
+    """Typing part of a compound common name finds all names containing it."""
+    resolver = _resolver(
+        _row(
+            "Hydrangea",
+            [_SPRING],
+            species="paniculata",
+            names={"nl": ["Pluimhortensia"], "en": ["Panicle hydrangea"]},
+        ),
+        _row(
+            "Hydrangea",
+            [_SPRING],
+            species="arborescens",
+            names={"nl": ["Sneeuwbalhortensia"], "en": ["Smooth hydrangea"]},
+        ),
+    )
+    assert {h.species for h in resolver.search("hortensia")} == {
+        "paniculata",
+        "arborescens",
+    }
+
+
 def test_search_resolves_a_synonym() -> None:
     """A superseded botanical name resolves to the row that lists it."""
     resolver = _resolver(

@@ -54,8 +54,7 @@ class Resolver:
         self._by_key: dict[tuple[str, str | None, str | None], Species] = {}
         self._by_genus: dict[str, list[Species]] = {}
         self._by_genus_species: dict[tuple[str, str], list[Species]] = {}
-        self._synonyms: dict[str, list[Species]] = {}
-        self._common: dict[str, list[Species]] = {}
+        self._name_terms: list[tuple[Species, tuple[str, ...]]] = []
         for species in dataset:
             self._index(species)
 
@@ -68,11 +67,10 @@ class Resolver:
         self._by_genus.setdefault(genus, []).append(species)
         if sp is not None:
             self._by_genus_species.setdefault((genus, sp), []).append(species)
-        for synonym in species.synonyms:
-            self._synonyms.setdefault(normalise(synonym), []).append(species)
+        terms = {normalise(synonym) for synonym in species.synonyms}
         for names in species.names.values():
-            for name in names:
-                self._common.setdefault(normalise(name), []).append(species)
+            terms.update(normalise(name) for name in names)
+        self._name_terms.append((species, tuple(terms)))
 
     def resolve(
         self, genus: str, species: str | None = None, variant: str | None = None
@@ -103,11 +101,14 @@ class Resolver:
     def search(self, query: str) -> list[Species]:
         """Find rows by botanical name, synonym or common name in any language (2.6).
 
-        One-to-many: a common name like "laurier" can return several rows. The
-        cultivar is ignored, so "Weigela florida Bristol Ruby" matches on genus
-        and species.
+        Common names and synonyms match as a substring, so "hortensia" finds
+        Pluimhortensia and its siblings; botanical names match by genus and
+        species token, so a trailing cultivar is ignored. One-to-many: a shared
+        common name like "laurier" returns several rows.
         """
         q = normalise(query)
+        if not q:
+            return []
         tokens = q.split()
         found: list[Species] = []
         seen: set[int] = set()
@@ -119,11 +120,11 @@ class Resolver:
                     seen.add(id(row))
                     found.append(row)
 
-        add(self._common.get(q, []))
-        add(self._synonyms.get(q, []))
         if len(tokens) >= 2 and (tokens[0], tokens[1]) in self._by_genus_species:
             add(self._by_genus_species[(tokens[0], tokens[1])])
-        elif tokens:
-            add(self._synonyms.get(tokens[0], []))
-            add(self._by_genus.get(tokens[0], []))
+        elif tokens and tokens[0] in self._by_genus:
+            add(self._by_genus[tokens[0]])
+        for species, terms in self._name_terms:
+            if any(q in term for term in terms):
+                add([species])
         return found
