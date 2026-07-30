@@ -7,6 +7,9 @@ load-time re-resolution (3.2) looks up the stored key with it.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 from .models import Species, Window
 
 # Straight and curly quotes, stripped during normalisation.
@@ -128,3 +131,33 @@ class Resolver:
             if any(q in term for term in terms):
                 add([species])
         return found
+
+
+def _window_from_stored(stored: Mapping[str, Any]) -> Window:
+    """Build a Window from a stored authored-window dict."""
+    when = stored["when"]
+    return Window(
+        start=when["start"], end=when["end"], description=dict(stored["description"])
+    )
+
+
+def resolve_windows(data: Mapping[str, Any], resolver: Resolver) -> list[Window] | None:
+    """Resolve a stored plant to its effective windows (3.2).
+
+    A manual plant with authored windows uses them; with windows_like it resolves
+    that key; otherwise the stored (genus, species, variant) key is resolved in the
+    dataset. Returns None when nothing resolves, which is a repair case (3.8).
+    """
+    if not data.get("in_dataset", True):
+        stored = data.get("windows")
+        if stored:
+            return [_window_from_stored(window) for window in stored]
+        like = data.get("windows_like")
+        if like:
+            row = resolver.resolve(
+                like["genus"], like.get("species"), like.get("variant")
+            )
+            return list(row.windows) if row else None
+        return None
+    row = resolver.resolve(data["genus"], data.get("species"), data.get("variant"))
+    return list(row.windows) if row else None

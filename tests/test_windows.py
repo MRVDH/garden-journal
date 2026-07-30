@@ -14,6 +14,7 @@ from custom_components.garden_companion.windows import (
     is_pruning_now,
     next_pruning,
     next_start,
+    occurrence_end,
 )
 
 
@@ -108,3 +109,13 @@ def test_is_pruning_now() -> None:
     summer = _w("07-15", "08-31")
     assert is_pruning_now([spring, summer], date(2026, 3, 1))
     assert not is_pruning_now([spring, summer], date(2026, 5, 1))
+
+
+def test_occurrence_end_non_wrapping() -> None:
+    """A non-wrapping window ends in the same year it started."""
+    assert occurrence_end(_w("02-15", "03-31"), date(2026, 2, 15)) == date(2026, 3, 31)
+
+
+def test_occurrence_end_wrapping() -> None:
+    """A wrapping window ends in the year after it started."""
+    assert occurrence_end(_w("12-01", "02-28"), date(2025, 12, 1)) == date(2026, 2, 28)

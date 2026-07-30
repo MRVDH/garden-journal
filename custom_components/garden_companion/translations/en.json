@@ -7,6 +7,13 @@
       }
     }
   },
+  "entity": {
+    "sensor": {
+      "next_pruning": {
+        "name": "Next pruning"
+      }
+    }
+  },
   "config_subentries": {
     "plant": {
       "initiate_flow": {

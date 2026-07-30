@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from custom_components.garden_companion.models import build_dataset
+from custom_components.garden_companion.models import Window, build_dataset
 from custom_components.garden_companion.resolver import (
     Resolver,
     normalise,
+    resolve_windows,
     timing_signature,
 )
 
@@ -245,3 +246,66 @@ def test_search_unknown_returns_empty() -> None:
     """A name not in the dataset returns nothing."""
     resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
     assert resolver.search("Quercus robur") == []
+
+
+def test_resolve_windows_for_a_dataset_plant() -> None:
+    """A dataset plant resolves to its row's windows."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    data = {
+        "genus": "Hydrangea",
+        "species": "paniculata",
+        "variant": None,
+        "in_dataset": True,
+        "windows": None,
+        "windows_like": None,
+    }
+    windows = resolve_windows(data, resolver)
+    assert windows is not None
+    assert windows[0].start == "03-01"
+
+
+def test_resolve_windows_for_a_borrowed_plant() -> None:
+    """A borrowed plant resolves to the windows_like row's windows."""
+    resolver = _resolver(_row("Wisteria", [_SUMMER]))
+    data = {
+        "genus": "Quercus",
+        "species": "robur",
+        "variant": None,
+        "in_dataset": False,
+        "windows": None,
+        "windows_like": {"genus": "Wisteria", "species": None, "variant": None},
+    }
+    windows = resolve_windows(data, resolver)
+    assert windows is not None
+    assert windows[0].start == "07-15"
+
+
+def test_resolve_windows_for_an_authored_plant() -> None:
+    """An authored plant uses its own stored windows."""
+    resolver = _resolver(_row("Wisteria", [_SUMMER]))
+    data = {
+        "genus": "Quercus",
+        "species": None,
+        "variant": None,
+        "in_dataset": False,
+        "windows_like": None,
+        "windows": [
+            {"when": {"start": "05-01", "end": "05-31"}, "description": {"en": "Trim"}}
+        ],
+    }
+    windows = resolve_windows(data, resolver)
+    assert windows == [Window(start="05-01", end="05-31", description={"en": "Trim"})]
+
+
+def test_resolve_windows_unknown_returns_none() -> None:
+    """A stored key that no longer resolves yields None (a repair case)."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    data = {
+        "genus": "Quercus",
+        "species": "robur",
+        "variant": None,
+        "in_dataset": True,
+        "windows": None,
+        "windows_like": None,
+    }
+    assert resolve_windows(data, resolver) is None

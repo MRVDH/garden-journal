@@ -8,6 +8,7 @@ the whole of this step.
 
 from __future__ import annotations
 
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from .const import _LOGGER
@@ -17,6 +18,8 @@ from .dataset import (
     async_load_dataset,
 )
 
+_PLATFORMS = [Platform.SENSOR]
+
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: GardenCompanionConfigEntry
@@ -25,6 +28,7 @@ async def async_setup_entry(
     species = await async_load_dataset(hass)
     entry.runtime_data = GardenCompanionData(species=species)
     _LOGGER.debug("Loaded %d species from the dataset", len(species))
+    await hass.config_entries.async_forward_entry_setups(entry, _PLATFORMS)
     return True
 
 
@@ -32,4 +36,4 @@ async def async_unload_entry(
     hass: HomeAssistant, entry: GardenCompanionConfigEntry
 ) -> bool:
     """Unload a config entry."""
-    return True
+    return await hass.config_entries.async_unload_platforms(entry, _PLATFORMS)

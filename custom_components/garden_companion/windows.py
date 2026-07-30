@@ -69,3 +69,10 @@ def next_pruning(windows: list[Window], today: date) -> tuple[date, Window]:
 def is_pruning_now(windows: list[Window], today: date) -> bool:
     """Return whether today falls inside any of the windows."""
     return any(contains(window, today) for window in windows)
+
+
+def occurrence_end(window: Window, start: date) -> date:
+    """Return the end date of the window occurrence that began on start."""
+    month, day = _month_day(window.end)
+    year = start.year + 1 if wraps(window) else start.year
+    return date(year, month, day)
