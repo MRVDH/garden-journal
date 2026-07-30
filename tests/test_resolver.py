@@ -1,0 +1,225 @@
+"""Tests for the resolver: normalisation, matching, ambiguity, search (2.6).
+
+Pure logic, no Home Assistant. The datasets are built in the tests because the
+shipped three-row fixture cannot exercise ambiguity or one-to-many common names.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from custom_components.garden_companion.models import build_dataset
+from custom_components.garden_companion.resolver import (
+    Resolver,
+    normalise,
+    timing_signature,
+)
+
+
+def _window(start: str, end: str, en: str, nl: str) -> dict[str, Any]:
+    """Build one window dict."""
+    return {"when": {"start": start, "end": end}, "description": {"nl": nl, "en": en}}
+
+
+def _row(
+    genus: str,
+    windows: list[dict[str, Any]],
+    *,
+    species: str | None = None,
+    variant: str | None = None,
+    names: dict[str, list[str]] | None = None,
+    synonyms: list[str] | None = None,
+    distinguish: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Build one record dict, defaulting the required fields."""
+    row: dict[str, Any] = {
+        "genus": genus,
+        "names": names or {"nl": [genus.lower()], "en": [genus.lower()]},
+        "source": "https://example.org",
+        "windows": windows,
+    }
+    if species is not None:
+        row["species"] = species
+    if variant is not None:
+        row["variant"] = variant
+    if synonyms is not None:
+        row["synonyms"] = synonyms
+    if distinguish is not None:
+        row["distinguish"] = distinguish
+    return row
+
+
+def _resolver(*rows: dict[str, Any]) -> Resolver:
+    """Build a Resolver over rows, asserting the rows are valid first."""
+    species, errors = build_dataset(list(rows))
+    assert errors == []
+    return Resolver(species)
+
+
+_SPRING = _window("03-01", "04-15", "Cut back hard before growth.", "Snoei stevig.")
+_APR_HARD = _window(
+    "04-01", "04-30", "Cut back to a pair of buds.", "Snoei tot een knoppaar."
+)
+_APR_LIGHT = _window(
+    "04-01", "04-30", "Dead wood only, do not cut back.", "Alleen dood hout."
+)
+_SUMMER = _window(
+    "07-15", "08-31", "Trim in the growing season.", "Snoei in het groeiseizoen."
+)
+
+
+def test_normalise_strips_hybrid_quotes_and_case() -> None:
+    """Hybrid markers, quotes, case and extra whitespace are removed."""
+    assert normalise("Hydrangea × macrophylla") == "hydrangea macrophylla"  # noqa: RUF001
+    assert normalise("Hydrangea x macrophylla") == "hydrangea macrophylla"
+    assert (
+        normalise("  Hydrangea  paniculata 'Limelight' ")
+        == "hydrangea paniculata limelight"
+    )
+
+
+def test_normalise_keeps_x_inside_a_word() -> None:
+    """An x inside a word (Ilex) is not a hybrid marker."""
+    assert normalise("Ilex crenata") == "ilex crenata"
+
+
+def test_resolve_exact_species() -> None:
+    """An exact (genus, species) key resolves to that row."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    match = resolver.resolve("Hydrangea", "paniculata")
+    assert match is not None
+    assert match.species == "paniculata"
+
+
+def test_resolve_falls_back_to_the_genus_row() -> None:
+    """An unknown species falls back to the genus-level row (2.6)."""
+    resolver = _resolver(_row("Ligustrum", [_SUMMER]))
+    match = resolver.resolve("Ligustrum", "ovalifolium")
+    assert match is not None
+    assert match.genus == "Ligustrum"
+
+
+def test_resolve_variant() -> None:
+    """A variant key resolves to the variant row."""
+    resolver = _resolver(
+        _row(
+            "Rosa",
+            [_SPRING],
+            variant="bush",
+            distinguish={"en": "On its own", "nl": "Op zichzelf"},
+        )
+    )
+    match = resolver.resolve("Rosa", variant="bush")
+    assert match is not None
+    assert match.variant == "bush"
+
+
+def test_resolve_no_match_returns_none() -> None:
+    """A genus not in the dataset resolves to nothing."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    assert resolver.resolve("Wisteria") is None
+
+
+def test_genus_is_ambiguous_when_species_disagree() -> None:
+    """Hydrangea is ambiguous because its species rows disagree on timing."""
+    resolver = _resolver(
+        _row("Hydrangea", [_SPRING], species="paniculata"),
+        _row("Hydrangea", [_APR_HARD], species="macrophylla"),
+    )
+    assert resolver.is_ambiguous("Hydrangea")
+
+
+def test_same_dates_different_instruction_is_still_ambiguous() -> None:
+    """Same dates with different instructions still count as distinct (macrophylla, aspera)."""
+    resolver = _resolver(
+        _row("Hydrangea", [_APR_HARD], species="macrophylla"),
+        _row("Hydrangea", [_APR_LIGHT], species="aspera"),
+    )
+    assert resolver.is_ambiguous("Hydrangea")
+
+
+def test_agreeing_species_are_not_ambiguous() -> None:
+    """Two species rows sharing an identical window block are one answer."""
+    resolver = _resolver(
+        _row("Foo", [_SUMMER], species="a"),
+        _row("Foo", [_SUMMER], species="b"),
+    )
+    assert not resolver.is_ambiguous("Foo")
+
+
+def test_a_genus_row_is_never_ambiguous() -> None:
+    """A genus-level row is a single answer, so the genus answers directly (2.6)."""
+    resolver = _resolver(
+        _row("Ligustrum", [_SUMMER]),
+        _row("Ligustrum", [_APR_HARD], species="lucidum"),
+    )
+    assert not resolver.is_ambiguous("Ligustrum")
+
+
+def test_search_by_botanical_name() -> None:
+    """A botanical name matches its row and nothing else."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    hits = resolver.search("Hydrangea paniculata")
+    assert [h.species for h in hits] == ["paniculata"]
+
+
+def test_search_by_common_name_in_any_language() -> None:
+    """An English user typing the Dutch name still finds the plant."""
+    resolver = _resolver(
+        _row(
+            "Hydrangea",
+            [_SPRING],
+            species="paniculata",
+            names={"nl": ["Pluimhortensia"], "en": ["Panicle hydrangea"]},
+        )
+    )
+    assert resolver.search("pluimhortensia")[0].species == "paniculata"
+    assert resolver.search("Panicle hydrangea")[0].species == "paniculata"
+
+
+def test_search_common_name_is_one_to_many() -> None:
+    """A shared common name returns several rows, with the same timing here."""
+    resolver = _resolver(
+        _row(
+            "Prunus",
+            [_SUMMER],
+            species="laurocerasus",
+            names={"nl": ["Laurier"], "en": ["Cherry laurel"]},
+        ),
+        _row(
+            "Laurus",
+            [_SUMMER],
+            species="nobilis",
+            names={"nl": ["Laurier"], "en": ["Bay laurel"]},
+        ),
+    )
+    hits = resolver.search("laurier")
+    assert len(hits) == 2
+    assert len({timing_signature(h) for h in hits}) == 1
+
+
+def test_search_resolves_a_synonym() -> None:
+    """A superseded botanical name resolves to the row that lists it."""
+    resolver = _resolver(
+        _row(
+            "Buddleja",
+            [_SUMMER],
+            species="davidii",
+            names={"nl": ["Vlinderstruik"], "en": ["Butterfly bush"]},
+            synonyms=["Buddleia"],
+        )
+    )
+    assert resolver.search("Buddleia")[0].genus == "Buddleja"
+
+
+def test_search_ignores_the_cultivar() -> None:
+    """A cultivar in the query is stripped; genus and species still match."""
+    resolver = _resolver(_row("Weigela", [_SUMMER], species="florida"))
+    hits = resolver.search("Weigela florida 'Bristol Ruby'")
+    assert [h.species for h in hits] == ["florida"]
+
+
+def test_search_unknown_returns_empty() -> None:
+    """A name not in the dataset returns nothing."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    assert resolver.search("Quercus robur") == []
