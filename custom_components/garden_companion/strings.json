@@ -10,13 +10,21 @@
   "config_subentries": {
     "plant": {
       "initiate_flow": {
-        "user": "Add plant"
+        "user": "Add plant",
+        "reconfigure": "Re-pick species"
       },
       "entry_type": "Plant",
       "step": {
         "user": {
           "title": "Add a plant",
           "description": "Type a botanical or common name, for example Hydrangea, Blauwe regen or Rose.",
+          "data": {
+            "query": "Plant name"
+          }
+        },
+        "reconfigure": {
+          "title": "Re-pick the plant",
+          "description": "Search again to change which plant in the dataset this maps to.",
           "data": {
             "query": "Plant name"
           }
@@ -86,7 +94,8 @@
         }
       },
       "error": {
-        "invalid_date": "That is not a real date. Check the day against the month; there is no 31 February or 29 February."
+        "invalid_date": "That is not a real date. Check the day against the month; there is no 31 February or 29 February.",
+        "not_found": "No plant matched that name."
       },
       "abort": {
         "reconfigure_successful": "Plant updated."

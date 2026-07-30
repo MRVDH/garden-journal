@@ -13,6 +13,7 @@ from typing import Any, override
 import voluptuous as vol
 from homeassistant.components import persistent_notification
 from homeassistant.config_entries import (
+    SOURCE_RECONFIGURE,
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
@@ -106,20 +107,23 @@ def _parse_botanical(botanical: str) -> tuple[str, str | None]:
     return genus, species
 
 
+def _matched_on(species: Species) -> str:
+    """Return how a dataset match resolved: variant, species or genus (3.2)."""
+    if species.variant:
+        return "variant"
+    if species.species:
+        return "species"
+    return "genus"
+
+
 def _stored_plant(species: Species, display_name: str) -> dict[str, Any]:
     """Build the stored subentry data for a plant matched in the dataset (3.2)."""
-    if species.variant:
-        matched_on = "variant"
-    elif species.species:
-        matched_on = "species"
-    else:
-        matched_on = "genus"
     return {
         "genus": species.genus,
         "species": species.species,
         "variant": species.variant,
         "display_name": display_name,
-        "matched_on": matched_on,
+        "matched_on": _matched_on(species),
         "in_dataset": True,
         "windows_like": None,
         "windows": None,
@@ -256,6 +260,56 @@ class PlantSubentryFlow(ConfigSubentryFlow):
         """Build a resolver over the config entry's cached dataset."""
         return Resolver(self._species())
 
+    async def _select_match(self, species: Species) -> SubentryFlowResult:
+        """Route a chosen dataset row: update on reconfigure, else name it (add)."""
+        if self.source == SOURCE_RECONFIGURE:
+            return self._apply_repick(species)
+        self._match = species
+        return await self.async_step_name()
+
+    def _apply_repick(self, species: Species) -> SubentryFlowResult:
+        """Re-map an existing plant to a dataset row, keeping its name (3.6)."""
+        subentry = self._get_reconfigure_subentry()
+        return self.async_update_reload_and_abort(
+            self._get_entry(),
+            subentry,
+            data={
+                **subentry.data,
+                "genus": species.genus,
+                "species": species.species,
+                "variant": species.variant,
+                "matched_on": _matched_on(species),
+                "in_dataset": True,
+                "windows_like": None,
+                "windows": None,
+            },
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Re-pick which plant this maps to (3.6). Rename and delete are HA built-ins."""
+        subentry = self._get_reconfigure_subentry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            groups = _distinct_by_timing(self._resolver().search(user_input["query"]))
+            if not groups:
+                errors["base"] = "not_found"
+            elif len(groups) == 1:
+                return await self._select_match(groups[0])
+            else:
+                self._candidates = groups
+                return await self.async_step_disambiguate()
+
+        default = subentry.data["genus"]
+        if subentry.data.get("species"):
+            default += f" {subentry.data['species']}"
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema({vol.Required("query", default=default): str}),
+            errors=errors,
+        )
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
@@ -268,8 +322,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
                 return await self.async_step_manual()
             if len(groups) == 1:
                 # One answer (a single row, or several that share timing).
-                self._match = groups[0]
-                return await self.async_step_name()
+                return await self._select_match(groups[0])
             self._candidates = groups
             return await self.async_step_disambiguate()
 
@@ -287,8 +340,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
             choice = user_input["choice"]
             if choice == "unsure":
                 return await self.async_step_manual()
-            self._match = candidates[int(choice)]
-            return await self.async_step_name()
+            return await self._select_match(candidates[int(choice)])
 
         language = self.hass.config.language
         options = [
@@ -297,7 +349,8 @@ class PlantSubentryFlow(ConfigSubentryFlow):
             )
             for index, candidate in enumerate(candidates)
         ]
-        options.append(SelectOptionDict(value="unsure", label="I am not sure"))
+        if self.source != SOURCE_RECONFIGURE:
+            options.append(SelectOptionDict(value="unsure", label="I am not sure"))
         return self.async_show_form(
             step_id="disambiguate",
             data_schema=vol.Schema(
