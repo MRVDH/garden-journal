@@ -19,6 +19,11 @@ from homeassistant.config_entries import (
     SubentryFlowResult,
 )
 from homeassistant.core import callback
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+)
 
 from .const import DOMAIN
 from .models import Species
@@ -61,6 +66,27 @@ def _default_display_name(species: Species, language: str) -> str:
     return " ".join(botanical)
 
 
+def _candidate_label(species: Species, language: str) -> str:
+    """Return a disambiguation label: the distinguish text, else botanical plus a name."""
+    if species.distinguish:
+        text = species.distinguish.get(language) or species.distinguish.get("en")
+        if text:
+            return text
+    botanical = species.genus
+    if species.species:
+        botanical += f" {species.species}"
+    common = _default_display_name(species, language)
+    return f"{botanical}, {common}" if common != botanical else botanical
+
+
+def _distinct_by_timing(candidates: list[Species]) -> list[Species]:
+    """Return one row per distinct timing, so identical timings are not offered twice (2.6)."""
+    groups: dict[tuple[Any, ...], Species] = {}
+    for candidate in candidates:
+        groups.setdefault(timing_signature(candidate), candidate)
+    return list(groups.values())
+
+
 def _stored_plant(species: Species, display_name: str) -> dict[str, Any]:
     """Build the stored subentry data for a plant matched in the dataset (3.2)."""
     if species.variant:
@@ -87,6 +113,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     """Add or reconfigure one plant."""
 
     _match: Species | None = None
+    _candidates: list[Species] | None = None
 
     def _resolver(self) -> Resolver:
         """Build a resolver over the config entry's cached dataset."""
@@ -98,21 +125,53 @@ class PlantSubentryFlow(ConfigSubentryFlow):
         """Search for a plant by botanical or common name."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            matches = self._resolver().search(user_input["query"])
-            if not matches:
+            groups = _distinct_by_timing(self._resolver().search(user_input["query"]))
+            if not groups:
                 errors["base"] = "not_found"
-            elif len({timing_signature(match) for match in matches}) == 1:
+            elif len(groups) == 1:
                 # One answer (a single row, or several that share timing).
-                self._match = matches[0]
+                self._match = groups[0]
                 return await self.async_step_name()
             else:
-                # Distinct timings: the disambiguation screen arrives in a later slice.
-                errors["base"] = "ambiguous"
+                self._candidates = groups
+                return await self.async_step_disambiguate()
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({vol.Required("query"): str}),
             errors=errors,
+        )
+
+    async def async_step_disambiguate(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Choose between candidates that prune at different times (2.6, 3.6)."""
+        candidates = self._candidates or []
+        if user_input is not None:
+            choice = user_input["choice"]
+            if choice == "unsure":
+                # Manual add is the destination here; it arrives in a later slice.
+                return self.async_abort(reason="manual_not_ready")
+            self._match = candidates[int(choice)]
+            return await self.async_step_name()
+
+        language = self.hass.config.language
+        options = [
+            SelectOptionDict(
+                value=str(index), label=_candidate_label(candidate, language)
+            )
+            for index, candidate in enumerate(candidates)
+        ]
+        options.append(SelectOptionDict(value="unsure", label="I am not sure"))
+        return self.async_show_form(
+            step_id="disambiguate",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("choice"): SelectSelector(
+                        SelectSelectorConfig(options=options)
+                    )
+                }
+            ),
         )
 
     async def async_step_name(

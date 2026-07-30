@@ -21,6 +21,13 @@
             "query": "Plant name"
           }
         },
+        "disambiguate": {
+          "title": "Which plant is it?",
+          "description": "These prune at different times, so pick the one you have.",
+          "data": {
+            "choice": "Plant"
+          }
+        },
         "name": {
           "title": "Name this plant",
           "description": "This name labels the plant's device and entities. You can change it later.",
@@ -30,10 +37,10 @@
         }
       },
       "error": {
-        "not_found": "No plant matched that name.",
-        "ambiguous": "Several plants match with different pruning times."
+        "not_found": "No plant matched that name."
       },
       "abort": {
+        "manual_not_ready": "Adding a plant that is not in the dataset arrives in a later build step.",
         "reconfigure_successful": "Plant updated."
       }
     }
