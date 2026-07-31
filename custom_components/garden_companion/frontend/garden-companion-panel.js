@@ -15,6 +15,55 @@
 const DEBOUNCE_MS = 250;
 const PAGE_SIZE = 24;
 
+/*
+ * The panel's own strings. A custom panel is not covered by the integration's
+ * translation files, which Home Assistant loads for config flows and entities,
+ * so the few strings this page owns live here and are picked by hass.language.
+ * Anything unknown falls back to English.
+ */
+const STRINGS = {
+  en: {
+    search: "Search plants",
+    loading: "Loading",
+    loadingMore: "Loading more",
+    plants: (n) => `${n} plant${n === 1 ? "" : "s"}`,
+    more: (n) => `Scroll for ${n} more`,
+    noPhoto: "No photo",
+    photo: (credit) => `Photo: ${credit}`,
+    planted: "Planted",
+    plantedTimes: (n) => `Planted ${n}x`,
+    plantedTitle: "You have this in your garden",
+    plantedTitleTimes: (n) => `You have ${n} of these in your garden`,
+    addPlant: (name) => `Add ${name} to my garden`,
+    addAnother: (name) => `Add another ${name}`,
+    nameLabel: "Name for this plant",
+    add: "Add",
+    cancel: "Cancel",
+    loadFailed: "Could not load plants",
+    addFailed: "Could not add the plant",
+  },
+  nl: {
+    search: "Zoek planten",
+    loading: "Laden",
+    loadingMore: "Meer laden",
+    plants: (n) => `${n} plant${n === 1 ? "" : "en"}`,
+    more: (n) => `Scroll voor nog ${n}`,
+    noPhoto: "Geen foto",
+    photo: (credit) => `Foto: ${credit}`,
+    planted: "Geplant",
+    plantedTimes: (n) => `${n}x geplant`,
+    plantedTitle: "Deze staat in je tuin",
+    plantedTitleTimes: (n) => `Hiervan staan er ${n} in je tuin`,
+    addPlant: (name) => `${name} toevoegen aan mijn tuin`,
+    addAnother: (name) => `Nog een ${name} toevoegen`,
+    nameLabel: "Naam voor deze plant",
+    add: "Toevoegen",
+    cancel: "Annuleren",
+    loadFailed: "Kon de planten niet laden",
+    addFailed: "Kon de plant niet toevoegen",
+  },
+};
+
 class GardenCompanionPanel extends HTMLElement {
   constructor() {
     super();
@@ -39,6 +88,13 @@ class GardenCompanionPanel extends HTMLElement {
       this._build();
       this._load({ reset: true });
     }
+  }
+
+  /* Look a string up in the user's language, falling back to English. */
+  _t(key) {
+    const language = (this._hass && this._hass.language) || "en";
+    const table = STRINGS[language] || STRINGS[language.split("-")[0]];
+    return (table && table[key]) || STRINGS.en[key];
   }
 
   set panel(_panel) {
@@ -154,11 +210,28 @@ class GardenCompanionPanel extends HTMLElement {
         }
         .add svg { width: 22px; height: 22px; fill: currentColor; }
         .add:hover { filter: brightness(1.08); }
+        /* A badge on the photo, so what you own reads as a status rather than as
+           another line of description. */
+        .owned {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          padding: 4px 9px 4px 6px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 500;
+          color: #fff;
+          background: var(--success-color, #0b8043);
+          box-shadow: 0 1px 3px rgba(0,0,0,.35);
+        }
+        .owned svg { width: 15px; height: 15px; fill: currentColor; }
         .body { padding: 14px 14px 14px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
         .common { font-size: 16px; font-weight: 500; padding-right: 40px; }
         .botanical { font-size: 13px; font-style: italic; color: var(--secondary-text-color, #727272); }
         .hint { font-size: 12px; color: var(--secondary-text-color, #727272); }
-        .added { font-size: 12px; color: var(--secondary-text-color, #727272); }
         .naming { display: flex; gap: 8px; width: 100%; margin-top: 8px; }
         .naming input {
           flex: 1;
@@ -188,7 +261,7 @@ class GardenCompanionPanel extends HTMLElement {
       </style>
       <header>Garden Companion</header>
       <div class="toolbar">
-        <input type="search" placeholder="Search plants" autocomplete="off">
+        <input type="search" autocomplete="off">
       </div>
       <div class="count"></div>
       <div class="error" hidden></div>
@@ -197,6 +270,7 @@ class GardenCompanionPanel extends HTMLElement {
       <div class="more" hidden></div>
     `;
     const search = this.shadowRoot.querySelector("input[type=search]");
+    search.placeholder = this._t("search");
     search.addEventListener("input", () => {
       this._query = search.value;
       if (this._timer) clearTimeout(this._timer);
@@ -258,7 +332,7 @@ class GardenCompanionPanel extends HTMLElement {
           await new Promise((resolve) => setTimeout(resolve, 400));
           continue;
         }
-        this._error = err && err.message ? err.message : "Could not load plants";
+        this._error = err && err.message ? err.message : this._t("loadFailed");
         break;
       }
     }
@@ -317,7 +391,7 @@ class GardenCompanionPanel extends HTMLElement {
       this._naming = null;
       await this._load({ reset: true });
     } catch (err) {
-      this._error = err && err.message ? err.message : "Could not add the plant";
+      this._error = err && err.message ? err.message : this._t("addFailed");
       this._render();
     }
   }
@@ -332,17 +406,16 @@ class GardenCompanionPanel extends HTMLElement {
     error.hidden = this._error === null;
     error.textContent = this._error || "";
 
-    if (this._loading && this._plants.length === 0) {
-      count.textContent = "Loading";
-    } else {
-      count.textContent = `${this._total} plant${this._total === 1 ? "" : "s"}`;
-    }
+    count.textContent =
+      this._loading && this._plants.length === 0
+        ? this._t("loading")
+        : this._t("plants")(this._total);
 
     const remaining = this._total - this._plants.length;
     more.hidden = remaining <= 0;
     more.textContent = this._loading
-      ? "Loading more"
-      : `Scroll for ${remaining} more`;
+      ? this._t("loadingMore")
+      : this._t("more")(remaining);
 
     grid.textContent = "";
     for (const plant of this._plants) {
@@ -373,17 +446,18 @@ class GardenCompanionPanel extends HTMLElement {
       if (plant.credit) {
         const credit = document.createElement("div");
         credit.className = "credit";
-        credit.textContent = `Photo: ${plant.credit}`;
+        credit.textContent = this._t("photo")(plant.credit);
         credit.title = plant.credit;
         frame.appendChild(credit);
       }
     } else {
       const empty = document.createElement("div");
       empty.className = "photo empty";
-      empty.textContent = "No photo";
+      empty.textContent = this._t("noPhoto");
       frame.appendChild(empty);
     }
 
+    if (plant.added) frame.appendChild(this._ownedBadge(plant));
     frame.appendChild(this._addButton(plant));
     card.appendChild(frame);
 
@@ -407,25 +481,34 @@ class GardenCompanionPanel extends HTMLElement {
       body.appendChild(hint);
     }
 
-    if (plant.added) {
-      const added = document.createElement("div");
-      added.className = "added";
-      added.textContent = "In your garden";
-      body.appendChild(added);
-    }
-
     if (this._naming === plant.key) body.appendChild(this._namingRow(plant));
 
     card.appendChild(body);
     return card;
   }
 
+  _ownedBadge(plant) {
+    const badge = document.createElement("div");
+    badge.className = "owned";
+    badge.innerHTML =
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+    const label = document.createElement("span");
+    label.textContent =
+      plant.added > 1 ? this._t("plantedTimes")(plant.added) : this._t("planted");
+    badge.appendChild(label);
+    badge.title =
+      plant.added > 1
+        ? this._t("plantedTitleTimes")(plant.added)
+        : this._t("plantedTitle");
+    return badge;
+  }
+
   _addButton(plant) {
     const button = document.createElement("button");
     button.className = "add";
     const label = plant.added
-      ? `Add another ${plant.common}`
-      : `Add ${plant.common} to my garden`;
+      ? this._t("addAnother")(plant.common)
+      : this._t("addPlant")(plant.common);
     button.title = label;
     button.setAttribute("aria-label", label);
     button.innerHTML =
@@ -443,12 +526,12 @@ class GardenCompanionPanel extends HTMLElement {
     const input = document.createElement("input");
     input.type = "text";
     input.value = plant.common;
-    input.setAttribute("aria-label", "Name for this plant");
+    input.setAttribute("aria-label", this._t("nameLabel"));
     const confirm = document.createElement("button");
-    confirm.textContent = "Add";
+    confirm.textContent = this._t("add");
     const cancel = document.createElement("button");
     cancel.className = "secondary";
-    cancel.textContent = "Cancel";
+    cancel.textContent = this._t("cancel");
     confirm.addEventListener("click", () => this._add(plant, input.value));
     cancel.addEventListener("click", () => {
       this._naming = null;

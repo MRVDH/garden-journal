@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+from collections import Counter
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any
@@ -44,7 +45,7 @@ _COMPONENT = "garden-companion-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "7"
+_MODULE_VERSION = "9"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 
 # Set once the panel, views and commands are registered, so a config entry
@@ -98,8 +99,12 @@ def _botanical(species: Species) -> str:
     return name
 
 
-def _as_json(species: Species, language: str, added: bool) -> dict[str, Any]:
-    """Describe one row for the panel: what a browsing card shows, and no more."""
+def _as_json(species: Species, language: str, added: int) -> dict[str, Any]:
+    """Describe one row for the panel: what a browsing card shows, and no more.
+
+    `added` counts how many plants in the garden come from this row, since the
+    same plant can be added more than once under different names.
+    """
     return {
         "key": row_value(species),
         "common": _default_display_name(species, language),
@@ -139,9 +144,9 @@ def _entry(hass: HomeAssistant) -> GardenCompanionConfigEntry | None:
     return None
 
 
-def _added_keys(entry: GardenCompanionConfigEntry) -> set[str]:
-    """Return the picker keys of plants already added."""
-    keys = set()
+def _added_counts(entry: GardenCompanionConfigEntry) -> Counter[str]:
+    """Count the plants in the garden against the dataset row each came from."""
+    counts: Counter[str] = Counter()
     for subentry in entry.get_subentries_of_type("plant"):
         data = subentry.data
         if not data.get("in_dataset", True):
@@ -151,8 +156,8 @@ def _added_keys(entry: GardenCompanionConfigEntry) -> set[str]:
             data.get("species") or "",
             data.get("variant") or "",
         )
-        keys.add("dataset:" + "|".join(parts))
-    return keys
+        counts["dataset:" + "|".join(parts)] += 1
+    return counts
 
 
 @websocket_api.websocket_command(
@@ -186,15 +191,13 @@ def _ws_plants(
     offset = msg.get("offset", 0)
     limit = msg.get("limit", _DEFAULT_LIMIT)
     page = rows[offset : offset + limit]
-    added = _added_keys(entry)
+    added = _added_counts(entry)
     connection.send_result(
         msg["id"],
         {
             "total": len(rows),
             "offset": offset,
-            "plants": [
-                _as_json(row, language, row_value(row) in added) for row in page
-            ],
+            "plants": [_as_json(row, language, added[row_value(row)]) for row in page],
         },
     )
 

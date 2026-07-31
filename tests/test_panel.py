@@ -87,20 +87,39 @@ async def test_plants_lists_the_dataset(
     assert hydrangea["botanical"] == "Hydrangea paniculata"
     assert hydrangea["photo"] == f"/api/{DOMAIN}/photo/{_HYDRANGEA}"
     assert hydrangea["credit"] == "Hedwig Storch (CC BY-SA 3.0)"
-    assert hydrangea["added"] is False
+    assert hydrangea["added"] == 0
 
 
-async def test_plants_marks_what_is_already_added(
+async def test_plants_counts_what_is_already_added(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """A plant already in the garden is flagged so the grid can say so."""
-    await _setup(hass, [("By the shed", _plant("Hydrangea", "paniculata"))])
+    """Each row reports how many plants in the garden came from it."""
+    await _setup(
+        hass,
+        [
+            ("By the shed", _plant("Hydrangea", "paniculata")),
+            ("By the door", _plant("Hydrangea", "paniculata")),
+        ],
+    )
     client = await hass_ws_client(hass)
     await client.send_json_auto_id({"type": f"{DOMAIN}/plants"})
     plants = (await client.receive_json())["result"]["plants"]
 
-    assert next(p for p in plants if p["key"] == _HYDRANGEA)["added"] is True
-    assert next(p for p in plants if p["key"] == _WISTERIA)["added"] is False
+    assert next(p for p in plants if p["key"] == _HYDRANGEA)["added"] == 2
+    assert next(p for p in plants if p["key"] == _WISTERIA)["added"] == 0
+
+
+async def test_plants_ignores_manual_plants_in_the_count(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """A manually added plant is not counted against a dataset row."""
+    manual = _plant("Hydrangea", "paniculata") | {"in_dataset": False}
+    await _setup(hass, [("Something else", manual)])
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": f"{DOMAIN}/plants"})
+    plants = (await client.receive_json())["result"]["plants"]
+
+    assert next(p for p in plants if p["key"] == _HYDRANGEA)["added"] == 0
 
 
 async def test_plants_searches_and_reports_the_variant_hint(
