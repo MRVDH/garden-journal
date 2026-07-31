@@ -113,7 +113,5 @@ class PruningCalendar(CalendarEntity):
                 for _year, start, _end in occurrences_in_range(
                     window, range_start, range_end
                 ):
-                    events.append(
-                        self._event(subentry_id, title, window, index, start)
-                    )
+                    events.append(self._event(subentry_id, title, window, index, start))
         return events

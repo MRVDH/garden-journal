@@ -322,7 +322,12 @@ def test_resolve_photo_borrows_a_dataset_rows_image() -> None:
         "licence": "CC BY-SA 4.0",
     }
     resolver = _resolver(row)
-    data = {"genus": "Hydrangea", "species": "paniculata", "variant": None, "in_dataset": True}
+    data = {
+        "genus": "Hydrangea",
+        "species": "paniculata",
+        "variant": None,
+        "in_dataset": True,
+    }
     assert resolve_photo(data, resolver) == Image(
         url="https://example.org/h.jpg", author="A Photographer", licence="CC BY-SA 4.0"
     )
@@ -331,7 +336,12 @@ def test_resolve_photo_borrows_a_dataset_rows_image() -> None:
 def test_resolve_photo_none_when_the_row_has_no_image() -> None:
     """A dataset plant whose row has no image resolves to no photo."""
     resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
-    data = {"genus": "Hydrangea", "species": "paniculata", "variant": None, "in_dataset": True}
+    data = {
+        "genus": "Hydrangea",
+        "species": "paniculata",
+        "variant": None,
+        "in_dataset": True,
+    }
     assert resolve_photo(data, resolver) is None
 
 
@@ -352,7 +362,12 @@ def test_resolve_photo_none_for_a_manual_plant_without_a_url() -> None:
 def test_repair_reason_none_when_the_plant_resolves() -> None:
     """A plant whose key still resolves needs no repair."""
     resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
-    data = {"genus": "Hydrangea", "species": "paniculata", "variant": None, "in_dataset": True}
+    data = {
+        "genus": "Hydrangea",
+        "species": "paniculata",
+        "variant": None,
+        "in_dataset": True,
+    }
     assert repair_reason(data, resolver) is None
 
 

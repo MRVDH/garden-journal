@@ -42,9 +42,7 @@ async def async_setup_entry(
     return True
 
 
-def _refresh_repairs(
-    hass: HomeAssistant, entry: GardenCompanionConfigEntry
-) -> None:
+def _refresh_repairs(hass: HomeAssistant, entry: GardenCompanionConfigEntry) -> None:
     """Raise or clear a repair per plant, according to whether its key resolves (3.8)."""
     resolver = Resolver(entry.runtime_data.species)
     plants = {s.subentry_id: s for s in entry.get_subentries_of_type("plant")}

@@ -5,10 +5,49 @@
 # so bare dates and unquoted no/yes/on/off would parse as the wrong type. See
 # plan.md sections 2.3 to 2.5 for the schema.
 #
-# Fixture for build step 2: three researched rows that exercise the mechanisms
-# (new-wood shrub, two windows, a variant with distinguish). Timing follows the
-# cited Groei & Bloei pages. The full sixteen-row dataset and the horticultural
-# review arrive in step 11.
+# Every row cites the Dutch page its timing comes from. Where sources disagree,
+# the safer window wins: for a plant that flowers on old wood, cutting too early
+# costs a season's flowers, so a later date is the lower-risk error.
+#
+# Photos are linked, never copied. Each is a freely licensed Wikimedia Commons
+# file addressed through Special:FilePath, which follows the file wherever
+# Commons stores it. Author and licence are recorded per photo; the licence on a
+# photo is its own, not the dataset's.
+
+# ---------------------------------------------------------------- Wisteria ---
+
+- genus: Wisteria
+  names:
+    nl: [Blauwe regen]
+    en: [Wisteria]
+  source: https://groei.nl/artikel/blauweregen-snoeien-in-de-zomer
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Wisteria%20in%20bloom%20at%20Fleetwood%20Park%20(26981934121).png?width=600
+    author: waferboard
+    licence: CC BY 2.0
+    page: https://commons.wikimedia.org/wiki/File:Wisteria_in_bloom_at_Fleetwood_Park_(26981934121).png
+  windows:
+    - when: { start: "07-15", end: "08-31" }
+      description:
+        nl: >-
+          Kort de lange zomeruitlopers in tot ongeveer vijf bladeren. Dit remt
+          de groei en stuurt energie naar de bloemknoppen.
+        en: >-
+          Shorten this summer's whippy side shoots to about five leaves. This
+          checks the growth and pushes energy into flower buds.
+    - when: { start: "01-15", end: "02-15" }
+      description:
+        nl: >-
+          Snoei diezelfde zijscheuten terug tot twee of drie knoppen als de
+          plant kaal is, om de bloeisporen op te bouwen.
+        en: >-
+          Cut the same side shoots back to two or three buds while the plant is
+          bare, building up the flowering spurs.
+
+# ------------------------------------------------------------- Hydrangea -----
+# No bare Hydrangea row on purpose: the four species below disagree, so the
+# genus resolves as ambiguous and the add flow asks which one you have. Nothing
+# declares that; it falls out of the data.
 
 - genus: Hydrangea
   species: paniculata
@@ -33,28 +72,354 @@
           this year's shoots, so a hard spring prune costs no bloom and gives
           larger heads.
 
-- genus: Wisteria
+- genus: Hydrangea
+  species: arborescens
   names:
-    nl: [Blauwe regen]
-    en: [Wisteria]
-  source: https://groei.nl/artikel/blauweregen-snoeien-in-de-zomer
+    nl: [Sneeuwbalhortensia]
+    en: [Smooth hydrangea]
+  source: https://groei.nl/artikel/hortensia-snoeien
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Hydrangea%20arborescens%20Annabelle%20over%20a%20fence.jpg?width=600
+    author: W.carter
+    licence: CC0
+    page: https://commons.wikimedia.org/wiki/File:Hydrangea_arborescens_Annabelle_over_a_fence.jpg
   windows:
-    - when: { start: "07-15", end: "08-31" }
+    - when: { start: "03-01", end: "04-15" }
       description:
         nl: >-
-          Kort de lange zomeruitlopers in tot ongeveer vijf bladeren. Dit remt
-          de groei en stuurt energie naar de bloemknoppen.
+          Knip de takken terug tot even onder de uitgebloeide bloemen voordat de
+          plant uitloopt. Hij bloeit op nieuw hout; laat een stevig raamwerk
+          staan, want te dunne takken kunnen de zware bollen niet dragen.
         en: >-
-          Shorten this summer's whippy side shoots to about five leaves. This
-          checks the growth and pushes energy into flower buds.
-    - when: { start: "01-15", end: "02-15" }
+          Cut the stems back to just below the spent flower heads before growth
+          starts. It flowers on new wood; leave a sturdy framework, because thin
+          stems cannot hold the heavy heads up.
+
+- genus: Hydrangea
+  species: macrophylla
+  names:
+    nl: [Boerenhortensia, Bolhortensia]
+    en: [Bigleaf hydrangea, Mophead hydrangea]
+  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/boerenhortensia-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Northern%20California%20H.%20macrophylla%20shrub%20in%20bloom.jpg?width=600
+    author: Cinderkinder
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Northern_California_H._macrophylla_shrub_in_bloom.jpg
+  windows:
+    - when: { start: "04-01", end: "04-30" }
       description:
         nl: >-
-          Snoei diezelfde zijscheuten terug tot twee of drie knoppen als de
-          plant kaal is, om de bloeisporen op te bouwen.
+          Knip de oude bloemen weg tot op het eerste dikke knoppenpaar eronder.
+          Hij bloeit op hout van vorig jaar, dus spaar de oude takken. Laat de
+          uitgebloeide bloemen de winter staan: ze beschermen de knoppen, en
+          snoeien in maart kost bloei als het nog nachtvorst wordt.
         en: >-
-          Cut the same side shoots back to two or three buds while the plant is
-          bare, building up the flowering spurs.
+          Take the old flower heads off down to the first fat pair of buds below
+          them. It flowers on last year's wood, so spare the old stems. Leave
+          the spent heads on over winter to shelter those buds; pruning in March
+          costs flowers if a night frost follows.
+
+- genus: Hydrangea
+  species: aspera
+  synonyms: [Hydrangea sargentiana]
+  names:
+    nl: [Fluweelhortensia]
+    en: [Rough-leaved hydrangea]
+  source: https://nl-nl.bakker.com/blogs/snoeien/snoeien-de-fluweelhortensia
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Azores%20-%20Hydrangea%20aspera.jpg?width=600
+    author: P. Hughes
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Azores_-_Hydrangea_aspera.jpg
+  windows:
+    - when: { start: "04-01", end: "04-30" }
+      description:
+        nl: >-
+          Haal alleen de uitgebloeide bloemen en dood of kruisend hout weg. Snoei
+          hem niet terug om hem kleiner te houden: hij bloeit op ouder hout en
+          een flinke snoei kost een jaar bloei. Dit is de uitzondering die niet
+          in vorm gesnoeid wordt.
+        en: >-
+          Remove only the spent flower heads and any dead or crossing wood. Do
+          not cut it back to keep it small: it flowers on older wood and a hard
+          prune costs a year's flowers. This is the one that is not shaped.
+
+# -------------------------------------------------------------- Perennials ---
+
+- genus: Salvia
+  species: nemorosa
+  names:
+    nl: [Bossalie]
+    en: [Woodland sage]
+  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/salie-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/00%201833%20Hain-Salbei%20(Salvia%20nemorosa).jpg?width=600
+    author: W. Bulach
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:00_1833_Hain-Salbei_(Salvia_nemorosa).jpg
+  windows:
+    - when: { start: "04-01", end: "05-15" }
+      description:
+        nl: >-
+          Knip het oude gewas tot bij de grond weg zodra je onderaan nieuwe
+          scheuten ziet. Het blijft de winter staan voor structuur en om de
+          kroon te beschermen, dus dit is de eerste snoei van het jaar.
+        en: >-
+          Cut last year's growth back to the base once new shoots show at the
+          bottom. It stands through winter for structure and to protect the
+          crown, so this is the first cut of the year.
+    - when: { start: "06-15", end: "07-15" }
+      description:
+        nl: >-
+          Snoei na de eerste bloei terug tot ongeveer tien centimeter boven de
+          grond. Dat levert een tweede bloei later in de zomer.
+        en: >-
+          After the first flush, cut back to about ten centimetres above the
+          ground. That buys a second flowering later in the summer.
+
+- genus: Leucanthemum
+  species: vulgare
+  synonyms: [Chrysanthemum leucanthemum]
+  names:
+    nl: [Gewone margriet, Margriet]
+    en: [Oxeye daisy]
+  source: https://tuiniertijd.nl/margriet-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Leucanthemum%20vulgare%20-%20Stadtgarten%20Karlsruhe%2001.jpg?width=600
+    author: H. Zell
+    licence: CC BY-SA 3.0
+    page: https://commons.wikimedia.org/wiki/File:Leucanthemum_vulgare_-_Stadtgarten_Karlsruhe_01.jpg
+  windows:
+    - when: { start: "03-01", end: "03-31" }
+      description:
+        nl: >-
+          Knip het oude gewas tot bij de grond weg voordat de plant knoppen
+          aanzet. Vroeg in het voorjaar, zodra de zwaarste vorst voorbij is.
+        en: >-
+          Cut last year's growth back to the base before the plant sets buds.
+          Early in spring, once the hardest frost has passed.
+    - when: { start: "07-01", end: "07-15" }
+      description:
+        nl: >-
+          Snoei na de eerste bloeigolf terug tot vijftien à twintig centimeter.
+          Houd de grond vochtig; na vier of vijf weken komen er nieuwe
+          bloemstelen voor een tweede bloei.
+        en: >-
+          Once the first flush is over, cut back to fifteen or twenty
+          centimetres. Keep the soil moist and new flower stems follow in four
+          or five weeks for a second flowering.
+
+# ------------------------------------------------------- Evergreen hedging ---
+# These four share one window block, copied verbatim, so a later deduplication
+# stays mechanical. They are all broadleaf evergreens sheared twice in the
+# growing season, which is why "laurier" (Prunus laurocerasus and Laurus
+# nobilis) does not have to be disambiguated: both answers are the same.
+
+- genus: Ilex
+  species: crenata
+  names:
+    nl: [Japanse hulst]
+    en: [Japanese holly, Box-leaved holly]
+  source: https://www.ilexcrenata.nl/blog/ilex-crenata-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Laurelhurst%20Park,%20Portland%20-%20Japanese%20Holly%202012.JPG?width=600
+    author: Another Believer
+    licence: CC BY-SA 3.0
+    page: https://commons.wikimedia.org/wiki/File:Laurelhurst_Park,_Portland_-_Japanese_Holly_2012.JPG
+  windows:
+    - when: { start: "05-15", end: "06-15" }
+      description:
+        nl: >-
+          Scheer voor het eerst als de nieuwe groei op gang is. Doe het op een
+          bewolkte dag, anders verbranden de gesneden bladranden in de zon.
+        en: >-
+          Shear for the first time once the new growth is running. Pick an
+          overcast day, or the cut leaf edges scorch in the sun.
+    - when: { start: "08-15", end: "09-15" }
+      description:
+        nl: >-
+          Scheer een tweede keer in de nazomer, zodat de wonden dichten voor de
+          winter. Snoei niet later: jonge scheuten bevriezen dan.
+        en: >-
+          Shear a second time in late summer so the cuts close before winter. Do
+          not trim later than this; soft new shoots would freeze.
+
+- genus: Ligustrum
+  names:
+    nl: [Liguster]
+    en: [Privet]
+  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/liguster-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Noordwijk%20-%20Haagliguster%20(Ligustrum%20ovalifolium).jpg?width=600
+    author: Rudolphous
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Noordwijk_-_Haagliguster_(Ligustrum_ovalifolium).jpg
+  windows:
+    - when: { start: "05-15", end: "06-15" }
+      description:
+        nl: >-
+          Scheer voor het eerst als de nieuwe groei op gang is. Doe het op een
+          bewolkte dag, anders verbranden de gesneden bladranden in de zon.
+        en: >-
+          Shear for the first time once the new growth is running. Pick an
+          overcast day, or the cut leaf edges scorch in the sun.
+    - when: { start: "08-15", end: "09-15" }
+      description:
+        nl: >-
+          Scheer een tweede keer in de nazomer, zodat de wonden dichten voor de
+          winter. Snoei niet later: jonge scheuten bevriezen dan.
+        en: >-
+          Shear a second time in late summer so the cuts close before winter. Do
+          not trim later than this; soft new shoots would freeze.
+
+- genus: Prunus
+  species: laurocerasus
+  synonyms: [Laurocerasus officinalis]
+  names:
+    nl: [Laurierkers, Laurier]
+    en: [Cherry laurel]
+  source: https://groei.nl/artikel/laurierkers-prunus-laurocerasus-snoeien-en-verjongen-video
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Ruhland,%20Goethestr.%20bei%20Lange%20Str.%208a,%20Lorbeerkirschen-Hecke,%20Vorwinter,%2001.jpg?width=600
+    author: Wilhelm Zimmerling PAR
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Ruhland,_Goethestr._bei_Lange_Str._8a,_Lorbeerkirschen-Hecke,_Vorwinter,_01.jpg
+  windows:
+    - when: { start: "05-15", end: "06-15" }
+      description:
+        nl: >-
+          Scheer voor het eerst als de nieuwe groei op gang is. Doe het op een
+          bewolkte dag, anders verbranden de gesneden bladranden in de zon.
+        en: >-
+          Shear for the first time once the new growth is running. Pick an
+          overcast day, or the cut leaf edges scorch in the sun.
+    - when: { start: "08-15", end: "09-15" }
+      description:
+        nl: >-
+          Scheer een tweede keer in de nazomer, zodat de wonden dichten voor de
+          winter. Snoei niet later: jonge scheuten bevriezen dan.
+        en: >-
+          Shear a second time in late summer so the cuts close before winter. Do
+          not trim later than this; soft new shoots would freeze.
+
+- genus: Laurus
+  species: nobilis
+  names:
+    nl: [Laurier, Echte laurier]
+    en: [Bay laurel, Bay]
+  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/echte-laurier-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/2018-04-10%20Bay%20Laural%20bush,%20(Laurus%20nobilis),%20Northrepps,%20Cromer.JPG?width=600
+    author: Kolforn (Wikimedia)
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:2018-04-10_Bay_Laural_bush,_(Laurus_nobilis),_Northrepps,_Cromer.JPG
+  windows:
+    - when: { start: "05-15", end: "06-15" }
+      description:
+        nl: >-
+          Scheer voor het eerst als de nieuwe groei op gang is. Doe het op een
+          bewolkte dag, anders verbranden de gesneden bladranden in de zon.
+        en: >-
+          Shear for the first time once the new growth is running. Pick an
+          overcast day, or the cut leaf edges scorch in the sun.
+    - when: { start: "08-15", end: "09-15" }
+      description:
+        nl: >-
+          Scheer een tweede keer in de nazomer, zodat de wonden dichten voor de
+          winter. Snoei niet later: jonge scheuten bevriezen dan.
+        en: >-
+          Shear a second time in late summer so the cuts close before winter. Do
+          not trim later than this; soft new shoots would freeze.
+
+# ------------------------------------------------------------------ Others ---
+
+- genus: Lavandula
+  names:
+    nl: [Lavendel]
+    en: [Lavender]
+  source: https://groei.nl/artikel/lavendel-snoeien
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Lavandula-angustifolia-flowering.JPG?width=600
+    author: Sten Porse
+    licence: CC BY-SA 3.0
+    page: https://commons.wikimedia.org/wiki/File:Lavandula-angustifolia-flowering.JPG
+  windows:
+    - when: { start: "03-25", end: "04-10" }
+      description:
+        nl: >-
+          Geef een lichte vormsnoei en haal winterschade weg. Snoei nooit in het
+          kale, verhoute hout: daar loopt lavendel niet meer uit. Blijf altijd
+          boven de laagste groene scheuten.
+        en: >-
+          Give it a light shaping and take out any winter damage. Never cut into
+          the bare, woody base: lavender does not reshoot from there. Always
+          stay above the lowest green shoots.
+    - when: { start: "08-15", end: "09-15" }
+      description:
+        nl: >-
+          Dit is de hoofdsnoei, direct na de bloei. Knip de uitgebloeide stelen
+          eraf met een paar centimeter van de bebladerde scheuten eronder. Zo
+          blijft de plant compact in plaats van open te vallen.
+        en: >-
+          This is the main prune, straight after flowering. Take off the spent
+          flower stems with a couple of centimetres of the leafy growth below
+          them. That keeps the plant compact instead of letting it fall open.
+
+- genus: Verbena
+  species: bonariensis
+  names:
+    nl: [Stijf ijzerhard, IJzerhard]
+    en: [Purpletop vervain]
+  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/verbena-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Verbena%20bonariensis.jpg?width=600
+    author: frank wouters
+    licence: CC BY 2.0
+    page: https://commons.wikimedia.org/wiki/File:Verbena_bonariensis.jpg
+  windows:
+    - when: { start: "03-01", end: "03-31" }
+      description:
+        nl: >-
+          Knip de dode stelen tot op de grond terug zodra je onderaan nieuwe
+          scheuten ziet. Laat ze de hele winter staan: ze beschermen de kroon
+          tegen de vorst, de zaden zijn vogelvoer en zo zaait hij zichzelf uit.
+        en: >-
+          Cut the dead stems right down once new shoots appear at the base.
+          Leave them standing all winter: they shelter the crown from frost, the
+          seed feeds the birds, and it is how the plant seeds itself around.
+
+- genus: Magnolia
+  species: soulangeana
+  synonyms: [Magnolia soulangiana]
+  names:
+    nl: [Beverboom]
+    en: [Saucer magnolia]
+  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/magnolia-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Magnolia%20x%20soulangeana%202%20(Piotr%20Kuczynski).jpg?width=600
+    author: Piotr Kuczynski
+    licence: CC BY-SA 3.0
+    page: https://commons.wikimedia.org/wiki/File:Magnolia_x_soulangeana_2_(Piotr_Kuczynski).jpg
+  windows:
+    - when: { start: "07-01", end: "09-15" }
+      description:
+        nl: >-
+          Snoei zo weinig mogelijk, en alleen in de zomer. Haal dood, beschadigd
+          of kruisend hout weg en houd de sneden klein. In de winter of het
+          vroege voorjaar bloedt hij en heelt de wond slecht, en in het najaar
+          snoei je de knoppen voor volgend voorjaar weg.
+        en: >-
+          Prune as little as possible, and only in summer. Take out dead,
+          damaged or crossing wood and keep the cuts small. In winter or early
+          spring the sap runs and the wound heals badly, and pruning in autumn
+          removes next spring's flower buds.
+
+# -------------------------------------------------------------------- Rosa ---
+# Rosa needs a variant, and therefore distinguish: a bush and a climber are
+# pruned at different times, so the genus is ambiguous and the flow asks. The
+# climber is here even in a garden that has none, because the ambiguity belongs
+# to the genus.
 
 - genus: Rosa
   variant: bush
@@ -65,6 +430,11 @@
     nl: Staat op zichzelf, niet tegen een muur of boog
     en: Stands on its own, not tied to a wall or arch
   source: https://groei.nl/artikel/roos-snoeien
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Rosa%20rugosa%20habitus.jpg?width=600
+    author: Gmihail
+    licence: CC BY-SA 3.0 RS
+    page: https://commons.wikimedia.org/wiki/File:Rosa_rugosa_habitus.jpg
   windows:
     - when: { start: "03-01", end: "03-31" }
       description:
@@ -76,3 +446,29 @@
           Prune to an outward-facing bud once the worst frost has passed.
           Through summer, deadhead spent flowers to keep it blooming; that is
           ongoing care, not a pruning window.
+
+- genus: Rosa
+  variant: climber
+  names:
+    nl: [Klimroos]
+    en: [Climbing rose]
+  distinguish:
+    nl: Geleid tegen een muur, hek of boog
+    en: Trained against a wall, fence or arch
+  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/klimroos-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Pale%20pink%20climbing%20rose%20at%20Harlow%20Museum%20%26%20Walled%20Gardens%2C%20Essex%2003.jpg?width=600
+    author: Acabashi
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Pale_pink_climbing_rose_at_Harlow_Museum_%26_Walled_Gardens,_Essex_03.jpg
+  windows:
+    - when: { start: "12-01", end: "03-01" }
+      description:
+        nl: >-
+          Snoei als de plant in rust is. Kort de zijscheuten in tot twee of drie
+          knoppen, dun takken uit die tegen elkaar schuren en bind het
+          hoofdgestel aan. Zo komt de nieuwe groei laag uit de plant.
+        en: >-
+          Prune while the plant is dormant. Shorten the side shoots to two or
+          three buds, thin out stems that rub against each other, and tie the
+          main framework in. That brings the new growth from low down.

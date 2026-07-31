@@ -1,8 +1,7 @@
 """Tests for the next-pruning sensor entity (step 6).
 
 The plant is preloaded as a subentry so the sensor platform creates it at setup.
-The dataset is the packaged three-row fixture, so the subentry references a plant
-that is in it.
+The dataset is the packaged one, so the subentry references a plant that is in it.
 """
 
 from __future__ import annotations
@@ -87,7 +86,7 @@ async def test_adding_a_plant_creates_its_entities(hass: HomeAssistant) -> None:
         (entry.entry_id, "plant"), context={"source": "user"}
     )
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"query": "hortensia"}
+        result["flow_id"], {"query": "lavendel"}
     )
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"display_name": "New plant"}

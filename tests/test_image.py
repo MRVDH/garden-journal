@@ -1,9 +1,9 @@
 """Tests for the plant photo image entity (step 9).
 
 A dataset plant borrows its row's photo and credit; a manual plant carries a bare
-URL with no credit; a plant whose row has no photo gets no image entity. The
-fetch itself is exercised with respx so the suite stays offline, covering both a
-successful fetch and a network failure.
+URL with no credit, or none at all and then gets no image entity. The fetch itself
+is exercised with respx so the suite stays offline, covering both a successful
+fetch and a network failure.
 """
 
 from __future__ import annotations
@@ -54,7 +54,9 @@ def _manual_plant(image_url: str | None) -> dict[str, Any]:
         "matched_on": "manual",
         "in_dataset": False,
         "windows_like": None,
-        "windows": [{"when": {"start": "02-01", "end": "02-28"}, "description": {"en": "prune"}}],
+        "windows": [
+            {"when": {"start": "02-01", "end": "02-28"}, "description": {"en": "prune"}}
+        ],
         "source": None,
         "image_url": image_url,
     }
@@ -94,10 +96,14 @@ async def test_dataset_plant_photo_carries_credit(hass: HomeAssistant) -> None:
     assert _image_entity(hass, "image.my_hydrangea_photo").image_url == _HYDRANGEA_PHOTO
 
 
-async def test_plant_without_a_photo_has_no_image_entity(hass: HomeAssistant) -> None:
-    """A dataset plant whose row has no photo gets no image entity."""
+async def test_every_packaged_row_supplies_a_photo(hass: HomeAssistant) -> None:
+    """Each row in the packaged dataset carries a photo, so a dataset plant gets one.
+
+    The row-without-a-photo path is covered at the resolver level, where a row can
+    be built without an image.
+    """
     await _setup(hass, [("My wisteria", _dataset_plant("Wisteria", None))])
-    assert hass.states.get("image.my_wisteria_photo") is None
+    assert hass.states.get("image.my_wisteria_photo") is not None
 
 
 async def test_manual_plant_photo_has_no_attribution(hass: HomeAssistant) -> None:
@@ -121,7 +127,9 @@ async def test_manual_plant_without_a_photo_has_no_image_entity(
 async def test_photo_fetches_and_caches(hass: HomeAssistant) -> None:
     """A successful fetch returns the bytes and records the content type."""
     respx.get(_MANUAL_PHOTO).mock(
-        return_value=httpx.Response(200, content=_JPEG, headers={"content-type": "image/jpeg"})
+        return_value=httpx.Response(
+            200, content=_JPEG, headers={"content-type": "image/jpeg"}
+        )
     )
     await _setup(hass, [("Backyard oak", _manual_plant(_MANUAL_PHOTO))])
 
