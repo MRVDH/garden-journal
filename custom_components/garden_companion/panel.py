@@ -45,7 +45,7 @@ _COMPONENT = "garden-companion-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "9"
+_MODULE_VERSION = "10"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 
 # Set once the panel, views and commands are registered, so a config entry
@@ -99,8 +99,24 @@ def _botanical(species: Species) -> str:
     return name
 
 
+def _windows(species: Species, language: str) -> list[dict[str, str]]:
+    """Return each pruning window as plain strings, for the detail dialog."""
+    return [
+        {
+            "start": window.start,
+            "end": window.end,
+            "description": (
+                window.description.get(language)
+                or window.description.get("en")
+                or next(iter(window.description.values()), "")
+            ),
+        }
+        for window in species.windows
+    ]
+
+
 def _as_json(species: Species, language: str, added: int) -> dict[str, Any]:
-    """Describe one row for the panel: what a browsing card shows, and no more.
+    """Describe one row for the panel: the card, plus what the dialog shows.
 
     `added` counts how many plants in the garden come from this row, since the
     same plant can be added more than once under different names.
@@ -116,6 +132,8 @@ def _as_json(species: Species, language: str, added: int) -> dict[str, Any]:
             if species.distinguish
             else None
         ),
+        "windows": _windows(species, language),
+        "source": species.source,
         "added": added,
     }
 

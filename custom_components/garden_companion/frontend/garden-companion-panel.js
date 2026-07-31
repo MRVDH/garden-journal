@@ -37,10 +37,19 @@ const STRINGS = {
     addPlant: (name) => `Add ${name} to my garden`,
     addAnother: (name) => `Add another ${name}`,
     nameLabel: "Name for this plant",
+    nameHint: "This name labels the plant's device and entities. You can change it later.",
     add: "Add",
     cancel: "Cancel",
+    close: "Close",
+    pruning: "Pruning",
+    source: "Source of this timing",
     loadFailed: "Could not load plants",
     addFailed: "Could not add the plant",
+    months: [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
+    ],
+    range: (from, to) => `${from} to ${to}`,
   },
   nl: {
     search: "Zoek planten",
@@ -57,10 +66,19 @@ const STRINGS = {
     addPlant: (name) => `${name} toevoegen aan mijn tuin`,
     addAnother: (name) => `Nog een ${name} toevoegen`,
     nameLabel: "Naam voor deze plant",
+    nameHint: "Deze naam komt op het apparaat en de entiteiten van de plant. Je kunt hem later aanpassen.",
     add: "Toevoegen",
     cancel: "Annuleren",
+    close: "Sluiten",
+    pruning: "Snoeien",
+    source: "Bron van deze timing",
     loadFailed: "Kon de planten niet laden",
     addFailed: "Kon de plant niet toevoegen",
+    months: [
+      "januari", "februari", "maart", "april", "mei", "juni",
+      "juli", "augustus", "september", "oktober", "november", "december",
+    ],
+    range: (from, to) => `${from} tot ${to}`,
   },
 };
 
@@ -73,7 +91,7 @@ class GardenCompanionPanel extends HTMLElement {
     this._query = "";
     this._loading = false;
     this._error = null;
-    this._naming = null;
+    this._escape = null;
     this._photos = new Map();
     this._pending = new Set();
     this._timer = null;
@@ -106,6 +124,7 @@ class GardenCompanionPanel extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this._closeDialog();
     for (const url of this._photos.values()) URL.revokeObjectURL(url);
     this._photos.clear();
     if (this._timer) clearTimeout(this._timer);
@@ -159,7 +178,9 @@ class GardenCompanionPanel extends HTMLElement {
           box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0,0,0,.16));
           display: flex;
           flex-direction: column;
+          cursor: pointer;
         }
+        .card:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 2px; }
         .frame { position: relative; }
         .photo {
           aspect-ratio: 4 / 3;
@@ -232,29 +253,78 @@ class GardenCompanionPanel extends HTMLElement {
         .common { font-size: 16px; font-weight: 500; padding-right: 40px; }
         .botanical { font-size: 13px; font-style: italic; color: var(--secondary-text-color, #727272); }
         .hint { font-size: 12px; color: var(--secondary-text-color, #727272); }
-        .naming { display: flex; gap: 8px; width: 100%; margin-top: 8px; }
-        .naming input {
-          flex: 1;
-          min-width: 0;
-          padding: 7px 10px;
+        /* The detail dialog: room for the photo, the advice and a name field,
+           which a 240px card could not give the input without squeezing it. */
+        .backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 10;
+          background: rgba(0,0,0,.55);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+        }
+        .dialog {
+          background: var(--card-background-color, #fff);
+          color: var(--primary-text-color, #212121);
+          border-radius: 14px;
+          width: min(520px, 100%);
+          max-height: min(88vh, 900px);
+          overflow: auto;
+          box-shadow: 0 12px 32px rgba(0,0,0,.4);
+        }
+        .dialog .hero { position: relative; }
+        .dialog .hero img, .dialog .hero .noimg {
+          width: 100%;
+          aspect-ratio: 16 / 10;
+          object-fit: cover;
+          display: block;
+          background: var(--secondary-background-color, #e8e8e8);
+        }
+        .dialog .hero .noimg { display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--secondary-text-color, #727272); }
+        .dialog .hero .credit { right: 0; }
+        .dialog .content { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+        .dialog h2 { margin: 0; font-size: 21px; font-weight: 500; }
+        .dialog .sub { margin: 0; font-size: 14px; font-style: italic; color: var(--secondary-text-color, #727272); }
+        .dialog .note { margin: 0; font-size: 13px; color: var(--secondary-text-color, #727272); }
+        .dialog h3 {
+          margin: 6px 0 0;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: .06em;
+          text-transform: uppercase;
+          color: var(--secondary-text-color, #727272);
+        }
+        .window { border-left: 3px solid var(--primary-color, #03a9f4); padding-left: 12px; }
+        .window .when { font-size: 14px; font-weight: 500; }
+        .window .what { font-size: 13px; line-height: 1.45; color: var(--secondary-text-color, #727272); }
+        .dialog a { color: var(--primary-color, #03a9f4); font-size: 13px; word-break: break-all; }
+        .field { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+        .field label { font-size: 13px; font-weight: 500; }
+        .field input {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 10px 12px;
           font: inherit;
-          font-size: 14px;
+          font-size: 15px;
           color: var(--primary-text-color, #212121);
           background: var(--card-background-color, #fff);
-          border: 1px solid var(--divider-color, #e0e0e0);
-          border-radius: 6px;
+          border: 1px solid var(--divider-color, #bdbdbd);
+          border-radius: 8px;
         }
-        .naming button {
+        .actions-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+        .actions-row button {
           font: inherit;
-          font-size: 14px;
-          padding: 7px 12px;
+          font-size: 15px;
+          padding: 10px 18px;
           border: none;
-          border-radius: 6px;
+          border-radius: 8px;
           cursor: pointer;
           background: var(--primary-color, #03a9f4);
           color: var(--text-primary-color, #fff);
         }
-        .naming button.secondary { background: transparent; color: var(--primary-color, #03a9f4); }
+        .actions-row button.secondary { background: transparent; color: var(--primary-color, #03a9f4); }
         .error { margin: 16px 20px; color: var(--error-color, #db4437); }
         .end { height: 24px; }
         .more { padding: 0 20px 28px; font-size: 13px; color: var(--secondary-text-color, #727272); }
@@ -268,6 +338,7 @@ class GardenCompanionPanel extends HTMLElement {
       <div class="grid"></div>
       <div class="end"></div>
       <div class="more" hidden></div>
+      <div class="dialog-host"></div>
     `;
     const search = this.shadowRoot.querySelector("input[type=search]");
     search.placeholder = this._t("search");
@@ -304,7 +375,6 @@ class GardenCompanionPanel extends HTMLElement {
     if (reset) {
       this._plants = [];
       this._total = 0;
-      this._naming = null;
     }
     this._loading = true;
     this._error = null;
@@ -388,7 +458,7 @@ class GardenCompanionPanel extends HTMLElement {
         key: plant.key,
         name,
       });
-      this._naming = null;
+      this._closeDialog();
       await this._load({ reset: true });
     } catch (err) {
       this._error = err && err.message ? err.message : this._t("addFailed");
@@ -426,6 +496,16 @@ class GardenCompanionPanel extends HTMLElement {
   _card(plant) {
     const card = document.createElement("div");
     card.className = "card";
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", plant.common);
+    card.addEventListener("click", () => this._openDialog(plant));
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        this._openDialog(plant);
+      }
+    });
 
     const frame = document.createElement("div");
     frame.className = "frame";
@@ -481,8 +561,6 @@ class GardenCompanionPanel extends HTMLElement {
       body.appendChild(hint);
     }
 
-    if (this._naming === plant.key) body.appendChild(this._namingRow(plant));
-
     card.appendChild(body);
     return card;
   }
@@ -513,36 +591,159 @@ class GardenCompanionPanel extends HTMLElement {
     button.setAttribute("aria-label", label);
     button.innerHTML =
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>';
-    button.addEventListener("click", () => {
-      this._naming = this._naming === plant.key ? null : plant.key;
-      this._render();
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      this._openDialog(plant);
     });
     return button;
   }
 
-  _namingRow(plant) {
-    const wrap = document.createElement("div");
-    wrap.className = "naming";
+  _monthDay(value) {
+    const [month, day] = value.split("-").map(Number);
+    return `${day} ${this._t("months")[month - 1]}`;
+  }
+
+  _openDialog(plant) {
+    this._closeDialog();
+    const host = this.shadowRoot.querySelector(".dialog-host");
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "backdrop";
+    backdrop.addEventListener("click", (event) => {
+      if (event.target === backdrop) this._closeDialog();
+    });
+
+    const dialog = document.createElement("div");
+    dialog.className = "dialog";
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+    dialog.setAttribute("aria-label", plant.common);
+
+    const hero = document.createElement("div");
+    hero.className = "hero";
+    if (plant.photo) {
+      const img = document.createElement("img");
+      img.alt = plant.common;
+      img.dataset.src = plant.photo;
+      const cached = this._photos.get(plant.photo);
+      if (cached) img.src = cached;
+      else this._loadPhoto(plant.photo);
+      hero.appendChild(img);
+      if (plant.credit) {
+        const credit = document.createElement("div");
+        credit.className = "credit";
+        credit.textContent = this._t("photo")(plant.credit);
+        hero.appendChild(credit);
+      }
+    } else {
+      const empty = document.createElement("div");
+      empty.className = "noimg";
+      empty.textContent = this._t("noPhoto");
+      hero.appendChild(empty);
+    }
+    if (plant.added) hero.appendChild(this._ownedBadge(plant));
+    dialog.appendChild(hero);
+
+    const content = document.createElement("div");
+    content.className = "content";
+
+    const title = document.createElement("h2");
+    title.textContent = plant.common;
+    content.appendChild(title);
+
+    const sub = document.createElement("p");
+    sub.className = "sub";
+    sub.textContent = plant.botanical;
+    content.appendChild(sub);
+
+    if (plant.distinguish) {
+      const note = document.createElement("p");
+      note.className = "note";
+      note.textContent = plant.distinguish;
+      content.appendChild(note);
+    }
+
+    if (plant.windows && plant.windows.length) {
+      const heading = document.createElement("h3");
+      heading.textContent = this._t("pruning");
+      content.appendChild(heading);
+      for (const window of plant.windows) {
+        const block = document.createElement("div");
+        block.className = "window";
+        const when = document.createElement("div");
+        when.className = "when";
+        when.textContent = this._t("range")(
+          this._monthDay(window.start),
+          this._monthDay(window.end),
+        );
+        const what = document.createElement("div");
+        what.className = "what";
+        what.textContent = window.description;
+        block.append(when, what);
+        content.appendChild(block);
+      }
+    }
+
+    if (plant.source) {
+      const heading = document.createElement("h3");
+      heading.textContent = this._t("source");
+      const link = document.createElement("a");
+      link.href = plant.source;
+      link.target = "_blank";
+      link.rel = "noreferrer noopener";
+      link.textContent = plant.source;
+      content.append(heading, link);
+    }
+
+    const field = document.createElement("div");
+    field.className = "field";
+    const label = document.createElement("label");
+    label.textContent = this._t("nameLabel");
     const input = document.createElement("input");
     input.type = "text";
     input.value = plant.common;
-    input.setAttribute("aria-label", this._t("nameLabel"));
-    const confirm = document.createElement("button");
-    confirm.textContent = this._t("add");
+    label.htmlFor = "plant-name";
+    input.id = "plant-name";
+    const hint = document.createElement("p");
+    hint.className = "note";
+    hint.textContent = this._t("nameHint");
+    field.append(label, input, hint);
+    content.appendChild(field);
+
+    const actions = document.createElement("div");
+    actions.className = "actions-row";
     const cancel = document.createElement("button");
     cancel.className = "secondary";
     cancel.textContent = this._t("cancel");
+    cancel.addEventListener("click", () => this._closeDialog());
+    const confirm = document.createElement("button");
+    confirm.textContent = this._t("add");
     confirm.addEventListener("click", () => this._add(plant, input.value));
-    cancel.addEventListener("click", () => {
-      this._naming = null;
-      this._render();
-    });
+    actions.append(cancel, confirm);
+    content.appendChild(actions);
+
     input.addEventListener("keydown", (event) => {
       if (event.key === "Enter") this._add(plant, input.value);
     });
-    wrap.append(input, confirm, cancel);
+
+    dialog.appendChild(content);
+    backdrop.appendChild(dialog);
+    host.appendChild(backdrop);
+
+    this._escape = (event) => {
+      if (event.key === "Escape") this._closeDialog();
+    };
+    window.addEventListener("keydown", this._escape);
     setTimeout(() => input.focus(), 0);
-    return wrap;
+  }
+
+  _closeDialog() {
+    const host = this.shadowRoot && this.shadowRoot.querySelector(".dialog-host");
+    if (host) host.textContent = "";
+    if (this._escape) {
+      window.removeEventListener("keydown", this._escape);
+      this._escape = null;
+    }
   }
 }
 

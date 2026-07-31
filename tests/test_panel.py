@@ -88,6 +88,12 @@ async def test_plants_lists_the_dataset(
     assert hydrangea["photo"] == f"/api/{DOMAIN}/photo/{_HYDRANGEA}"
     assert hydrangea["credit"] == "Hedwig Storch (CC BY-SA 3.0)"
     assert hydrangea["added"] == 0
+    # The dialog shows the windows and the source, so the card payload carries them.
+    assert hydrangea["source"].startswith("https://groei.nl/")
+    assert len(hydrangea["windows"]) == 1
+    window = hydrangea["windows"][0]
+    assert (window["start"], window["end"]) == ("03-01", "04-15")
+    assert "framework" in window["description"]
 
 
 async def test_plants_counts_what_is_already_added(
