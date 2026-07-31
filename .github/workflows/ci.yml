@@ -3,11 +3,8 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
-
-# HACS validate is deliberately absent: it requires a public repository with a
-# description and topics, so it cannot pass before build step 12. It gets added
-# there rather than sitting red until then.
 
 jobs:
   lint:
@@ -45,3 +42,27 @@ jobs:
       - uses: astral-sh/setup-uv@v9
       - run: scripts/setup
       - run: .venv/bin/python scripts/validate.py
+
+  hacs:
+    name: HACS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hacs/action@main
+        with:
+          category: integration
+
+  # A release is the tag plus the version inside manifest.json, and HACS shows
+  # the manifest version as the installed one. They have to agree, so a
+  # mismatched tag fails here rather than shipping a wrong version number.
+  version:
+    name: Tag matches manifest
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v7
+      - run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest=$(python3 -c "import json; print(json.load(open('custom_components/garden_companion/manifest.json'))['version'])")
+          echo "tag=$tag manifest=$manifest"
+          test "$tag" = "$manifest"

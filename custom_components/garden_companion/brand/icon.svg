@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Garden Companion</title>
+  <!-- Source of truth for the brand icons. scripts/render_icon.py renders it to
+       icon.png (256px) and icon@2x.png (512px). Flat shapes and a small palette,
+       so it stays readable at 256px: a leaf being cut by a pair of secateurs.
+       Deliberately unlike Home Assistant's own mark, which would suggest this is
+       an official integration. -->
+  <rect width="256" height="256" rx="56" fill="#23703F"/>
+  <path d="M 56 192 C 56 128 96 80 152 64 C 144 126 108 174 56 192 Z" fill="#A7E48F"/>
+  <path d="M 56 192 L 152 64" stroke="#5B9E56" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <g fill="none" stroke-linecap="round">
+    <g stroke="#E9962F" stroke-width="26">
+      <path d="M 172 166 Q 152 200 140 222"/>
+      <path d="M 172 166 Q 204 196 214 214"/>
+    </g>
+    <g stroke="#F1F6F2" stroke-width="13">
+      <path d="M 176 170 Q 146 132 110 92"/>
+      <path d="M 176 170 Q 188 126 190 78"/>
+    </g>
+  </g>
+  <circle cx="174" cy="168" r="10" fill="#B9C9BF"/>
+</svg>
