@@ -163,6 +163,25 @@ def resolve_windows(data: Mapping[str, Any], resolver: Resolver) -> list[Window]
     return list(row.windows) if row else None
 
 
+def repair_reason(data: Mapping[str, Any], resolver: Resolver) -> str | None:
+    """Return why a stored plant no longer resolves, or None if it is fine (3.8).
+
+    The reason is a stable code that maps to a repair issue: `ambiguous_genus`
+    when a bare genus has gained a disagreeing species row, `missing_borrow` when
+    a manual plant's borrowed key is gone, `missing_row` when a stored key no
+    longer matches anything.
+    """
+    if resolve_windows(data, resolver) is not None:
+        return None
+    if not data.get("in_dataset", True):
+        return "missing_borrow" if data.get("windows_like") else "missing_row"
+    genus = data["genus"]
+    bare = data.get("species") is None and data.get("variant") is None
+    if bare and resolver.is_ambiguous(genus):
+        return "ambiguous_genus"
+    return "missing_row"
+
+
 def resolve_photo(data: Mapping[str, Any], resolver: Resolver) -> Image | None:
     """Resolve a stored plant to its photo, or None when it has none (2.5, 3.7).
 

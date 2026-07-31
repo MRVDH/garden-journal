@@ -12,6 +12,7 @@ from custom_components.garden_companion.models import Image, Window, build_datas
 from custom_components.garden_companion.resolver import (
     Resolver,
     normalise,
+    repair_reason,
     resolve_photo,
     resolve_windows,
     timing_signature,
@@ -346,3 +347,38 @@ def test_resolve_photo_none_for_a_manual_plant_without_a_url() -> None:
     resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
     data = {"in_dataset": False, "image_url": None}
     assert resolve_photo(data, resolver) is None
+
+
+def test_repair_reason_none_when_the_plant_resolves() -> None:
+    """A plant whose key still resolves needs no repair."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    data = {"genus": "Hydrangea", "species": "paniculata", "variant": None, "in_dataset": True}
+    assert repair_reason(data, resolver) is None
+
+
+def test_repair_reason_missing_row_for_a_gone_key() -> None:
+    """A stored key that matches no row reports missing_row."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    data = {"genus": "Quercus", "species": "robur", "variant": None, "in_dataset": True}
+    assert repair_reason(data, resolver) == "missing_row"
+
+
+def test_repair_reason_ambiguous_genus() -> None:
+    """A bare genus that has gained a disagreeing species row reports ambiguity."""
+    resolver = _resolver(
+        _row("Hydrangea", [_APR_HARD], species="paniculata"),
+        _row("Hydrangea", [_APR_LIGHT], species="aspera"),
+    )
+    data = {"genus": "Hydrangea", "species": None, "variant": None, "in_dataset": True}
+    assert repair_reason(data, resolver) == "ambiguous_genus"
+
+
+def test_repair_reason_missing_borrow() -> None:
+    """A manual plant whose borrowed key is gone reports missing_borrow."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    data = {
+        "in_dataset": False,
+        "windows": None,
+        "windows_like": {"genus": "Wisteria", "species": None, "variant": None},
+    }
+    assert repair_reason(data, resolver) == "missing_borrow"
