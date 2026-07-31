@@ -30,14 +30,18 @@ from aiohttp import web
 from homeassistant.components import panel_custom, websocket_api
 from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.config_entries import ConfigEntryState, ConfigSubentry
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.httpx_client import get_async_client
+from homeassistant.util import dt as dt_util
 
 from .config_flow import _default_display_name, _stored_plant, picked_row, row_value
 from .const import _LOGGER, DOMAIN
 from .dataset import GardenCompanionConfigEntry
 from .models import Species
-from .resolver import Resolver
+from .resolver import Resolver, repair_reason, resolve_windows
+from .windows import is_pruning_now, next_pruning, occurrence_end
 
 _PANEL_URL = f"/{DOMAIN}_panel"
 _MODULE_URL = f"{_PANEL_URL}/garden-companion-panel.js"
@@ -45,7 +49,7 @@ _COMPONENT = "garden-companion-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "10"
+_MODULE_VERSION = "11"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 
 # Set once the panel, views and commands are registered, so a config entry
@@ -220,6 +224,79 @@ def _ws_plants(
     )
 
 
+def _image_entity(hass: HomeAssistant, entry_id: str, subentry_id: str) -> str | None:
+    """Return the photo entity of one plant, or None when it has no photo."""
+    registry = er.async_get(hass)
+    for entity in er.async_entries_for_config_entry(registry, entry_id):
+        if entity.config_subentry_id == subentry_id and entity.domain == Platform.IMAGE:
+            return entity.entity_id
+    return None
+
+
+def _garden_plant(
+    hass: HomeAssistant,
+    entry: GardenCompanionConfigEntry,
+    subentry: ConfigSubentry,
+    resolver: Resolver,
+) -> dict[str, Any]:
+    """Describe one plant in the garden, with the date it should next be pruned."""
+    data = dict(subentry.data)
+    language = hass.config.language
+    windows = resolve_windows(data, resolver)
+    today = dt_util.now().date()
+
+    entry_json: dict[str, Any] = {
+        "subentry_id": subentry.subentry_id,
+        "name": subentry.title,
+        "botanical": " ".join(
+            part
+            for part in (data["genus"], data.get("species"), data.get("variant"))
+            if part
+        ),
+        "image_entity": _image_entity(hass, entry.entry_id, subentry.subentry_id),
+        "needs_attention": repair_reason(data, resolver) is not None,
+        "next": None,
+        "end": None,
+        "prune_now": False,
+        "advice": None,
+    }
+    if not windows:
+        return entry_json
+
+    start, window = next_pruning(windows, today)
+    entry_json["next"] = start.isoformat()
+    entry_json["end"] = occurrence_end(window, start).isoformat()
+    entry_json["prune_now"] = is_pruning_now(windows, today)
+    entry_json["advice"] = (
+        window.description.get(language)
+        or window.description.get("en")
+        or next(iter(window.description.values()), "")
+    )
+    return entry_json
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/garden"})
+@callback
+def _ws_garden(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Return the plants in the garden, the most urgent first."""
+    entry = _entry(hass)
+    if entry is None:
+        connection.send_error(msg["id"], "not_loaded", "Garden Companion is not loaded")
+        return
+    resolver = Resolver(entry.runtime_data.species)
+    plants = [
+        _garden_plant(hass, entry, subentry, resolver)
+        for subentry in entry.get_subentries_of_type("plant")
+    ]
+    # Open windows first, then by date, with unknown timing last.
+    plants.sort(key=lambda p: (not p["prune_now"], p["next"] or "9999-99-99"))
+    connection.send_result(msg["id"], {"plants": plants})
+
+
 @websocket_api.require_admin
 @websocket_api.websocket_command(
     {
@@ -376,6 +453,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         [StaticPathConfig(_PANEL_URL, str(Path(__file__).parent / "frontend"), False)]
     )
     hass.http.register_view(GardenCompanionPhotoView(hass))
+    websocket_api.async_register_command(hass, _ws_garden)
     websocket_api.async_register_command(hass, _ws_plants)
     websocket_api.async_register_command(hass, _ws_add_plant)
     await panel_custom.async_register_panel(

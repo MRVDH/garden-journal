@@ -50,6 +50,16 @@ const STRINGS = {
       "July", "August", "September", "October", "November", "December",
     ],
     range: (from, to) => `${from} to ${to}`,
+    myGarden: "My garden",
+    addPlantTitle: "Add a plant",
+    addPlantButton: "Add plant",
+    back: "Back to my garden",
+    emptyGarden: "No plants yet. Add your first one to get pruning dates.",
+    pruneNow: "Prune now",
+    nextPruning: "Next pruning",
+    until: (date) => `until ${date}`,
+    unknownTiming: "Timing unknown, needs attention",
+    openDevice: "Open in Home Assistant",
   },
   nl: {
     search: "Zoek planten",
@@ -79,6 +89,16 @@ const STRINGS = {
       "juli", "augustus", "september", "oktober", "november", "december",
     ],
     range: (from, to) => `${from} tot ${to}`,
+    myGarden: "Mijn tuin",
+    addPlantTitle: "Plant toevoegen",
+    addPlantButton: "Plant toevoegen",
+    back: "Terug naar mijn tuin",
+    emptyGarden: "Nog geen planten. Voeg je eerste toe voor snoeidata.",
+    pruneNow: "Nu snoeien",
+    nextPruning: "Volgende snoei",
+    until: (date) => `tot ${date}`,
+    unknownTiming: "Timing onbekend, vraagt aandacht",
+    openDevice: "Openen in Home Assistant",
   },
 };
 
@@ -86,6 +106,11 @@ class GardenCompanionPanel extends HTMLElement {
   constructor() {
     super();
     this._hass = null;
+    // "garden" lists the plants you have; "catalogue" browses the dataset to add
+    // one. The garden is the page, adding is something you go and do.
+    this._view = "garden";
+    this._garden = [];
+    this._gardenLoaded = false;
     this._plants = [];
     this._total = 0;
     this._query = "";
@@ -104,7 +129,7 @@ class GardenCompanionPanel extends HTMLElement {
     this._hass = hass;
     if (first) {
       this._build();
-      this._load({ reset: true });
+      this._loadGarden();
     }
   }
 
@@ -148,10 +173,71 @@ class GardenCompanionPanel extends HTMLElement {
         header {
           background: var(--app-header-background-color, var(--primary-color, #03a9f4));
           color: var(--app-header-text-color, #fff);
-          padding: 16px 20px;
-          font-size: 20px;
-          font-weight: 500;
+          padding: 12px 20px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-height: 40px;
         }
+        header .title { font-size: 20px; font-weight: 500; flex: 1; }
+        header button {
+          font: inherit;
+          cursor: pointer;
+          color: inherit;
+          background: transparent;
+          border: none;
+        }
+        header .back { display: flex; padding: 4px; border-radius: 50%; }
+        header .back svg { width: 24px; height: 24px; fill: currentColor; }
+        header .back:hover { background: rgba(255,255,255,.16); }
+        header .primary-action {
+          font-size: 14px;
+          font-weight: 500;
+          padding: 8px 14px;
+          border-radius: 8px;
+          background: rgba(255,255,255,.18);
+        }
+        header .primary-action:hover { background: rgba(255,255,255,.3); }
+
+        /* My garden: one row per plant, the urgent ones first. */
+        .garden-list { display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 32px; }
+        .plant {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 10px 14px 10px 10px;
+          background: var(--card-background-color, #fff);
+          border-radius: 12px;
+          box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0,0,0,.16));
+        }
+        .plant .thumb {
+          width: 64px;
+          height: 64px;
+          border-radius: 8px;
+          object-fit: cover;
+          flex: 0 0 auto;
+          background: var(--secondary-background-color, #e8e8e8);
+        }
+        .plant .about { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .plant .name { font-size: 16px; font-weight: 500; }
+        .plant .latin { font-size: 12px; font-style: italic; color: var(--secondary-text-color, #727272); }
+        .plant .when { font-size: 13px; color: var(--secondary-text-color, #727272); }
+        .plant .flag {
+          align-self: flex-start;
+          margin-top: 2px;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 9px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 500;
+          color: #fff;
+          background: var(--success-color, #0b8043);
+        }
+        .plant .flag.attention { background: var(--warning-color, #ffa600); color: #000; }
+        .plant .go { color: var(--primary-color, #03a9f4); font-size: 13px; white-space: nowrap; }
+        .empty { margin: 28px 20px; color: var(--secondary-text-color, #727272); font-size: 15px; }
         .toolbar { padding: 16px 20px 4px; }
         input[type="search"] {
           width: 100%;
@@ -329,17 +415,39 @@ class GardenCompanionPanel extends HTMLElement {
         .end { height: 24px; }
         .more { padding: 0 20px 28px; font-size: 13px; color: var(--secondary-text-color, #727272); }
       </style>
-      <header>Garden Companion</header>
-      <div class="toolbar">
-        <input type="search" autocomplete="off">
-      </div>
-      <div class="count"></div>
+      <header>
+        <button class="back" hidden aria-label="back">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20z"/></svg>
+        </button>
+        <span class="title"></span>
+        <button class="primary-action" hidden></button>
+      </header>
       <div class="error" hidden></div>
-      <div class="grid"></div>
-      <div class="end"></div>
-      <div class="more" hidden></div>
+
+      <section class="view-garden">
+        <div class="garden-list"></div>
+        <p class="empty" hidden></p>
+      </section>
+
+      <section class="view-catalogue" hidden>
+        <div class="toolbar">
+          <input type="search" autocomplete="off">
+        </div>
+        <div class="count"></div>
+        <div class="grid"></div>
+        <div class="end"></div>
+        <div class="more" hidden></div>
+      </section>
+
       <div class="dialog-host"></div>
     `;
+    this.shadowRoot
+      .querySelector("header .back")
+      .addEventListener("click", () => this._show("garden"));
+    this.shadowRoot
+      .querySelector("header .primary-action")
+      .addEventListener("click", () => this._show("catalogue"));
+
     const search = this.shadowRoot.querySelector("input[type=search]");
     search.placeholder = this._t("search");
     search.addEventListener("input", () => {
@@ -370,6 +478,47 @@ class GardenCompanionPanel extends HTMLElement {
     this._endWatcher.observe(this.shadowRoot.querySelector(".end"));
   }
 
+  _show(view) {
+    this._view = view;
+    this._error = null;
+    this._closeDialog();
+    if (view === "catalogue" && this._plants.length === 0) this._load({ reset: true });
+    else this._render();
+    window.scrollTo(0, 0);
+  }
+
+  /* Ask the server for a list, waiting out the reload that follows a change. */
+  async _request(message) {
+    for (let attempt = 0; attempt < 6; attempt++) {
+      try {
+        return await this._hass.connection.sendMessagePromise(message);
+      } catch (err) {
+        if (err && err.code === "not_loaded" && attempt < 5) {
+          await new Promise((resolve) => setTimeout(resolve, 400));
+          continue;
+        }
+        throw err;
+      }
+    }
+    return null;
+  }
+
+  async _loadGarden() {
+    if (!this._hass) return;
+    this._loading = true;
+    this._render();
+    try {
+      const result = await this._request({ type: "garden_companion/garden" });
+      this._garden = result.plants;
+      this._gardenLoaded = true;
+      this._error = null;
+    } catch (err) {
+      this._error = err && err.message ? err.message : this._t("loadFailed");
+    }
+    this._loading = false;
+    this._render();
+  }
+
   async _load({ reset } = {}) {
     if (!this._hass) return;
     if (reset) {
@@ -387,24 +536,13 @@ class GardenCompanionPanel extends HTMLElement {
     };
     if (this._query.trim()) message.query = this._query.trim();
 
-    // Adding or changing a plant reloads the integration, which leaves a short
-    // window where the dataset cannot be read, so a not-loaded answer is waited
-    // out rather than shown as a failure.
-    for (let attempt = 0; attempt < 6; attempt++) {
-      try {
-        const result = await this._hass.connection.sendMessagePromise(message);
-        this._plants = reset ? result.plants : this._plants.concat(result.plants);
-        this._total = result.total;
-        this._error = null;
-        break;
-      } catch (err) {
-        if (err && err.code === "not_loaded" && attempt < 5) {
-          await new Promise((resolve) => setTimeout(resolve, 400));
-          continue;
-        }
-        this._error = err && err.message ? err.message : this._t("loadFailed");
-        break;
-      }
+    try {
+      const result = await this._request(message);
+      this._plants = reset ? result.plants : this._plants.concat(result.plants);
+      this._total = result.total;
+      this._error = null;
+    } catch (err) {
+      this._error = err && err.message ? err.message : this._t("loadFailed");
     }
     this._loading = false;
     this._render();
@@ -459,7 +597,9 @@ class GardenCompanionPanel extends HTMLElement {
         name,
       });
       this._closeDialog();
-      await this._load({ reset: true });
+      // Back to the garden, which is where the plant now is.
+      this._view = "garden";
+      await Promise.all([this._loadGarden(), this._load({ reset: true })]);
     } catch (err) {
       this._error = err && err.message ? err.message : this._t("addFailed");
       this._render();
@@ -468,13 +608,126 @@ class GardenCompanionPanel extends HTMLElement {
 
   _render() {
     if (!this._built) return;
-    const count = this.shadowRoot.querySelector(".count");
-    const error = this.shadowRoot.querySelector(".error");
-    const grid = this.shadowRoot.querySelector(".grid");
-    const more = this.shadowRoot.querySelector(".more");
-
+    const sr = this.shadowRoot;
+    const error = sr.querySelector(".error");
     error.hidden = this._error === null;
     error.textContent = this._error || "";
+
+    const catalogue = this._view === "catalogue";
+    sr.querySelector(".title").textContent = catalogue
+      ? this._t("addPlantTitle")
+      : this._t("myGarden");
+    sr.querySelector("header .back").hidden = !catalogue;
+    const action = sr.querySelector("header .primary-action");
+    action.hidden = catalogue;
+    action.textContent = this._t("addPlantButton");
+    sr.querySelector(".view-garden").hidden = catalogue;
+    sr.querySelector(".view-catalogue").hidden = !catalogue;
+
+    if (catalogue) this._renderCatalogue();
+    else this._renderGarden();
+  }
+
+  _renderGarden() {
+    const list = this.shadowRoot.querySelector(".garden-list");
+    const empty = this.shadowRoot.querySelector(".empty");
+    list.textContent = "";
+    const nothing = this._gardenLoaded && this._garden.length === 0;
+    empty.hidden = !nothing;
+    empty.textContent = nothing ? this._t("emptyGarden") : "";
+    for (const plant of this._garden) list.appendChild(this._plantRow(plant));
+  }
+
+  _plantRow(plant) {
+    const row = document.createElement("div");
+    row.className = "plant";
+
+    const picture =
+      plant.image_entity &&
+      this._hass.states[plant.image_entity] &&
+      this._hass.states[plant.image_entity].attributes.entity_picture;
+    const thumb = document.createElement("img");
+    thumb.className = "thumb";
+    thumb.alt = "";
+    if (picture) thumb.src = picture;
+    row.appendChild(thumb);
+
+    const about = document.createElement("div");
+    about.className = "about";
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = plant.name;
+    const latin = document.createElement("div");
+    latin.className = "latin";
+    latin.textContent = plant.botanical;
+    about.append(name, latin);
+
+    if (plant.needs_attention || !plant.next) {
+      const flag = document.createElement("span");
+      flag.className = "flag attention";
+      flag.textContent = this._t("unknownTiming");
+      about.appendChild(flag);
+    } else if (plant.prune_now) {
+      const flag = document.createElement("span");
+      flag.className = "flag";
+      flag.textContent = this._t("pruneNow");
+      about.appendChild(flag);
+      const when = document.createElement("div");
+      when.className = "when";
+      when.textContent = this._t("until")(this._date(plant.end));
+      when.title = plant.advice || "";
+      about.appendChild(when);
+    } else {
+      const when = document.createElement("div");
+      when.className = "when";
+      when.textContent = `${this._t("nextPruning")}: ${this._date(plant.next)}`;
+      when.title = plant.advice || "";
+      about.appendChild(when);
+    }
+    row.appendChild(about);
+
+    const go = document.createElement("a");
+    go.className = "go";
+    go.textContent = this._t("openDevice");
+    go.href = `/config/devices/dashboard?historyBack=1&config_entry=${plant.subentry_id}`;
+    go.addEventListener("click", (event) => {
+      event.preventDefault();
+      this._openPlantDevice(plant);
+    });
+    row.appendChild(go);
+    return row;
+  }
+
+  _openPlantDevice(plant) {
+    // Home Assistant renders a plant as a device, which is where renaming and
+    // removing live, so the link hands over to its own page.
+    const entity = plant.image_entity;
+    const path = entity
+      ? `/config/entities?historyBack=1&search=${encodeURIComponent(plant.name)}`
+      : `/config/devices/dashboard?historyBack=1`;
+    history.pushState(null, "", path);
+    window.dispatchEvent(new CustomEvent("location-changed"));
+  }
+
+  _date(iso) {
+    if (!iso) return "";
+    const [year, month, day] = iso.split("-").map(Number);
+    const language = (this._hass && this._hass.language) || "en";
+    try {
+      return new Date(year, month - 1, day).toLocaleDateString(language, {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    } catch {
+      return `${day} ${this._t("months")[month - 1]} ${year}`;
+    }
+  }
+
+  _renderCatalogue() {
+    const count = this.shadowRoot.querySelector(".count");
+    const grid = this.shadowRoot.querySelector(".grid");
+    const more = this.shadowRoot.querySelector(".more");
 
     count.textContent =
       this._loading && this._plants.length === 0

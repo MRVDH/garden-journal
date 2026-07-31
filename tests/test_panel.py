@@ -13,6 +13,7 @@ from typing import Any
 
 import httpx
 import respx
+from freezegun import freeze_time
 from homeassistant.config_entries import ConfigSubentryData
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -94,6 +95,64 @@ async def test_plants_lists_the_dataset(
     window = hydrangea["windows"][0]
     assert (window["start"], window["end"]) == ("03-01", "04-15")
     assert "framework" in window["description"]
+
+
+async def test_garden_lists_your_plants_urgent_first(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """The garden view puts an open window first, then the soonest date."""
+    await _setup(
+        hass,
+        [
+            ("By the shed", _plant("Hydrangea", "paniculata")),
+            ("The wisteria", _plant("Wisteria", None)),
+        ],
+    )
+    # The connection is made against the real clock, which its token check needs.
+    client = await hass_ws_client(hass)
+    with freeze_time("2026-08-01"):
+        await client.send_json_auto_id({"type": f"{DOMAIN}/garden"})
+        plants = (await client.receive_json())["result"]["plants"]
+
+    # Wisteria prunes mid-July to end of August, so on 1 August it is open.
+    assert [p["name"] for p in plants] == ["The wisteria", "By the shed"]
+    wisteria, hydrangea = plants
+    assert wisteria["prune_now"] is True
+    assert wisteria["next"] == "2026-07-15"
+    assert wisteria["end"] == "2026-08-31"
+    assert wisteria["botanical"] == "Wisteria"
+    assert wisteria["advice"]
+    assert wisteria["image_entity"] == "image.the_wisteria_photo"
+    assert wisteria["needs_attention"] is False
+    assert hydrangea["prune_now"] is False
+    assert hydrangea["next"] == "2027-03-01"
+
+
+async def test_garden_flags_a_plant_that_needs_attention(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """A plant whose key resolves to nothing is flagged with no date."""
+    await _setup(hass, [("Backyard oak", _plant("Quercus", "robur"))])
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": f"{DOMAIN}/garden"})
+    plants = (await client.receive_json())["result"]["plants"]
+
+    assert len(plants) == 1
+    assert plants[0]["needs_attention"] is True
+    assert plants[0]["next"] is None
+    assert plants[0]["advice"] is None
+
+
+async def test_garden_is_empty_without_plants(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """With nothing added the garden is empty rather than an error."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": f"{DOMAIN}/garden"})
+    result = (await client.receive_json())["result"]
+
+    assert result["plants"] == []
 
 
 async def test_plants_counts_what_is_already_added(
