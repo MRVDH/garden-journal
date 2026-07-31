@@ -22,6 +22,11 @@
       "garden_companion": {
         "name": "Garden Companion"
       }
+    },
+    "image": {
+      "photo": {
+        "name": "Photo"
+      }
     }
   },
   "config_subentries": {

@@ -21,6 +21,15 @@ from .models import Window
 from .resolver import Resolver, resolve_windows
 
 
+def plant_device_info(subentry_id: str, title: str) -> DeviceInfo:
+    """Return the device that a plant's entities share."""
+    return DeviceInfo(
+        identifiers={(DOMAIN, subentry_id)},
+        name=title,
+        entry_type=DeviceEntryType.SERVICE,
+    )
+
+
 class PlantEntity(Entity):
     """Base for a plant's entities, sharing the device and the daily refresh."""
 
@@ -33,11 +42,7 @@ class PlantEntity(Entity):
         """Set up the shared device and resolver for one plant."""
         self._data = data
         self._resolver = resolver
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, subentry_id)},
-            name=title,
-            entry_type=DeviceEntryType.SERVICE,
-        )
+        self._attr_device_info = plant_device_info(subentry_id, title)
 
     async def async_added_to_hass(self) -> None:
         """Recompute state at local midnight, when today rolls over (3.5)."""

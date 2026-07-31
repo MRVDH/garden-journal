@@ -16,6 +16,11 @@
     nl: [Pluimhortensia]
     en: [Panicle hydrangea]
   source: https://groei.nl/tuin/tuinonderhoud/snoeien/pluimhortensia-snoeien-stekken
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Hydrangea%20paniculata%20IMG%206629.JPG?width=600
+    author: Hedwig Storch
+    licence: CC BY-SA 3.0
+    page: https://commons.wikimedia.org/wiki/File:Hydrangea_paniculata_IMG_6629.JPG
   windows:
     - when: { start: "03-01", end: "04-15" }
       description:

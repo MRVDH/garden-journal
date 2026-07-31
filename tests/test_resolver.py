@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from custom_components.garden_companion.models import Window, build_dataset
+from custom_components.garden_companion.models import Image, Window, build_dataset
 from custom_components.garden_companion.resolver import (
     Resolver,
     normalise,
+    resolve_photo,
     resolve_windows,
     timing_signature,
 )
@@ -309,3 +310,39 @@ def test_resolve_windows_unknown_returns_none() -> None:
         "windows_like": None,
     }
     assert resolve_windows(data, resolver) is None
+
+
+def test_resolve_photo_borrows_a_dataset_rows_image() -> None:
+    """A dataset plant resolves to its row's image, credit included."""
+    row = _row("Hydrangea", [_SPRING], species="paniculata")
+    row["image"] = {
+        "url": "https://example.org/h.jpg",
+        "author": "A Photographer",
+        "licence": "CC BY-SA 4.0",
+    }
+    resolver = _resolver(row)
+    data = {"genus": "Hydrangea", "species": "paniculata", "variant": None, "in_dataset": True}
+    assert resolve_photo(data, resolver) == Image(
+        url="https://example.org/h.jpg", author="A Photographer", licence="CC BY-SA 4.0"
+    )
+
+
+def test_resolve_photo_none_when_the_row_has_no_image() -> None:
+    """A dataset plant whose row has no image resolves to no photo."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    data = {"genus": "Hydrangea", "species": "paniculata", "variant": None, "in_dataset": True}
+    assert resolve_photo(data, resolver) is None
+
+
+def test_resolve_photo_uses_a_manual_plants_bare_url() -> None:
+    """A manual plant resolves to a bare image URL with no credit."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    data = {"in_dataset": False, "image_url": "https://example.test/mine.jpg"}
+    assert resolve_photo(data, resolver) == Image(url="https://example.test/mine.jpg")
+
+
+def test_resolve_photo_none_for_a_manual_plant_without_a_url() -> None:
+    """A manual plant with no image URL resolves to no photo."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    data = {"in_dataset": False, "image_url": None}
+    assert resolve_photo(data, resolver) is None

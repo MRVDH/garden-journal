@@ -18,7 +18,12 @@ from .dataset import (
     async_load_dataset,
 )
 
-_PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.CALENDAR]
+_PLATFORMS = [
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.CALENDAR,
+    Platform.IMAGE,
+]
 
 
 async def async_setup_entry(

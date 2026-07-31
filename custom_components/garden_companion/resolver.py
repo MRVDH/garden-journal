@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from .models import Species, Window
+from .models import Image, Species, Window
 
 # Straight and curly quotes, stripped during normalisation.
 _QUOTES = ("'", '"', "‘", "’", "“", "”")  # noqa: RUF001
@@ -161,3 +161,17 @@ def resolve_windows(data: Mapping[str, Any], resolver: Resolver) -> list[Window]
         return None
     row = resolver.resolve(data["genus"], data.get("species"), data.get("variant"))
     return list(row.windows) if row else None
+
+
+def resolve_photo(data: Mapping[str, Any], resolver: Resolver) -> Image | None:
+    """Resolve a stored plant to its photo, or None when it has none (2.5, 3.7).
+
+    A manually added plant carries a bare photo URL with no credit; a dataset
+    plant borrows the row's image, credit and all. A dataset plant whose key no
+    longer resolves has no photo.
+    """
+    if not data.get("in_dataset", True):
+        url = data.get("image_url")
+        return Image(url=url) if url else None
+    row = resolver.resolve(data["genus"], data.get("species"), data.get("variant"))
+    return row.image if row else None
