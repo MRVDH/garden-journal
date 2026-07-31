@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from .models import Image, Species, Window
+from .models import Image, Species, Window, timing_signature
 
 # Straight and curly quotes, stripped during normalisation.
 _QUOTES = ("'", '"', "‘", "’", "“", "”")  # noqa: RUF001
@@ -29,24 +29,6 @@ def normalise(text: str) -> str:
     lowered = lowered.replace("×", " ")  # noqa: RUF001
     tokens = [token for token in lowered.split() if token != "x"]
     return " ".join(tokens)
-
-
-def _window_signature(window: Window) -> tuple[str, str, tuple[tuple[str, str], ...]]:
-    """Return a hashable form of one window, so timings can be compared."""
-    return (window.start, window.end, tuple(sorted(window.description.items())))
-
-
-def timing_signature(
-    species: Species,
-) -> tuple[tuple[str, str, tuple[tuple[str, str], ...]], ...]:
-    """Return a hashable signature of a row's whole set of windows.
-
-    Two rows share timing when their signatures are equal; window order does not
-    matter. Descriptions are part of the signature, so two rows with the same
-    dates but different instructions (Hydrangea macrophylla against aspera) count
-    as different timings and must not be treated as one.
-    """
-    return tuple(sorted(_window_signature(window) for window in species.windows))
 
 
 class Resolver:

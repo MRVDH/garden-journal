@@ -6,8 +6,10 @@ prints every problem it finds and exits non-zero when there are any, so a broken
 data change fails on GitHub rather than on a user's Pi. It never touches the
 network: image URLs are not fetched, so CI cannot flake.
 
-The `--duplicates` and `--uncredited` report modes in the plan are not built
-yet; they are deferred to build step 11, where a large dataset makes them useful.
+Two extra report modes are informational rather than pass or fail. `--duplicates`
+groups rows whose window sets are identical, so the repeated blocks stay
+mechanical to deduplicate. `--uncredited` lists rows with a photo that has no
+author or licence, since credit is optional in the schema.
 """
 
 from __future__ import annotations
@@ -27,9 +29,36 @@ _PACKAGE = (
 )
 sys.path.insert(0, str(_PACKAGE))
 
-from models import build_dataset  # noqa: E402
+from models import Species, build_dataset, timing_signature  # noqa: E402
 
 DEFAULT_PATH = _PACKAGE / "data" / "species.yaml"
+
+
+def _key(species: Species) -> str:
+    """Return a readable key for one record."""
+    return " ".join(p for p in (species.genus, species.species, species.variant) if p)
+
+
+def duplicate_groups(dataset: list[Species]) -> list[list[str]]:
+    """Return groups of two or more rows that share an identical window set.
+
+    Dates and descriptions both count, so Hydrangea macrophylla and aspera,
+    which share dates but not instructions, are not grouped.
+    """
+    by_signature: dict[object, list[str]] = {}
+    for species in dataset:
+        by_signature.setdefault(timing_signature(species), []).append(_key(species))
+    return [keys for keys in by_signature.values() if len(keys) > 1]
+
+
+def uncredited(dataset: list[Species]) -> list[str]:
+    """Return rows whose photo is missing an author or a licence."""
+    return [
+        _key(species)
+        for species in dataset
+        if species.image is not None
+        and (species.image.author is None or species.image.licence is None)
+    ]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -43,6 +72,16 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=DEFAULT_PATH,
         help="Path to species.yaml (defaults to the packaged dataset)",
+    )
+    parser.add_argument(
+        "--duplicates",
+        action="store_true",
+        help="Report rows that share an identical window set (informational)",
+    )
+    parser.add_argument(
+        "--uncredited",
+        action="store_true",
+        help="Report photos missing an author or licence (informational)",
     )
     args = parser.parse_args(argv)
 
@@ -63,6 +102,25 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(f"OK: {len(species)} record(s) in {args.path}")
+
+    if args.duplicates:
+        groups = duplicate_groups(species)
+        if groups:
+            print(f"{len(groups)} repeated window block(s):")
+            for group in groups:
+                print(f"  - {', '.join(group)}")
+        else:
+            print("No repeated window blocks.")
+
+    if args.uncredited:
+        rows = uncredited(species)
+        if rows:
+            print(f"{len(rows)} photo(s) without full credit:")
+            for row in rows:
+                print(f"  - {row}")
+        else:
+            print("Every photo has an author and a licence.")
+
     return 0
 
 

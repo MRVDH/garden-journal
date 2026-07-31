@@ -63,6 +63,24 @@ class Species:
         return (self.genus, self.species, self.variant)
 
 
+def _window_signature(window: Window) -> tuple[str, str, tuple[tuple[str, str], ...]]:
+    """Return a hashable form of one window, so timings can be compared."""
+    return (window.start, window.end, tuple(sorted(window.description.items())))
+
+
+def timing_signature(
+    species: Species,
+) -> tuple[tuple[str, str, tuple[tuple[str, str], ...]], ...]:
+    """Return a hashable signature of a row's whole set of windows (2.6).
+
+    Two rows share timing when their signatures are equal; window order does not
+    matter. Descriptions are part of the signature, so two rows with the same
+    dates but different instructions (Hydrangea macrophylla against aspera) count
+    as different timings and must not be treated as one.
+    """
+    return tuple(sorted(_window_signature(window) for window in species.windows))
+
+
 def _string_key_errors(node: object, path: str) -> list[str]:
     """Report any mapping key in the parsed dataset that is not a string.
 
