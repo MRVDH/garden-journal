@@ -7,6 +7,8 @@ the suite stays offline.
 
 from __future__ import annotations
 
+import shutil
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -46,7 +48,13 @@ def _plant(genus: str, species: str | None) -> dict[str, Any]:
 async def _setup(
     hass: HomeAssistant, plants: list[tuple[str, dict[str, Any]]] | None = None
 ) -> MockConfigEntry:
-    """Set up the integration, optionally with plants already added."""
+    """Set up the integration, optionally with plants already added.
+
+    The photo cache lives on disk under the config directory, which the test
+    harness shares between tests and between runs, so it is emptied here to give
+    each test a cold cache.
+    """
+    shutil.rmtree(hass.config.cache_path(DOMAIN), ignore_errors=True)
     entry = MockConfigEntry(
         domain=DOMAIN,
         title="Garden Companion",
@@ -79,13 +87,6 @@ async def test_plants_lists_the_dataset(
     assert hydrangea["botanical"] == "Hydrangea paniculata"
     assert hydrangea["photo"] == f"/api/{DOMAIN}/photo/{_HYDRANGEA}"
     assert hydrangea["credit"] == "Hedwig Storch (CC BY-SA 3.0)"
-    assert hydrangea["windows"] == [
-        {
-            "start": "03-01",
-            "end": "04-15",
-            "description": hydrangea["windows"][0]["description"],
-        }
-    ]
     assert hydrangea["added"] is False
 
 
@@ -117,17 +118,38 @@ async def test_plants_searches_and_reports_the_variant_hint(
     assert bush["distinguish"] == "Stands on its own, not tied to a wall or arch"
 
 
-async def test_plants_limit_bounds_the_page(
+async def test_plants_pages_through_the_dataset(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """A limit bounds the page while total still reports the whole match set."""
+    """Offset and limit walk the rows without repeats, and total stays the whole set."""
     await _setup(hass)
     client = await hass_ws_client(hass)
-    await client.send_json_auto_id({"type": f"{DOMAIN}/plants", "limit": 3})
+
+    seen: list[str] = []
+    for offset in (0, 6, 12):
+        await client.send_json_auto_id(
+            {"type": f"{DOMAIN}/plants", "limit": 6, "offset": offset}
+        )
+        result = (await client.receive_json())["result"]
+        assert result["total"] == 16
+        assert result["offset"] == offset
+        seen.extend(plant["key"] for plant in result["plants"])
+
+    assert len(seen) == 16
+    assert len(set(seen)) == 16
+
+
+async def test_plants_past_the_end_is_empty(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """An offset beyond the last row returns nothing, which stops the scrolling."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": f"{DOMAIN}/plants", "offset": 16})
     result = (await client.receive_json())["result"]
 
+    assert result["plants"] == []
     assert result["total"] == 16
-    assert len(result["plants"]) == 3
 
 
 async def test_add_plant_creates_the_plant_and_its_entities(
@@ -213,6 +235,36 @@ async def test_photo_proxy_caches(
 
     await client.get(f"/api/{DOMAIN}/photo/{_HYDRANGEA}")
     await client.get(f"/api/{DOMAIN}/photo/{_HYDRANGEA}")
+    assert route.call_count == 1
+
+
+@respx.mock
+async def test_photo_proxy_caches_on_disk(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
+) -> None:
+    """A cached photo survives a restart, so the remote host is asked once."""
+    route = respx.get(url__startswith="https://commons.wikimedia.org").mock(
+        return_value=httpx.Response(
+            200, content=_JPEG, headers={"content-type": "image/jpeg"}
+        )
+    )
+    entry = await _setup(hass)
+    client = await hass_client()
+    await client.get(f"/api/{DOMAIN}/photo/{_HYDRANGEA}")
+    assert route.call_count == 1
+
+    cached = await hass.async_add_executor_job(
+        lambda: list(Path(hass.config.cache_path(DOMAIN)).glob("*.img"))
+    )
+    assert len(cached) == 1
+
+    # A reload builds a fresh view, so its memory cache starts empty.
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    response = await client.get(f"/api/{DOMAIN}/photo/{_HYDRANGEA}")
+
+    assert response.status == 200
+    assert await response.read() == _JPEG
     assert route.call_count == 1
 
 

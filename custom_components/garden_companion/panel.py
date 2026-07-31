@@ -17,6 +17,7 @@ same reason the photo entity uses `image_url` rather than `entity_picture`.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any
@@ -43,28 +44,33 @@ _COMPONENT = "garden-companion-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "3"
+_MODULE_VERSION = "7"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 
 # Set once the panel, views and commands are registered, so a config entry
 # reload does not register them a second time.
 _REGISTERED = f"{DOMAIN}_panel_registered"
 
-_DEFAULT_LIMIT = 60
+# One screenful at a time; the panel asks for the next page as it scrolls.
+_DEFAULT_LIMIT = 24
 _MAX_LIMIT = 200
 
 # Photo bytes keyed by remote URL, so scrolling the grid does not refetch.
 _CACHE_LIMIT = 64
 
-# Wikimedia asks for a descriptive agent and throttles bursts, and the grid wants
-# thumbnails rather than the full-size file, so a photo request is rewritten to a
-# smaller width, spaced out, and retried once if it is refused.
+# Wikimedia's robot policy wants a descriptive agent naming the tool and where to
+# read about it. Requests carrying one are served happily in parallel, while a
+# generic agent is refused with a 429, so this header is what makes the grid work.
 _USER_AGENT = (
     "GardenCompanion/0.1.0 (Home Assistant integration; "
     "https://github.com/MRVDH/garden-companion)"
 )
+
+# The grid wants thumbnails, not full-size files, and a modest number of
+# connections at a time. A refusal is still retried once, in case a host applies
+# a limit anyway.
 _THUMB_WIDTH = "320"
-_MIN_INTERVAL = 0.4
+_MAX_CONCURRENT_FETCHES = 4
 _THROTTLED_WAIT = 2.0
 
 
@@ -82,21 +88,6 @@ def _thumbnail(url: str) -> str:
     return urlunparse(parts._replace(query=urlencode(query)))
 
 
-def _windows_summary(species: Species, language: str) -> list[dict[str, str]]:
-    """Return each window as plain strings the panel can render."""
-    summary = []
-    for window in species.windows:
-        description = (
-            window.description.get(language)
-            or window.description.get("en")
-            or next(iter(window.description.values()), "")
-        )
-        summary.append(
-            {"start": window.start, "end": window.end, "description": description}
-        )
-    return summary
-
-
 def _botanical(species: Species) -> str:
     """Return the botanical name, variant included."""
     name = species.genus
@@ -108,14 +99,13 @@ def _botanical(species: Species) -> str:
 
 
 def _as_json(species: Species, language: str, added: bool) -> dict[str, Any]:
-    """Describe one row for the panel."""
+    """Describe one row for the panel: what a browsing card shows, and no more."""
     return {
         "key": row_value(species),
         "common": _default_display_name(species, language),
         "botanical": _botanical(species),
         "photo": f"{_PHOTO_URL}/{row_value(species)}" if species.image else None,
         "credit": _credit(species),
-        "windows": _windows_summary(species, language),
         "distinguish": (
             species.distinguish.get(language) or species.distinguish.get("en")
             if species.distinguish
@@ -170,6 +160,7 @@ def _added_keys(entry: GardenCompanionConfigEntry) -> set[str]:
         vol.Required("type"): f"{DOMAIN}/plants",
         vol.Optional("query"): str,
         vol.Optional("limit"): vol.All(int, vol.Range(min=1, max=_MAX_LIMIT)),
+        vol.Optional("offset"): vol.All(int, vol.Range(min=0)),
     }
 )
 @callback
@@ -178,7 +169,11 @@ def _ws_plants(
     connection: websocket_api.ActiveConnection,
     msg: dict[str, Any],
 ) -> None:
-    """Return a page of dataset rows, filtered by an optional search query."""
+    """Return one page of dataset rows, filtered by an optional search query.
+
+    The page is bounded and reports the total, so the panel can keep asking for
+    the next slice as it scrolls without ever holding the whole dataset.
+    """
     entry = _entry(hass)
     if entry is None:
         connection.send_error(msg["id"], "not_loaded", "Garden Companion is not loaded")
@@ -188,14 +183,17 @@ def _ws_plants(
     rows = resolver.search(query) if query else list(entry.runtime_data.species)
     language = hass.config.language
     rows.sort(key=lambda row: _default_display_name(row, language).casefold())
+    offset = msg.get("offset", 0)
     limit = msg.get("limit", _DEFAULT_LIMIT)
+    page = rows[offset : offset + limit]
     added = _added_keys(entry)
     connection.send_result(
         msg["id"],
         {
             "total": len(rows),
+            "offset": offset,
             "plants": [
-                _as_json(row, language, row_value(row) in added) for row in rows[:limit]
+                _as_json(row, language, row_value(row) in added) for row in page
             ],
         },
     )
@@ -247,11 +245,11 @@ class GardenCompanionPhotoView(HomeAssistantView):
     name = f"api:{DOMAIN}:photo"
 
     def __init__(self, hass: HomeAssistant) -> None:
-        """Keep a cache of fetched photos and the state used to pace fetching."""
+        """Keep the caches and the semaphore that bounds outbound fetching."""
         self._hass = hass
-        self._cache: dict[str, tuple[str, bytes]] = {}
-        self._lock = asyncio.Lock()
-        self._last_fetch = 0.0
+        self._memory: dict[str, tuple[str, bytes]] = {}
+        self._limit = asyncio.Semaphore(_MAX_CONCURRENT_FETCHES)
+        self._dir = Path(hass.config.cache_path(DOMAIN))
 
     async def get(self, request: web.Request, key: str) -> web.Response:
         """Return the photo bytes for one dataset row."""
@@ -262,27 +260,64 @@ class GardenCompanionPhotoView(HomeAssistantView):
         if row is None or row.image is None:
             return web.Response(status=404)
         url = _thumbnail(row.image.url)
-        # One fetch at a time, so a grid of cards cannot open a burst of
-        # connections to the remote host and get itself rate limited.
-        async with self._lock:
-            if (cached := self._cache.get(url)) is not None:
+
+        if (cached := self._memory.get(url)) is not None:
+            return web.Response(body=cached[1], content_type=cached[0])
+        if (
+            stored := await self._hass.async_add_executor_job(self._read, url)
+        ) is not None:
+            self._remember(url, stored)
+            return web.Response(body=stored[1], content_type=stored[0])
+
+        async with self._limit:
+            # Another request may have filled the cache while this one queued.
+            if (cached := self._memory.get(url)) is not None:
                 return web.Response(body=cached[1], content_type=cached[0])
             fetched = await self._fetch(url)
         if fetched is None:
             return web.Response(status=502)
-        content_type, body = fetched
-        if len(self._cache) >= _CACHE_LIMIT:
-            self._cache.pop(next(iter(self._cache)))
-        self._cache[url] = fetched
-        return web.Response(body=body, content_type=content_type)
+        self._remember(url, fetched)
+        await self._hass.async_add_executor_job(self._write, url, fetched)
+        return web.Response(body=fetched[1], content_type=fetched[0])
+
+    def _remember(self, url: str, photo: tuple[str, bytes]) -> None:
+        """Hold a photo in memory, dropping the oldest when full."""
+        if len(self._memory) >= _CACHE_LIMIT:
+            self._memory.pop(next(iter(self._memory)))
+        self._memory[url] = photo
+
+    def _cache_file(self, url: str) -> Path:
+        """Return the on-disk name for a photo URL."""
+        digest = hashlib.sha256(url.encode("utf-8")).hexdigest()
+        return self._dir / f"{digest}.img"
+
+    def _read(self, url: str) -> tuple[str, bytes] | None:
+        """Read a cached photo off disk, or None when it is not there."""
+        path = self._cache_file(url)
+        try:
+            body = path.read_bytes()
+        except OSError:
+            return None
+        # The content type is stored on the first line, the bytes after it.
+        content_type, _, image = body.partition(b"\n")
+        if not image:
+            return None
+        return content_type.decode("ascii", "replace"), image
+
+    def _write(self, url: str, photo: tuple[str, bytes]) -> None:
+        """Cache a photo on disk so a restart does not refetch it."""
+        try:
+            self._dir.mkdir(parents=True, exist_ok=True)
+            self._cache_file(url).write_bytes(
+                photo[0].encode("ascii", "replace") + b"\n" + photo[1]
+            )
+        except OSError as err:
+            _LOGGER.debug("Could not cache photo %s: %s", url, err)
 
     async def _fetch(self, url: str) -> tuple[str, bytes] | None:
-        """Fetch one photo, spacing requests out and retrying once if throttled."""
+        """Fetch one photo, retrying once if the remote host refuses the rate."""
         client = get_async_client(self._hass)
         for attempt in (1, 2):
-            gap = _MIN_INTERVAL - (self._hass.loop.time() - self._last_fetch)
-            if gap > 0:
-                await asyncio.sleep(gap)
             try:
                 response = await client.get(
                     url,
@@ -292,7 +327,6 @@ class GardenCompanionPhotoView(HomeAssistantView):
                 )
                 response.raise_for_status()
             except httpx.HTTPStatusError as err:
-                self._last_fetch = self._hass.loop.time()
                 throttled = err.response.status_code == HTTPStatus.TOO_MANY_REQUESTS
                 if throttled and attempt == 1:
                     await asyncio.sleep(_THROTTLED_WAIT)
@@ -300,15 +334,14 @@ class GardenCompanionPhotoView(HomeAssistantView):
                 _LOGGER.debug("Photo fetch failed for %s: %s", url, err)
                 return None
             except httpx.RequestError as err:
-                self._last_fetch = self._hass.loop.time()
                 _LOGGER.debug("Photo fetch failed for %s: %s", url, err)
                 return None
-            self._last_fetch = self._hass.loop.time()
             content_type = response.headers.get("content-type", "image/jpeg")
             if not content_type.startswith("image/"):
                 _LOGGER.debug("Photo at %s is not an image: %s", url, content_type)
                 return None
             return content_type, response.content
+        return None
         return None
 
 
