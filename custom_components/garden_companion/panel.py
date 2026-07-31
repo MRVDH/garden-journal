@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 from collections import Counter
+from collections.abc import Iterable
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any
@@ -39,7 +40,7 @@ from homeassistant.util import dt as dt_util
 from .config_flow import _default_display_name, _stored_plant, picked_row, row_value
 from .const import _LOGGER, DOMAIN
 from .dataset import GardenCompanionConfigEntry
-from .models import Species
+from .models import Species, Window
 from .resolver import Resolver, repair_reason, resolve_windows
 from .windows import is_pruning_now, next_pruning, occurrence_end
 
@@ -49,7 +50,7 @@ _COMPONENT = "garden-companion-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "11"
+_MODULE_VERSION = "12"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 
 # Set once the panel, views and commands are registered, so a config entry
@@ -103,19 +104,24 @@ def _botanical(species: Species) -> str:
     return name
 
 
-def _windows(species: Species, language: str) -> list[dict[str, str]]:
+def _describe(window: Window, language: str) -> str:
+    """Return a window's advice in the user's language, else English."""
+    return (
+        window.description.get(language)
+        or window.description.get("en")
+        or next(iter(window.description.values()), "")
+    )
+
+
+def _windows(windows: Iterable[Window], language: str) -> list[dict[str, str]]:
     """Return each pruning window as plain strings, for the detail dialog."""
     return [
         {
             "start": window.start,
             "end": window.end,
-            "description": (
-                window.description.get(language)
-                or window.description.get("en")
-                or next(iter(window.description.values()), "")
-            ),
+            "description": _describe(window, language),
         }
-        for window in species.windows
+        for window in windows
     ]
 
 
@@ -136,7 +142,7 @@ def _as_json(species: Species, language: str, added: int) -> dict[str, Any]:
             if species.distinguish
             else None
         ),
-        "windows": _windows(species, language),
+        "windows": _windows(species.windows, language),
         "source": species.source,
         "added": added,
     }
@@ -255,11 +261,25 @@ def _garden_plant(
         ),
         "image_entity": _image_entity(hass, entry.entry_id, subentry.subentry_id),
         "needs_attention": repair_reason(data, resolver) is not None,
+        "in_dataset": bool(data.get("in_dataset", True)),
         "next": None,
         "end": None,
         "prune_now": False,
         "advice": None,
+        "windows": _windows(windows or (), language),
+        "source": data.get("source"),
+        "credit": None,
     }
+
+    row = (
+        resolver.resolve(data["genus"], data.get("species"), data.get("variant"))
+        if data.get("in_dataset", True)
+        else None
+    )
+    if row is not None:
+        entry_json["source"] = row.source
+        entry_json["credit"] = _credit(row)
+
     if not windows:
         return entry_json
 
@@ -267,11 +287,7 @@ def _garden_plant(
     entry_json["next"] = start.isoformat()
     entry_json["end"] = occurrence_end(window, start).isoformat()
     entry_json["prune_now"] = is_pruning_now(windows, today)
-    entry_json["advice"] = (
-        window.description.get(language)
-        or window.description.get("en")
-        or next(iter(window.description.values()), "")
-    )
+    entry_json["advice"] = _describe(window, language)
     return entry_json
 
 
@@ -334,6 +350,77 @@ def _ws_add_plant(
     )
     hass.config_entries.async_add_subentry(entry, subentry)
     connection.send_result(msg["id"], {"subentry_id": subentry.subentry_id})
+
+
+def _find_subentry(
+    entry: GardenCompanionConfigEntry, subentry_id: str
+) -> ConfigSubentry | None:
+    """Return one plant subentry by id, or None when there is no such plant."""
+    for subentry in entry.get_subentries_of_type("plant"):
+        if subentry.subentry_id == subentry_id:
+            return subentry
+    return None
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/rename_plant",
+        vol.Required("subentry_id"): str,
+        vol.Required("name"): vol.All(str, vol.Length(min=1)),
+    }
+)
+@callback
+def _ws_rename_plant(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Rename a plant, which renames its device once the entry reloads."""
+    entry = _entry(hass)
+    if entry is None:
+        connection.send_error(msg["id"], "not_loaded", "Garden Companion is not loaded")
+        return
+    subentry = _find_subentry(entry, msg["subentry_id"])
+    if subentry is None:
+        connection.send_error(msg["id"], "unknown_plant", "No such plant")
+        return
+    name = msg["name"].strip()
+    if not name:
+        connection.send_error(msg["id"], "invalid_name", "A plant needs a name")
+        return
+    hass.config_entries.async_update_subentry(
+        entry,
+        subentry,
+        title=name,
+        data={**subentry.data, "display_name": name},
+    )
+    connection.send_result(msg["id"], {"name": name})
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/remove_plant",
+        vol.Required("subentry_id"): str,
+    }
+)
+@callback
+def _ws_remove_plant(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Remove a plant, along with its device and entities."""
+    entry = _entry(hass)
+    if entry is None:
+        connection.send_error(msg["id"], "not_loaded", "Garden Companion is not loaded")
+        return
+    if _find_subentry(entry, msg["subentry_id"]) is None:
+        connection.send_error(msg["id"], "unknown_plant", "No such plant")
+        return
+    hass.config_entries.async_remove_subentry(entry, msg["subentry_id"])
+    connection.send_result(msg["id"], {})
 
 
 class GardenCompanionPhotoView(HomeAssistantView):
@@ -456,6 +543,8 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_garden)
     websocket_api.async_register_command(hass, _ws_plants)
     websocket_api.async_register_command(hass, _ws_add_plant)
+    websocket_api.async_register_command(hass, _ws_rename_plant)
+    websocket_api.async_register_command(hass, _ws_remove_plant)
     await panel_custom.async_register_panel(
         hass,
         frontend_url_path=DOMAIN,

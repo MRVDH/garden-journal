@@ -60,6 +60,14 @@ const STRINGS = {
     until: (date) => `until ${date}`,
     unknownTiming: "Timing unknown, needs attention",
     openDevice: "Open in Home Assistant",
+    save: "Save",
+    remove: "Remove",
+    confirmRemove: (name) => `Remove ${name} and its entities?`,
+    confirmYes: "Yes, remove",
+    saved: "Name changed",
+    manualPlant: "Added by hand, not from the dataset",
+    renameFailed: "Could not rename the plant",
+    removeFailed: "Could not remove the plant",
   },
   nl: {
     search: "Zoek planten",
@@ -99,6 +107,14 @@ const STRINGS = {
     until: (date) => `tot ${date}`,
     unknownTiming: "Timing onbekend, vraagt aandacht",
     openDevice: "Openen in Home Assistant",
+    save: "Opslaan",
+    remove: "Verwijderen",
+    confirmRemove: (name) => `${name} en de entiteiten verwijderen?`,
+    confirmYes: "Ja, verwijderen",
+    saved: "Naam gewijzigd",
+    manualPlant: "Handmatig toegevoegd, niet uit de dataset",
+    renameFailed: "Kon de plant niet hernoemen",
+    removeFailed: "Kon de plant niet verwijderen",
   },
 };
 
@@ -236,7 +252,10 @@ class GardenCompanionPanel extends HTMLElement {
           background: var(--success-color, #0b8043);
         }
         .plant .flag.attention { background: var(--warning-color, #ffa600); color: #000; }
-        .plant .go { color: var(--primary-color, #03a9f4); font-size: 13px; white-space: nowrap; }
+        .plant { cursor: pointer; }
+        .plant:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 2px; }
+        .plant .chevron { display: flex; color: var(--secondary-text-color, #727272); }
+        .plant .chevron svg { width: 22px; height: 22px; fill: currentColor; }
         .empty { margin: 28px 20px; color: var(--secondary-text-color, #727272); font-size: 15px; }
         .toolbar { padding: 16px 20px 4px; }
         input[type="search"] {
@@ -411,6 +430,10 @@ class GardenCompanionPanel extends HTMLElement {
           color: var(--text-primary-color, #fff);
         }
         .actions-row button.secondary { background: transparent; color: var(--primary-color, #03a9f4); }
+        .actions-row button.danger { background: transparent; color: var(--error-color, #db4437); }
+        .actions-row.spread { justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .actions-row .right { display: flex; gap: 8px; margin-left: auto; }
+        .actions-row .confirm { flex: 1 1 100%; margin: 0; color: var(--primary-text-color, #212121); }
         .error { margin: 16px 20px; color: var(--error-color, #db4437); }
         .end { height: 24px; }
         .more { padding: 0 20px 28px; font-size: 13px; color: var(--secondary-text-color, #727272); }
@@ -641,6 +664,16 @@ class GardenCompanionPanel extends HTMLElement {
   _plantRow(plant) {
     const row = document.createElement("div");
     row.className = "plant";
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    row.setAttribute("aria-label", plant.name);
+    row.addEventListener("click", () => this._openGardenDialog(plant));
+    row.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        this._openGardenDialog(plant);
+      }
+    });
 
     const picture =
       plant.image_entity &&
@@ -686,27 +719,12 @@ class GardenCompanionPanel extends HTMLElement {
     }
     row.appendChild(about);
 
-    const go = document.createElement("a");
-    go.className = "go";
-    go.textContent = this._t("openDevice");
-    go.href = `/config/devices/dashboard?historyBack=1&config_entry=${plant.subentry_id}`;
-    go.addEventListener("click", (event) => {
-      event.preventDefault();
-      this._openPlantDevice(plant);
-    });
-    row.appendChild(go);
+    const chevron = document.createElement("div");
+    chevron.className = "chevron";
+    chevron.innerHTML =
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
+    row.appendChild(chevron);
     return row;
-  }
-
-  _openPlantDevice(plant) {
-    // Home Assistant renders a plant as a device, which is where renaming and
-    // removing live, so the link hands over to its own page.
-    const entity = plant.image_entity;
-    const path = entity
-      ? `/config/entities?historyBack=1&search=${encodeURIComponent(plant.name)}`
-      : `/config/devices/dashboard?historyBack=1`;
-    history.pushState(null, "", path);
-    window.dispatchEvent(new CustomEvent("location-changed"));
   }
 
   _date(iso) {
@@ -752,11 +770,11 @@ class GardenCompanionPanel extends HTMLElement {
     card.tabIndex = 0;
     card.setAttribute("role", "button");
     card.setAttribute("aria-label", plant.common);
-    card.addEventListener("click", () => this._openDialog(plant));
+    card.addEventListener("click", () => this._openCatalogueDialog(plant));
     card.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        this._openDialog(plant);
+        this._openCatalogueDialog(plant);
       }
     });
 
@@ -856,7 +874,12 @@ class GardenCompanionPanel extends HTMLElement {
     return `${day} ${this._t("months")[month - 1]}`;
   }
 
-  _openDialog(plant) {
+  /*
+   * Both dialogs show the same plant, so they share everything above the buttons:
+   * the photo, the names, the pruning windows and the source. Only the name field
+   * and the actions differ, which `build` fills in.
+   */
+  _openDialog({ title, botanical, hint, photoSrc, photoEntity, credit, windows, source, badge, nameValue, build }) {
     this._closeDialog();
     const host = this.shadowRoot.querySelector(".dialog-host");
 
@@ -870,23 +893,31 @@ class GardenCompanionPanel extends HTMLElement {
     dialog.className = "dialog";
     dialog.setAttribute("role", "dialog");
     dialog.setAttribute("aria-modal", "true");
-    dialog.setAttribute("aria-label", plant.common);
+    dialog.setAttribute("aria-label", title);
 
     const hero = document.createElement("div");
     hero.className = "hero";
-    if (plant.photo) {
+    const picture =
+      photoEntity &&
+      this._hass.states[photoEntity] &&
+      this._hass.states[photoEntity].attributes.entity_picture;
+    if (photoSrc || picture) {
       const img = document.createElement("img");
-      img.alt = plant.common;
-      img.dataset.src = plant.photo;
-      const cached = this._photos.get(plant.photo);
-      if (cached) img.src = cached;
-      else this._loadPhoto(plant.photo);
+      img.alt = title;
+      if (picture) {
+        img.src = picture;
+      } else {
+        img.dataset.src = photoSrc;
+        const cached = this._photos.get(photoSrc);
+        if (cached) img.src = cached;
+        else this._loadPhoto(photoSrc);
+      }
       hero.appendChild(img);
-      if (plant.credit) {
-        const credit = document.createElement("div");
-        credit.className = "credit";
-        credit.textContent = this._t("photo")(plant.credit);
-        hero.appendChild(credit);
+      if (credit) {
+        const line = document.createElement("div");
+        line.className = "credit";
+        line.textContent = this._t("photo")(credit);
+        hero.appendChild(line);
       }
     } else {
       const empty = document.createElement("div");
@@ -894,33 +925,33 @@ class GardenCompanionPanel extends HTMLElement {
       empty.textContent = this._t("noPhoto");
       hero.appendChild(empty);
     }
-    if (plant.added) hero.appendChild(this._ownedBadge(plant));
+    if (badge) hero.appendChild(badge);
     dialog.appendChild(hero);
 
     const content = document.createElement("div");
     content.className = "content";
 
-    const title = document.createElement("h2");
-    title.textContent = plant.common;
-    content.appendChild(title);
+    const heading = document.createElement("h2");
+    heading.textContent = title;
+    content.appendChild(heading);
 
     const sub = document.createElement("p");
     sub.className = "sub";
-    sub.textContent = plant.botanical;
+    sub.textContent = botanical;
     content.appendChild(sub);
 
-    if (plant.distinguish) {
+    if (hint) {
       const note = document.createElement("p");
       note.className = "note";
-      note.textContent = plant.distinguish;
+      note.textContent = hint;
       content.appendChild(note);
     }
 
-    if (plant.windows && plant.windows.length) {
-      const heading = document.createElement("h3");
-      heading.textContent = this._t("pruning");
-      content.appendChild(heading);
-      for (const window of plant.windows) {
+    if (windows && windows.length) {
+      const label = document.createElement("h3");
+      label.textContent = this._t("pruning");
+      content.appendChild(label);
+      for (const window of windows) {
         const block = document.createElement("div");
         block.className = "window";
         const when = document.createElement("div");
@@ -937,47 +968,33 @@ class GardenCompanionPanel extends HTMLElement {
       }
     }
 
-    if (plant.source) {
-      const heading = document.createElement("h3");
-      heading.textContent = this._t("source");
+    if (source) {
+      const label = document.createElement("h3");
+      label.textContent = this._t("source");
       const link = document.createElement("a");
-      link.href = plant.source;
+      link.href = source;
       link.target = "_blank";
       link.rel = "noreferrer noopener";
-      link.textContent = plant.source;
-      content.append(heading, link);
+      link.textContent = source;
+      content.append(label, link);
     }
 
     const field = document.createElement("div");
     field.className = "field";
     const label = document.createElement("label");
     label.textContent = this._t("nameLabel");
+    label.htmlFor = "plant-name";
     const input = document.createElement("input");
     input.type = "text";
-    input.value = plant.common;
-    label.htmlFor = "plant-name";
     input.id = "plant-name";
-    const hint = document.createElement("p");
-    hint.className = "note";
-    hint.textContent = this._t("nameHint");
-    field.append(label, input, hint);
+    input.value = nameValue;
+    const note = document.createElement("p");
+    note.className = "note";
+    note.textContent = this._t("nameHint");
+    field.append(label, input, note);
     content.appendChild(field);
 
-    const actions = document.createElement("div");
-    actions.className = "actions-row";
-    const cancel = document.createElement("button");
-    cancel.className = "secondary";
-    cancel.textContent = this._t("cancel");
-    cancel.addEventListener("click", () => this._closeDialog());
-    const confirm = document.createElement("button");
-    confirm.textContent = this._t("add");
-    confirm.addEventListener("click", () => this._add(plant, input.value));
-    actions.append(cancel, confirm);
-    content.appendChild(actions);
-
-    input.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") this._add(plant, input.value);
-    });
+    content.appendChild(build(input, content));
 
     dialog.appendChild(content);
     backdrop.appendChild(dialog);
@@ -988,6 +1005,127 @@ class GardenCompanionPanel extends HTMLElement {
     };
     window.addEventListener("keydown", this._escape);
     setTimeout(() => input.focus(), 0);
+  }
+
+  _openCatalogueDialog(plant) {
+    this._openDialog({
+      title: plant.common,
+      botanical: plant.botanical,
+      hint: plant.distinguish,
+      photoSrc: plant.photo,
+      credit: plant.credit,
+      windows: plant.windows,
+      source: plant.source,
+      badge: plant.added ? this._ownedBadge(plant) : null,
+      nameValue: plant.common,
+      build: (input) => {
+        const actions = document.createElement("div");
+        actions.className = "actions-row";
+        const cancel = document.createElement("button");
+        cancel.className = "secondary";
+        cancel.textContent = this._t("cancel");
+        cancel.addEventListener("click", () => this._closeDialog());
+        const confirm = document.createElement("button");
+        confirm.textContent = this._t("add");
+        confirm.addEventListener("click", () => this._add(plant, input.value));
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") this._add(plant, input.value);
+        });
+        actions.append(cancel, confirm);
+        return actions;
+      },
+    });
+  }
+
+  _openGardenDialog(plant) {
+    this._openDialog({
+      title: plant.name,
+      botanical: plant.botanical,
+      hint: plant.in_dataset ? null : this._t("manualPlant"),
+      photoEntity: plant.image_entity,
+      credit: plant.credit,
+      windows: plant.windows,
+      source: plant.source,
+      badge: null,
+      nameValue: plant.name,
+      build: (input) => {
+        const actions = document.createElement("div");
+        actions.className = "actions-row spread";
+
+        const remove = document.createElement("button");
+        remove.className = "danger";
+        remove.textContent = this._t("remove");
+
+        const right = document.createElement("div");
+        right.className = "right";
+        const cancel = document.createElement("button");
+        cancel.className = "secondary";
+        cancel.textContent = this._t("cancel");
+        cancel.addEventListener("click", () => this._closeDialog());
+        const save = document.createElement("button");
+        save.textContent = this._t("save");
+        save.addEventListener("click", () => this._rename(plant, input.value));
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") this._rename(plant, input.value);
+        });
+        right.append(cancel, save);
+
+        // Confirming in place, rather than stacking a second dialog on this one.
+        remove.addEventListener("click", () => {
+          actions.textContent = "";
+          const question = document.createElement("p");
+          question.className = "note confirm";
+          question.textContent = this._t("confirmRemove")(plant.name);
+          const keep = document.createElement("button");
+          keep.className = "secondary";
+          keep.textContent = this._t("cancel");
+          keep.addEventListener("click", () => this._closeDialog());
+          const yes = document.createElement("button");
+          yes.className = "danger";
+          yes.textContent = this._t("confirmYes");
+          yes.addEventListener("click", () => this._remove(plant));
+          const row = document.createElement("div");
+          row.className = "right";
+          row.append(keep, yes);
+          actions.append(question, row);
+        });
+
+        actions.append(remove, right);
+        return actions;
+      },
+    });
+  }
+
+  async _rename(plant, name) {
+    const trimmed = (name || "").trim();
+    if (!trimmed) return;
+    try {
+      await this._hass.connection.sendMessagePromise({
+        type: "garden_companion/rename_plant",
+        subentry_id: plant.subentry_id,
+        name: trimmed,
+      });
+      this._closeDialog();
+      await this._loadGarden();
+    } catch (err) {
+      this._error = err && err.message ? err.message : this._t("renameFailed");
+      this._render();
+    }
+  }
+
+  async _remove(plant) {
+    try {
+      await this._hass.connection.sendMessagePromise({
+        type: "garden_companion/remove_plant",
+        subentry_id: plant.subentry_id,
+      });
+      this._closeDialog();
+      this._plants = [];
+      await this._loadGarden();
+    } catch (err) {
+      this._error = err && err.message ? err.message : this._t("removeFailed");
+      this._render();
+    }
   }
 
   _closeDialog() {

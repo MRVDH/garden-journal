@@ -155,6 +155,96 @@ async def test_garden_is_empty_without_plants(
     assert result["plants"] == []
 
 
+async def test_garden_carries_what_the_dialog_shows(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """A plant comes with every window, its source and its photo credit."""
+    await _setup(hass, [("The wisteria", _plant("Wisteria", None))])
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": f"{DOMAIN}/garden"})
+    plant = (await client.receive_json())["result"]["plants"][0]
+
+    assert len(plant["windows"]) == 2
+    assert plant["source"].startswith("https://groei.nl/")
+    assert plant["credit"] == "waferboard (CC BY 2.0)"
+    assert plant["in_dataset"] is True
+
+
+async def test_rename_plant_changes_the_title(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """Renaming updates the subentry title and its stored display name."""
+    entry = await _setup(hass, [("By the shed", _plant("Hydrangea", "paniculata"))])
+    subentry_id = next(iter(entry.subentries))
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id(
+        {
+            "type": f"{DOMAIN}/rename_plant",
+            "subentry_id": subentry_id,
+            "name": "  Naast de schuur  ",
+        }
+    )
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+
+    subentry = entry.subentries[subentry_id]
+    assert subentry.title == "Naast de schuur"
+    assert subentry.data["display_name"] == "Naast de schuur"
+
+
+async def test_rename_plant_rejects_an_empty_name(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """A blank name is refused rather than leaving a nameless plant."""
+    entry = await _setup(hass, [("By the shed", _plant("Hydrangea", "paniculata"))])
+    subentry_id = next(iter(entry.subentries))
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id(
+        {"type": f"{DOMAIN}/rename_plant", "subentry_id": subentry_id, "name": "   "}
+    )
+    response = await client.receive_json()
+
+    assert not response["success"]
+    assert entry.subentries[subentry_id].title == "By the shed"
+
+
+async def test_remove_plant_takes_its_entities_with_it(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """Removing a plant drops the subentry and its entities."""
+    entry = await _setup(hass, [("By the shed", _plant("Hydrangea", "paniculata"))])
+    subentry_id = next(iter(entry.subentries))
+    client = await hass_ws_client(hass)
+    assert hass.states.get("sensor.by_the_shed_next_pruning") is not None
+
+    await client.send_json_auto_id(
+        {"type": f"{DOMAIN}/remove_plant", "subentry_id": subentry_id}
+    )
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+
+    assert not entry.get_subentries_of_type("plant")
+    assert hass.states.get("sensor.by_the_shed_next_pruning") is None
+
+
+async def test_remove_plant_rejects_an_unknown_id(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """An id naming no plant is refused rather than erroring out of the handler."""
+    await _setup(hass, [("By the shed", _plant("Hydrangea", "paniculata"))])
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id(
+        {"type": f"{DOMAIN}/remove_plant", "subentry_id": "nope"}
+    )
+    response = await client.receive_json()
+
+    assert not response["success"]
+    assert response["error"]["code"] == "unknown_plant"
+
+
 async def test_plants_counts_what_is_already_added(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
