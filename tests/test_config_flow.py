@@ -110,6 +110,70 @@ async def test_add_a_dataset_plant(hass: HomeAssistant) -> None:
     assert result["data"]["in_dataset"] is True
 
 
+async def test_the_first_step_lists_every_dataset_row(hass: HomeAssistant) -> None:
+    """The picker offers every row, labelled so variants of one genus differ."""
+    entry = await _entry_with(
+        hass,
+        [
+            _row(
+                "Hydrangea",
+                [_SPRING],
+                species="paniculata",
+                names={"nl": ["Pluimhortensia"], "en": ["Panicle hydrangea"]},
+            ),
+            _row(
+                "Rosa",
+                [_APRIL],
+                variant="bush",
+                names={"nl": ["Roos"], "en": ["Rose"]},
+                distinguish={"nl": "Staat op zichzelf", "en": "Stands on its own"},
+            ),
+            _row(
+                "Rosa",
+                [_SUMMER],
+                variant="climber",
+                names={"nl": ["Klimroos"], "en": ["Climbing rose"]},
+                distinguish={"nl": "Tegen een muur", "en": "Trained against a wall"},
+            ),
+        ],
+    )
+    result = await _start(hass, entry)
+
+    field = next(f for f in result["data_schema"].schema if f == "query")
+    options = result["data_schema"].schema[field].config["options"]
+    labels = [option["label"] for option in options]
+    assert labels == [
+        "Climbing rose (Rosa), Trained against a wall",
+        "Panicle hydrangea (Hydrangea paniculata)",
+        "Rose (Rosa), Stands on its own",
+    ]
+
+
+async def test_picking_from_the_list_skips_the_search(hass: HomeAssistant) -> None:
+    """Choosing an option names that exact row, with no disambiguation."""
+    entry = await _entry_with(
+        hass,
+        [
+            _row("Hydrangea", [_SPRING], species="paniculata"),
+            _row("Hydrangea", [_APRIL], species="macrophylla"),
+        ],
+    )
+    result = await _start(hass, entry)
+    options = result["data_schema"].schema["query"].config["options"]
+    macrophylla = next(o for o in options if "macrophylla" in o["label"])
+
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"query": macrophylla["value"]}
+    )
+    assert result["step_id"] == "name"
+
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"display_name": "By the door"}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"]["species"] == "macrophylla"
+
+
 async def test_distinct_timings_ask_then_create(hass: HomeAssistant) -> None:
     """A genus whose species disagree shows a choice, then creates the picked one."""
     entry = await _entry_with(

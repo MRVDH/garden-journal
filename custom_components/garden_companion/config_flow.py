@@ -28,6 +28,7 @@ from homeassistant.helpers.selector import (
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
+    SelectSelectorMode,
 )
 
 from .const import DOMAIN
@@ -87,6 +88,37 @@ def _borrow_label(species: Species, language: str) -> str:
         botanical += f" {species.species}"
     common = _default_display_name(species, language)
     return f"{common} ({botanical})" if common != botanical else botanical
+
+
+# Option values in the add picker. The prefix keeps them apart from a name the
+# user types, since the same field accepts both.
+_ROW_VALUE = "dataset-row-{}"
+
+
+def _picked_row(value: str, rows: list[Species]) -> Species | None:
+    """Return the row an option value refers to, or None if a name was typed."""
+    prefix = _ROW_VALUE.format("")
+    if not value.startswith(prefix):
+        return None
+    index = value.removeprefix(prefix)
+    if not index.isdigit() or int(index) >= len(rows):
+        return None
+    return rows[int(index)]
+
+
+def _picker_label(species: Species, language: str) -> str:
+    """Label a row in the add picker, telling variants of one genus apart.
+
+    Two rows of the same genus that differ only by variant would otherwise read
+    identically, so the distinguishing text is appended.
+    """
+    label = _borrow_label(species, language)
+    if not species.variant:
+        return label
+    hint = None
+    if species.distinguish:
+        hint = species.distinguish.get(language) or species.distinguish.get("en")
+    return f"{label}, {hint or species.variant}"
 
 
 def _distinct_by_timing(candidates: list[Species]) -> list[Species]:
@@ -310,15 +342,33 @@ class PlantSubentryFlow(ConfigSubentryFlow):
             errors=errors,
         )
 
+    def _picker_rows(self) -> list[Species]:
+        """Return every dataset row, ordered by the label the picker shows."""
+        language = self.hass.config.language
+        return sorted(
+            self._species(), key=lambda row: _picker_label(row, language).casefold()
+        )
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Search for a plant by botanical or common name."""
+        """Pick a plant from the dataset, or type any name to search for it.
+
+        The picker is a combo box holding every row, so the whole dataset can be
+        browsed, and typing filters it. A name typed that is not one of the
+        options falls through to the same search that drives disambiguation and
+        manual add, so a plant that is not in the dataset still works.
+        """
+        rows = self._picker_rows()
         if user_input is not None:
-            groups = _distinct_by_timing(self._resolver().search(user_input["query"]))
+            chosen = user_input["query"]
+            picked = _picked_row(chosen, rows)
+            if picked is not None:
+                return await self._select_match(picked)
+            groups = _distinct_by_timing(self._resolver().search(chosen))
             if not groups:
                 # No match: offer manual add, seeding the botanical name (3.6).
-                self._query = user_input["query"]
+                self._query = chosen
                 return await self.async_step_manual()
             if len(groups) == 1:
                 # One answer (a single row, or several that share timing).
@@ -326,9 +376,26 @@ class PlantSubentryFlow(ConfigSubentryFlow):
             self._candidates = groups
             return await self.async_step_disambiguate()
 
+        language = self.hass.config.language
+        options = [
+            SelectOptionDict(
+                value=_ROW_VALUE.format(index), label=_picker_label(row, language)
+            )
+            for index, row in enumerate(rows)
+        ]
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema({vol.Required("query"): str}),
+            data_schema=vol.Schema(
+                {
+                    vol.Required("query"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=options,
+                            mode=SelectSelectorMode.DROPDOWN,
+                            custom_value=True,
+                        )
+                    )
+                }
+            ),
         )
 
     async def async_step_disambiguate(

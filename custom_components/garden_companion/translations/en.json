@@ -53,9 +53,9 @@
       "step": {
         "user": {
           "title": "Add a plant",
-          "description": "Type a botanical or common name, for example Hydrangea, Blauwe regen or Rose.",
+          "description": "Pick a plant from the list, or type any name to search for it. Typing filters the list, and both botanical and common names work, in Dutch or English.",
           "data": {
-            "query": "Plant name"
+            "query": "Plant"
           }
         },
         "reconfigure": {

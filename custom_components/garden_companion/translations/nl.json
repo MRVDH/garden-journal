@@ -53,9 +53,9 @@
       "step": {
         "user": {
           "title": "Plant toevoegen",
-          "description": "Typ een botanische of Nederlandse naam, bijvoorbeeld Hydrangea, Blauwe regen of Roos.",
+          "description": "Kies een plant uit de lijst, of typ een naam om te zoeken. Tijdens typen wordt de lijst gefilterd, en zowel botanische als Nederlandse namen werken.",
           "data": {
-            "query": "Plantnaam"
+            "query": "Plant"
           }
         },
         "reconfigure": {
