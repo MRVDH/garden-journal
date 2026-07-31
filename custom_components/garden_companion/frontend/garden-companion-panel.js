@@ -68,6 +68,30 @@ const STRINGS = {
     manualPlant: "Added by hand, not from the dataset",
     renameFailed: "Could not rename the plant",
     removeFailed: "Could not remove the plant",
+    notInList: "Not in the list? Add it by hand",
+    manualTitle: "Add a plant by hand",
+    manualIntro:
+      "For a plant the dataset does not cover yet. Home Assistant will offer you a snippet to contribute it back.",
+    botanicalLabel: "Botanical name",
+    botanicalHint: "For example Buxus sempervirens. Genus first.",
+    timingLabel: "Pruning timing",
+    timingBorrow: "Prune it like another plant",
+    timingOwn: "Write the timing myself",
+    borrowLabel: "Pruned like",
+    windowStart: "From",
+    windowEnd: "Until",
+    windowWhat: "What to do",
+    addWindow: "Add another period",
+    removeWindow: "Remove this period",
+    optional: "Source and photo (optional)",
+    sourceLabel: "Source URL",
+    imageLabel: "Photo URL",
+    day: "Day",
+    month: "Month",
+    manualFailed: "Could not add the plant",
+    needBotanical: "Give a botanical name",
+    needWindow: "Give at least one pruning period, with what to do",
+    badDate: "That is not a real date. There is no 31 February, and 29 February cannot be used.",
   },
   nl: {
     search: "Zoek planten",
@@ -115,6 +139,30 @@ const STRINGS = {
     manualPlant: "Handmatig toegevoegd, niet uit de dataset",
     renameFailed: "Kon de plant niet hernoemen",
     removeFailed: "Kon de plant niet verwijderen",
+    notInList: "Staat er niet bij? Handmatig toevoegen",
+    manualTitle: "Plant handmatig toevoegen",
+    manualIntro:
+      "Voor een plant die nog niet in de dataset staat. Home Assistant geeft je daarna een stukje YAML om hem terug te delen.",
+    botanicalLabel: "Botanische naam",
+    botanicalHint: "Bijvoorbeeld Buxus sempervirens. Geslacht eerst.",
+    timingLabel: "Snoeitiming",
+    timingBorrow: "Snoei hem als een andere plant",
+    timingOwn: "Zelf de timing invullen",
+    borrowLabel: "Gesnoeid als",
+    windowStart: "Van",
+    windowEnd: "Tot",
+    windowWhat: "Wat te doen",
+    addWindow: "Nog een periode toevoegen",
+    removeWindow: "Deze periode verwijderen",
+    optional: "Bron en foto (optioneel)",
+    sourceLabel: "Bron-URL",
+    imageLabel: "Foto-URL",
+    day: "Dag",
+    month: "Maand",
+    manualFailed: "Kon de plant niet toevoegen",
+    needBotanical: "Geef een botanische naam",
+    needWindow: "Geef minstens één snoeiperiode, met wat je doet",
+    badDate: "Dat is geen bestaande datum. 31 februari bestaat niet, en 29 februari kan niet worden gebruikt.",
   },
 };
 
@@ -434,6 +482,76 @@ class GardenCompanionPanel extends HTMLElement {
         .actions-row.spread { justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .actions-row .right { display: flex; gap: 8px; margin-left: auto; }
         .actions-row .confirm { flex: 1 1 100%; margin: 0; color: var(--primary-text-color, #212121); }
+
+        /* Adding a plant the dataset does not cover. */
+        .manual-entry { padding: 0 20px 32px; }
+        button.link {
+          font: inherit;
+          font-size: 14px;
+          padding: 0;
+          border: none;
+          background: none;
+          cursor: pointer;
+          text-decoration: underline;
+          color: var(--primary-color, #03a9f4);
+        }
+        .dialog select, .dialog input[type="number"] {
+          font: inherit;
+          font-size: 15px;
+          padding: 9px 10px;
+          color: var(--primary-text-color, #212121);
+          background: var(--card-background-color, #fff);
+          border: 1px solid var(--divider-color, #bdbdbd);
+          border-radius: 8px;
+        }
+        .modes { display: flex; flex-direction: column; gap: 6px; }
+        .mode { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+        .windows-editor { display: flex; flex-direction: column; gap: 10px; }
+        .window-row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-end;
+          gap: 8px;
+          padding: 10px;
+          border: 1px solid var(--divider-color, #e0e0e0);
+          border-radius: 10px;
+        }
+        .date-group { display: flex; align-items: center; gap: 6px; }
+        .date-group .small { font-size: 12px; color: var(--secondary-text-color, #727272); min-width: 26px; }
+        .date-group input[type="number"] { width: 64px; }
+        .what-input {
+          flex: 1 1 100%;
+          box-sizing: border-box;
+          padding: 9px 10px;
+          font: inherit;
+          font-size: 15px;
+          color: var(--primary-text-color, #212121);
+          background: var(--card-background-color, #fff);
+          border: 1px solid var(--divider-color, #bdbdbd);
+          border-radius: 8px;
+        }
+        button.drop {
+          font-size: 20px;
+          line-height: 1;
+          padding: 4px 10px;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          background: transparent;
+          color: var(--error-color, #db4437);
+        }
+        button.add-window {
+          align-self: flex-start;
+          font: inherit;
+          font-size: 14px;
+          padding: 8px 12px;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          background: transparent;
+          color: var(--primary-color, #03a9f4);
+        }
+        .problem { color: var(--error-color, #db4437); }
         .error { margin: 16px 20px; color: var(--error-color, #db4437); }
         .end { height: 24px; }
         .more { padding: 0 20px 28px; font-size: 13px; color: var(--secondary-text-color, #727272); }
@@ -460,6 +578,9 @@ class GardenCompanionPanel extends HTMLElement {
         <div class="grid"></div>
         <div class="end"></div>
         <div class="more" hidden></div>
+        <div class="manual-entry">
+          <button class="link manual"></button>
+        </div>
       </section>
 
       <div class="dialog-host"></div>
@@ -470,6 +591,10 @@ class GardenCompanionPanel extends HTMLElement {
     this.shadowRoot
       .querySelector("header .primary-action")
       .addEventListener("click", () => this._show("catalogue"));
+
+    const manual = this.shadowRoot.querySelector("button.manual");
+    manual.textContent = this._t("notInList");
+    manual.addEventListener("click", () => this._openManualDialog());
 
     const search = this.shadowRoot.querySelector("input[type=search]");
     search.placeholder = this._t("search");
@@ -1094,6 +1219,280 @@ class GardenCompanionPanel extends HTMLElement {
         return actions;
       },
     });
+  }
+
+  /* A plant the dataset does not cover: named here, with timing borrowed or written. */
+  _openManualDialog() {
+    this._closeDialog();
+    const host = this.shadowRoot.querySelector(".dialog-host");
+    const backdrop = document.createElement("div");
+    backdrop.className = "backdrop";
+    backdrop.addEventListener("click", (event) => {
+      if (event.target === backdrop) this._closeDialog();
+    });
+
+    const dialog = document.createElement("div");
+    dialog.className = "dialog";
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+    dialog.setAttribute("aria-label", this._t("manualTitle"));
+
+    const content = document.createElement("div");
+    content.className = "content";
+
+    const heading = document.createElement("h2");
+    heading.textContent = this._t("manualTitle");
+    const intro = document.createElement("p");
+    intro.className = "note";
+    intro.textContent = this._t("manualIntro");
+    content.append(heading, intro);
+
+    const problem = document.createElement("p");
+    problem.className = "note problem";
+    problem.hidden = true;
+    content.appendChild(problem);
+
+    const name = this._textField(this._t("nameLabel"), "");
+    const botanical = this._textField(
+      this._t("botanicalLabel"),
+      this._t("botanicalHint"),
+    );
+    content.append(name.wrap, botanical.wrap);
+
+    // Borrowing or writing the timing, one or the other.
+    const choice = document.createElement("div");
+    choice.className = "field";
+    const choiceLabel = document.createElement("label");
+    choiceLabel.textContent = this._t("timingLabel");
+    const modes = document.createElement("div");
+    modes.className = "modes";
+    const borrowMode = this._radio("timing", this._t("timingBorrow"), true);
+    const ownMode = this._radio("timing", this._t("timingOwn"), false);
+    modes.append(borrowMode.wrap, ownMode.wrap);
+    choice.append(choiceLabel, modes);
+    content.appendChild(choice);
+
+    const borrowBox = document.createElement("div");
+    borrowBox.className = "field";
+    const borrowLabel = document.createElement("label");
+    borrowLabel.textContent = this._t("borrowLabel");
+    const borrowSelect = document.createElement("select");
+    for (const plant of this._plants) {
+      const option = document.createElement("option");
+      option.value = plant.key;
+      option.textContent = `${plant.common} (${plant.botanical})`;
+      borrowSelect.appendChild(option);
+    }
+    borrowBox.append(borrowLabel, borrowSelect);
+    content.appendChild(borrowBox);
+
+    const ownBox = document.createElement("div");
+    ownBox.className = "windows-editor";
+    ownBox.hidden = true;
+    const rows = document.createElement("div");
+    const addRow = document.createElement("button");
+    addRow.className = "secondary add-window";
+    addRow.textContent = this._t("addWindow");
+    addRow.addEventListener("click", () => rows.appendChild(this._windowRow(rows)));
+    ownBox.append(rows, addRow);
+    rows.appendChild(this._windowRow(rows));
+    content.appendChild(ownBox);
+
+    const source = this._textField(this._t("sourceLabel"), "");
+    const image = this._textField(this._t("imageLabel"), "");
+    const extras = document.createElement("div");
+    extras.className = "field";
+    const extrasLabel = document.createElement("h3");
+    extrasLabel.textContent = this._t("optional");
+    extras.append(extrasLabel, source.wrap, image.wrap);
+    ownBox.appendChild(extras);
+
+    const swap = () => {
+      const own = ownMode.input.checked;
+      ownBox.hidden = !own;
+      borrowBox.hidden = own;
+    };
+    borrowMode.input.addEventListener("change", swap);
+    ownMode.input.addEventListener("change", swap);
+
+    const actions = document.createElement("div");
+    actions.className = "actions-row";
+    const cancel = document.createElement("button");
+    cancel.className = "secondary";
+    cancel.textContent = this._t("cancel");
+    cancel.addEventListener("click", () => this._closeDialog());
+    const confirm = document.createElement("button");
+    confirm.textContent = this._t("add");
+    confirm.addEventListener("click", () =>
+      this._addManual({
+        problem,
+        name: name.input.value,
+        botanical: botanical.input.value,
+        own: ownMode.input.checked,
+        borrowKey: borrowSelect.value,
+        rows,
+        source: source.input.value,
+        imageUrl: image.input.value,
+      }),
+    );
+    actions.append(cancel, confirm);
+    content.appendChild(actions);
+
+    dialog.appendChild(content);
+    backdrop.appendChild(dialog);
+    host.appendChild(backdrop);
+    this._escape = (event) => {
+      if (event.key === "Escape") this._closeDialog();
+    };
+    window.addEventListener("keydown", this._escape);
+    setTimeout(() => name.input.focus(), 0);
+  }
+
+  _textField(labelText, hintText) {
+    const wrap = document.createElement("div");
+    wrap.className = "field";
+    const label = document.createElement("label");
+    label.textContent = labelText;
+    const input = document.createElement("input");
+    input.type = "text";
+    wrap.append(label, input);
+    if (hintText) {
+      const hint = document.createElement("p");
+      hint.className = "note";
+      hint.textContent = hintText;
+      wrap.appendChild(hint);
+    }
+    return { wrap, input };
+  }
+
+  _radio(group, labelText, checked) {
+    const wrap = document.createElement("label");
+    wrap.className = "mode";
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = group;
+    input.checked = checked;
+    const text = document.createElement("span");
+    text.textContent = labelText;
+    wrap.append(input, text);
+    return { wrap, input };
+  }
+
+  _monthSelect() {
+    const select = document.createElement("select");
+    this._t("months").forEach((month, index) => {
+      const option = document.createElement("option");
+      option.value = String(index + 1);
+      option.textContent = month;
+      select.appendChild(option);
+    });
+    return select;
+  }
+
+  _windowRow(container) {
+    const row = document.createElement("div");
+    row.className = "window-row";
+
+    const build = (labelText) => {
+      const group = document.createElement("div");
+      group.className = "date-group";
+      const label = document.createElement("span");
+      label.className = "small";
+      label.textContent = labelText;
+      const month = this._monthSelect();
+      const day = document.createElement("input");
+      day.type = "number";
+      day.min = "1";
+      day.max = "31";
+      day.value = "1";
+      day.setAttribute("aria-label", this._t("day"));
+      group.append(label, month, day);
+      return { group, month, day };
+    };
+
+    const from = build(this._t("windowStart"));
+    const until = build(this._t("windowEnd"));
+
+    const what = document.createElement("input");
+    what.type = "text";
+    what.className = "what-input";
+    what.placeholder = this._t("windowWhat");
+
+    const drop = document.createElement("button");
+    drop.className = "danger drop";
+    drop.title = this._t("removeWindow");
+    drop.setAttribute("aria-label", this._t("removeWindow"));
+    drop.textContent = "×";
+    drop.addEventListener("click", () => {
+      if (container.querySelectorAll(".window-row").length > 1) row.remove();
+    });
+
+    row.append(from.group, until.group, what, drop);
+    row._fields = { from, until, what };
+    return row;
+  }
+
+  async _addManual({ problem, name, botanical, own, borrowKey, rows, source, imageUrl }) {
+    const pad = (value) => String(value).padStart(2, "0");
+    const fail = (key) => {
+      problem.hidden = false;
+      problem.textContent = this._t(key);
+    };
+    if (!name.trim() || !botanical.trim()) {
+      fail("needBotanical");
+      return;
+    }
+
+    const message = {
+      type: "garden_companion/add_manual_plant",
+      name: name.trim(),
+      botanical: botanical.trim(),
+    };
+
+    if (own) {
+      const windows = [];
+      for (const row of rows.querySelectorAll(".window-row")) {
+        const { from, until, what } = row._fields;
+        if (!what.value.trim()) {
+          fail("needWindow");
+          return;
+        }
+        windows.push({
+          start: `${pad(from.month.value)}-${pad(from.day.value)}`,
+          end: `${pad(until.month.value)}-${pad(until.day.value)}`,
+          description: what.value.trim(),
+        });
+      }
+      if (!windows.length) {
+        fail("needWindow");
+        return;
+      }
+      message.windows = windows;
+      if (source.trim()) message.source = source.trim();
+      if (imageUrl.trim()) message.image_url = imageUrl.trim();
+    } else {
+      if (!borrowKey) {
+        fail("needWindow");
+        return;
+      }
+      message.borrow_key = borrowKey;
+    }
+
+    try {
+      await this._hass.connection.sendMessagePromise(message);
+      this._closeDialog();
+      this._view = "garden";
+      this._plants = [];
+      await Promise.all([this._loadGarden(), this._load({ reset: true })]);
+    } catch (err) {
+      if (err && err.code === "invalid_date") fail("badDate");
+      else if (err && err.code === "missing_description") fail("needWindow");
+      else {
+        problem.hidden = false;
+        problem.textContent =
+          err && err.message ? err.message : this._t("manualFailed");
+      }
+    }
   }
 
   async _rename(plant, name) {

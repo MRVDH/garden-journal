@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import re
 from collections import Counter
 from collections.abc import Iterable
 from http import HTTPStatus
@@ -37,7 +38,16 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.util import dt as dt_util
 
-from .config_flow import _default_display_name, _stored_plant, picked_row, row_value
+from .config_flow import (
+    _default_display_name,
+    _stored_author,
+    _stored_borrow,
+    _stored_plant,
+    _valid_day,
+    notify_contribution,
+    picked_row,
+    row_value,
+)
 from .const import _LOGGER, DOMAIN
 from .dataset import GardenCompanionConfigEntry
 from .models import Species, Window
@@ -50,7 +60,7 @@ _COMPONENT = "garden-companion-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "12"
+_MODULE_VERSION = "13"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 
 # Set once the panel, views and commands are registered, so a config entry
@@ -352,6 +362,115 @@ def _ws_add_plant(
     connection.send_result(msg["id"], {"subentry_id": subentry.subentry_id})
 
 
+_MMDD = re.compile(r"^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$")
+
+
+def _bad_window(window: dict[str, Any]) -> str | None:
+    """Return why a window is unusable, or None when it is fine.
+
+    The same rules the dataset is held to: a real MM-DD on both ends, and never
+    29 February, which is not an annual date.
+    """
+    for bound in ("start", "end"):
+        value = window.get(bound, "")
+        if not isinstance(value, str) or not _MMDD.match(value):
+            return "invalid_date"
+        month, day = (int(part) for part in value.split("-"))
+        if not _valid_day(month, day):
+            return "invalid_date"
+    if not (window.get("description") or "").strip():
+        return "missing_description"
+    return None
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/add_manual_plant",
+        vol.Required("name"): str,
+        vol.Required("botanical"): str,
+        vol.Optional("borrow_key"): str,
+        vol.Optional("windows"): [
+            {
+                vol.Required("start"): str,
+                vol.Required("end"): str,
+                vol.Required("description"): str,
+            }
+        ],
+        vol.Optional("source"): vol.Any(str, None),
+        vol.Optional("image_url"): vol.Any(str, None),
+    }
+)
+@callback
+def _ws_add_manual_plant(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Add a plant that is not in the dataset (3.7).
+
+    Timing is either borrowed from a plant that is pruned the same way, or written
+    out here. The stored shape is the one the add flow writes, so both routes
+    produce the same plant.
+    """
+    entry = _entry(hass)
+    if entry is None:
+        connection.send_error(msg["id"], "not_loaded", "Garden Companion is not loaded")
+        return
+
+    name = msg["name"].strip()
+    botanical = msg["botanical"].strip()
+    if not name or not botanical:
+        connection.send_error(msg["id"], "invalid_name", "A plant needs both names")
+        return
+
+    resolver = Resolver(entry.runtime_data.species)
+    borrow_key = msg.get("borrow_key")
+    windows = msg.get("windows") or []
+    if bool(borrow_key) == bool(windows):
+        connection.send_error(
+            msg["id"],
+            "invalid_timing",
+            "Give either a plant to borrow timing from or at least one window",
+        )
+        return
+
+    if borrow_key:
+        borrowed = picked_row(borrow_key, resolver)
+        if borrowed is None:
+            connection.send_error(msg["id"], "unknown_plant", "No such plant to borrow")
+            return
+        data = _stored_borrow(botanical, name, borrowed)
+    else:
+        for window in windows:
+            if (problem := _bad_window(window)) is not None:
+                connection.send_error(msg["id"], problem, "That window is not usable")
+                return
+        language = hass.config.language
+        stored_windows = [
+            {
+                "when": {"start": window["start"], "end": window["end"]},
+                "description": {language: window["description"].strip()},
+            }
+            for window in windows
+        ]
+        source = (msg.get("source") or "").strip() or None
+        data = _stored_author(
+            botanical,
+            name,
+            stored_windows,
+            source,
+            (msg.get("image_url") or "").strip() or None,
+        )
+        notify_contribution(hass, botanical, name, stored_windows, source)
+
+    subentry = ConfigSubentry(
+        data=data, subentry_type="plant", title=name, unique_id=None
+    )
+    hass.config_entries.async_add_subentry(entry, subentry)
+    connection.send_result(msg["id"], {"subentry_id": subentry.subentry_id})
+
+
 def _find_subentry(
     entry: GardenCompanionConfigEntry, subentry_id: str
 ) -> ConfigSubentry | None:
@@ -543,6 +662,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_garden)
     websocket_api.async_register_command(hass, _ws_plants)
     websocket_api.async_register_command(hass, _ws_add_plant)
+    websocket_api.async_register_command(hass, _ws_add_manual_plant)
     websocket_api.async_register_command(hass, _ws_rename_plant)
     websocket_api.async_register_command(hass, _ws_remove_plant)
     await panel_custom.async_register_panel(

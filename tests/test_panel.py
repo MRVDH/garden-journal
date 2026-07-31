@@ -10,6 +10,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import httpx
 import respx
@@ -168,6 +169,152 @@ async def test_garden_carries_what_the_dialog_shows(
     assert plant["source"].startswith("https://groei.nl/")
     assert plant["credit"] == "waferboard (CC BY 2.0)"
     assert plant["in_dataset"] is True
+
+
+async def test_add_manual_plant_with_its_own_windows(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """A plant outside the dataset can be added with windows written by hand."""
+    entry = await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id(
+        {
+            "type": f"{DOMAIN}/add_manual_plant",
+            "name": "Buxus bij de deur",
+            "botanical": "Buxus sempervirens",
+            "windows": [
+                {"start": "05-15", "end": "06-15", "description": "Scheer de haag"}
+            ],
+            "source": "https://example.test/buxus",
+        }
+    )
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+
+    subentry = next(iter(entry.get_subentries_of_type("plant")))
+    assert subentry.title == "Buxus bij de deur"
+    assert subentry.data["in_dataset"] is False
+    assert subentry.data["genus"] == "Buxus"
+    assert subentry.data["species"] == "sempervirens"
+    assert subentry.data["source"] == "https://example.test/buxus"
+    assert subentry.data["windows"] == [
+        {
+            "when": {"start": "05-15", "end": "06-15"},
+            "description": {hass.config.language: "Scheer de haag"},
+        }
+    ]
+    assert hass.states.get("sensor.buxus_bij_de_deur_next_pruning") is not None
+
+
+async def test_add_manual_plant_borrowing_timing(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """A manual plant can take the timing of a plant pruned the same way."""
+    entry = await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id(
+        {
+            "type": f"{DOMAIN}/add_manual_plant",
+            "name": "De taxus",
+            "botanical": "Taxus baccata",
+            "borrow_key": "dataset:Ligustrum||",
+        }
+    )
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+
+    subentry = next(iter(entry.get_subentries_of_type("plant")))
+    assert subentry.data["windows_like"] == {
+        "genus": "Ligustrum",
+        "species": None,
+        "variant": None,
+    }
+    # The borrowed timing drives the sensor, so it has a date.
+    state = hass.states.get("sensor.de_taxus_next_pruning")
+    assert state is not None
+    assert state.state not in ("unknown", "unavailable")
+
+
+async def test_add_manual_plant_rejects_an_impossible_date(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """31 February is refused, the same rule the dataset is held to."""
+    entry = await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id(
+        {
+            "type": f"{DOMAIN}/add_manual_plant",
+            "name": "Nope",
+            "botanical": "Quercus robur",
+            "windows": [{"start": "02-31", "end": "03-01", "description": "Snoei"}],
+        }
+    )
+    response = await client.receive_json()
+
+    assert not response["success"]
+    assert response["error"]["code"] == "invalid_date"
+    assert not entry.get_subentries_of_type("plant")
+
+
+async def test_add_manual_plant_needs_one_kind_of_timing(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """Neither borrowing nor writing the timing is refused, and so is both."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id(
+        {
+            "type": f"{DOMAIN}/add_manual_plant",
+            "name": "Nope",
+            "botanical": "Quercus robur",
+        }
+    )
+    assert (await client.receive_json())["error"]["code"] == "invalid_timing"
+
+    await client.send_json_auto_id(
+        {
+            "type": f"{DOMAIN}/add_manual_plant",
+            "name": "Nope",
+            "botanical": "Quercus robur",
+            "borrow_key": "dataset:Ligustrum||",
+            "windows": [{"start": "05-01", "end": "05-31", "description": "Snoei"}],
+        }
+    )
+    assert (await client.receive_json())["error"]["code"] == "invalid_timing"
+
+
+async def test_add_manual_plant_notifies_for_contribution(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """Authoring a plant offers a snippet to contribute it back to the dataset."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    with patch(
+        "custom_components.garden_companion.config_flow"
+        ".persistent_notification.async_create"
+    ) as notify:
+        await client.send_json_auto_id(
+            {
+                "type": f"{DOMAIN}/add_manual_plant",
+                "name": "Buxus bij de deur",
+                "botanical": "Buxus sempervirens",
+                "windows": [
+                    {"start": "05-15", "end": "06-15", "description": "Scheer de haag"}
+                ],
+            }
+        )
+        assert (await client.receive_json())["success"]
+        await hass.async_block_till_done()
+
+    assert notify.called
+    message = notify.call_args.args[1]
+    assert "genus: Buxus" in message
+    assert "species: sempervirens" in message
 
 
 async def test_rename_plant_changes_the_title(

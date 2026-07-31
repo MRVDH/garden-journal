@@ -20,7 +20,7 @@ from homeassistant.config_entries import (
     ConfigSubentryFlow,
     SubentryFlowResult,
 )
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
@@ -294,6 +294,33 @@ def _snippet(
     return "\n".join(lines)
 
 
+def notify_contribution(
+    hass: HomeAssistant,
+    botanical: str,
+    display_name: str,
+    windows: list[dict[str, Any]],
+    source: str | None,
+) -> None:
+    """Raise a notification holding a paste-ready species.yaml snippet (3.7).
+
+    A plant added by hand is a gap in the dataset, so the snippet makes
+    contributing it back a copy and a paste.
+    """
+    genus, species = _parse_botanical(botanical)
+    snippet = _snippet(
+        genus, species, display_name, hass.config.language, windows, source
+    )
+    message = (
+        "A plant that is not in the Garden Companion dataset was added. If it "
+        "belongs in the dataset, paste this into species.yaml and open an issue:\n\n"
+        f"```yaml\n{snippet}\n```\n\n"
+        "Issues: https://github.com/MRVDH/garden-companion/issues"
+    )
+    persistent_notification.async_create(
+        hass, message, title="Garden Companion: new plant"
+    )
+
+
 class PlantSubentryFlow(ConfigSubentryFlow):
     """Add or reconfigure one plant."""
 
@@ -540,19 +567,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
         source: str | None,
     ) -> None:
         """Raise a persistent notification with a paste-ready species.yaml snippet (3.7)."""
-        genus, species = _parse_botanical(botanical)
-        snippet = _snippet(
-            genus, species, display_name, self.hass.config.language, windows, source
-        )
-        message = (
-            "A plant that is not in the Garden Companion dataset was added. If it "
-            "belongs in the dataset, paste this into species.yaml and open an issue:\n\n"
-            f"```yaml\n{snippet}\n```\n\n"
-            "Issues: https://github.com/MRVDH/garden-companion/issues"
-        )
-        persistent_notification.async_create(
-            self.hass, message, title="Garden Companion: new plant"
-        )
+        notify_contribution(self.hass, botanical, display_name, windows, source)
 
     async def async_step_author(
         self, user_input: dict[str, Any] | None = None
