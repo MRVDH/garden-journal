@@ -3,6 +3,7 @@
   "name": "Garden Companion",
   "codeowners": ["@MRVDH"],
   "config_flow": true,
+  "dependencies": ["http", "panel_custom", "websocket_api"],
   "documentation": "https://github.com/MRVDH/garden-companion",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/MRVDH/garden-companion/issues",

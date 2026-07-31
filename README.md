@@ -44,9 +44,20 @@ directory and restart.
 
 ## Adding plants
 
-Add the integration once, then add a plant to it from the integration page. Type
-a botanical or a common name, in Dutch or English: `Hydrangea`, `blauwe regen`
-and `rose` all work, and a partial name like `hortensia` finds every hydrangea.
+Two ways, whichever suits you.
+
+**Browse the Garden Companion panel** in the sidebar. It shows every plant in the
+dataset as a card with its photo, common name, botanical name and pruning dates,
+with a search box over the top. Click a plant, give it a name, and it is added.
+Cards for plants you already have say so. Photos are fetched by Home Assistant
+rather than by your browser, so looking at the panel does not tell Wikimedia
+anything about you.
+
+**Or add from the integration page**, which is the same flow Home Assistant uses
+for everything else. Pick a plant from the list, or type a botanical or common
+name, in Dutch or English: `Hydrangea`, `blauwe regen` and `rose` all work, and a
+partial name like `hortensia` finds every hydrangea. This is also the route for a
+plant that is not in the dataset.
 
 Some names cannot be answered on their own. Hydrangeas are the clear case: a
 panicle hydrangea is cut hard in spring and a velvet hydrangea must not be cut

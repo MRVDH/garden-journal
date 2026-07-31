@@ -91,19 +91,39 @@ def _borrow_label(species: Species, language: str) -> str:
 
 
 # Option values in the add picker. The prefix keeps them apart from a name the
-# user types, since the same field accepts both.
-_ROW_VALUE = "dataset-row-{}"
+# user types, since the same field accepts both, and the key is the row's own
+# (genus, species, variant) so the custom panel can build the same value without
+# knowing anything about option ordering.
+_ROW_PREFIX = "dataset:"
 
 
-def _picked_row(value: str, rows: list[Species]) -> Species | None:
-    """Return the row an option value refers to, or None if a name was typed."""
-    prefix = _ROW_VALUE.format("")
-    if not value.startswith(prefix):
+def row_value(species: Species) -> str:
+    """Return the picker value that identifies one dataset row."""
+    parts = (species.genus, species.species or "", species.variant or "")
+    return _ROW_PREFIX + "|".join(parts)
+
+
+def picked_row(value: str, resolver: Resolver) -> Species | None:
+    """Return the row a picker value names, or None if a name was typed instead.
+
+    The lookup is exact: `Resolver.resolve` falls back to the genus row, which
+    would silently substitute a different plant, so the resolved key is compared
+    against the requested one.
+    """
+    if not value.startswith(_ROW_PREFIX):
         return None
-    index = value.removeprefix(prefix)
-    if not index.isdigit() or int(index) >= len(rows):
+    parts = value.removeprefix(_ROW_PREFIX).split("|")
+    if len(parts) != 3 or not parts[0]:
         return None
-    return rows[int(index)]
+    genus, species, variant = (part or None for part in parts)
+    row = resolver.resolve(genus, species, variant)
+    if row is None or (row.genus, row.species, row.variant) != (
+        genus,
+        species,
+        variant,
+    ):
+        return None
+    return row
 
 
 def _picker_label(species: Species, language: str) -> str:
@@ -362,7 +382,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
         rows = self._picker_rows()
         if user_input is not None:
             chosen = user_input["query"]
-            picked = _picked_row(chosen, rows)
+            picked = picked_row(chosen, self._resolver())
             if picked is not None:
                 return await self._select_match(picked)
             groups = _distinct_by_timing(self._resolver().search(chosen))
@@ -378,10 +398,8 @@ class PlantSubentryFlow(ConfigSubentryFlow):
 
         language = self.hass.config.language
         options = [
-            SelectOptionDict(
-                value=_ROW_VALUE.format(index), label=_picker_label(row, language)
-            )
-            for index, row in enumerate(rows)
+            SelectOptionDict(value=row_value(row), label=_picker_label(row, language))
+            for row in rows
         ]
         return self.async_show_form(
             step_id="user",

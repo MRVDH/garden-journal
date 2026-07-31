@@ -19,6 +19,7 @@ from .dataset import (
     GardenCompanionData,
     async_load_dataset,
 )
+from .panel import async_setup_panel
 from .resolver import Resolver, repair_reason
 
 _PLATFORMS = [
@@ -37,6 +38,7 @@ async def async_setup_entry(
     entry.runtime_data = GardenCompanionData(species=species)
     _LOGGER.debug("Loaded %d species from the dataset", len(species))
     _refresh_repairs(hass, entry)
+    await async_setup_panel(hass)
     await hass.config_entries.async_forward_entry_setups(entry, _PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
     return True
