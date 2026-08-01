@@ -29,7 +29,6 @@ from custom_components.garden_companion.panel import _MAX_LIMIT
 
 _HYDRANGEA = "dataset:Hydrangea|paniculata|"
 _WISTERIA = "dataset:Wisteria||"
-_ROSE_BUSH = "dataset:Rosa||bush"
 _JPEG = b"\xff\xd8\xff\xe0panel"
 
 
@@ -427,19 +426,48 @@ async def test_plants_ignores_manual_plants_in_the_count(
     assert next(p for p in plants if p["key"] == _HYDRANGEA)["added"] == 0
 
 
-async def test_plants_searches_and_reports_the_variant_hint(
+async def test_plants_searches_by_a_common_name(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """A search narrows the list, and a variant row carries its distinguishing text."""
+    """A Dutch common name narrows the list to the rows that answer to it."""
     await _setup(hass)
     client = await hass_ws_client(hass)
-    await client.send_json_auto_id({"type": f"{DOMAIN}/plants", "query": "roos"})
+    await client.send_json_auto_id({"type": f"{DOMAIN}/plants", "query": "hortensia"})
     result = (await client.receive_json())["result"]
 
     keys = {plant["key"] for plant in result["plants"]}
-    assert keys == {_ROSE_BUSH, "dataset:Rosa||climber"}
-    bush = next(p for p in result["plants"] if p["key"] == _ROSE_BUSH)
-    assert bush["distinguish"] == "Stands on its own, not tied to a wall or arch"
+    assert keys == {
+        _HYDRANGEA,
+        "dataset:Hydrangea|arborescens|",
+        "dataset:Hydrangea|macrophylla|",
+        "dataset:Hydrangea|aspera|",
+    }
+    assert result["total"] == 4
+
+
+async def test_a_variant_row_reports_its_distinguishing_text() -> None:
+    """A variant row carries the text that tells it from its siblings.
+
+    No row in the packaged dataset uses a variant, so the field is exercised with a
+    row built here.
+    """
+    from custom_components.garden_companion.models import Species
+    from custom_components.garden_companion.panel import _as_json
+
+    row = Species(
+        genus="Rosa",
+        species=None,
+        variant="climber",
+        names={"en": ["Climbing rose"], "nl": ["Klimroos"]},
+        windows=(),
+        source="https://example.test",
+        distinguish={"en": "Trained against a wall", "nl": "Tegen een muur"},
+    )
+
+    assert _as_json(row, "nl", 0)["distinguish"] == "Tegen een muur"
+    assert _as_json(row, "en", 0)["distinguish"] == "Trained against a wall"
+    assert _as_json(row, "de", 0)["distinguish"] == "Trained against a wall"
+    assert _as_json(row, "nl", 0)["botanical"] == "Rosa (climber)"
 
 
 async def test_plants_pages_through_the_dataset(

@@ -464,20 +464,15 @@
           removes next spring's flower buds.
 
 # -------------------------------------------------------------------- Rosa ---
-# Rosa needs a variant, and therefore distinguish: a bush and a climber are
-# pruned at different times, so the genus is ambiguous and the flow asks. The
-# climber is here even in a garden that has none, because the ambiguity belongs
-# to the genus.
+# One row for roses, trained however you grow them. A shrub and a climber differ
+# in what you cut rather than when: both go in the same spring window, so the
+# difference is carried by the description and the genus answers on its own.
 
 - genus: Rosa
-  variant: bush
   names:
-    nl: [Roos, Rozen]
-    en: [Rose]
-  distinguish:
-    nl: Staat op zichzelf, niet tegen een muur of boog
-    en: Stands on its own, not tied to a wall or arch
-  source: https://groei.nl/artikel/roos-snoeien
+    nl: [Roos, Rozen, Klimroos]
+    en: [Rose, Climbing rose]
+  source: https://www.directplant.nl/tuintips/rozen-snoeien/
   image:
     url: https://commons.wikimedia.org/wiki/Special:FilePath/Light%20magenta%20rose%20Easton%20Lodge%20Gardens%20walled%20garden%20Little%20Easton%20Essex%2002.jpg?width=600
     author: Acabashi
@@ -487,36 +482,18 @@
     - when: { start: "03-01", end: "03-31" }
       description:
         nl: >-
-          Snoei tot een naar buiten gerichte knop zodra de ergste vorst voorbij
-          is. Knip in de zomer uitgebloeide bloemen weg om de bloei door te
-          laten gaan; dat is doorlopend onderhoud, geen snoeimoment.
+          Snoei een rozenstruik terug tot drie à vijf ogen boven de grond, tot
+          een naar buiten gerichte knop, zodra de ergste vorst voorbij is. Laat
+          je hem klimmen, dan is het net andersom: de lange hoofdtakken laat je
+          staan en kort je een derde in, en je snoeit vooral de zijtakken; dat
+          mag al vanaf februari. Knip het hele seizoen uitgebloeide bloemen weg
+          tot op het eerste blad met vijf blaadjes, want daaruit komt de
+          volgende knop; dat is doorlopend onderhoud, geen snoeimoment.
         en: >-
-          Prune to an outward-facing bud once the worst frost has passed.
-          Through summer, deadhead spent flowers to keep it blooming; that is
-          ongoing care, not a pruning window.
-
-- genus: Rosa
-  variant: climber
-  names:
-    nl: [Klimroos]
-    en: [Climbing rose]
-  distinguish:
-    nl: Geleid tegen een muur, hek of boog
-    en: Trained against a wall, fence or arch
-  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/klimroos-snoeien/
-  image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Rosa%20New%20Dawn.jpg?width=600
-    author: Nockel12
-    licence: Public domain
-    page: https://commons.wikimedia.org/wiki/File:Rosa_New_Dawn.jpg
-  windows:
-    - when: { start: "12-01", end: "03-01" }
-      description:
-        nl: >-
-          Snoei als de plant in rust is. Kort de zijscheuten in tot twee of drie
-          knoppen, dun takken uit die tegen elkaar schuren en bind het
-          hoofdgestel aan. Zo komt de nieuwe groei laag uit de plant.
-        en: >-
-          Prune while the plant is dormant. Shorten the side shoots to two or
-          three buds, thin out stems that rub against each other, and tie the
-          main framework in. That brings the new growth from low down.
+          Cut a shrub rose back to three to five eyes above the ground, to an
+          outward-facing bud, once the worst frost has passed. Grown as a
+          climber it is the other way round: leave the long main stems and
+          shorten them by a third, and prune the side shoots instead; that can
+          start in February. All season, deadhead spent flowers down to the
+          first leaf with five leaflets, because the next bud comes from there;
+          that is ongoing care, not a pruning window.
