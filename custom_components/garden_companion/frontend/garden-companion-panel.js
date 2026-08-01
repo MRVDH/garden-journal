@@ -219,6 +219,9 @@ class GardenCompanionPanel extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.innerHTML = `
       <style>
+        /* A class that sets display beats the browser's own [hidden] rule, and
+           several blocks here are flex, so hiding is made to win outright. */
+        [hidden] { display: none !important; }
         :host {
           display: block;
           background: var(--primary-background-color, #f5f5f5);
@@ -434,7 +437,8 @@ class GardenCompanionPanel extends HTMLElement {
         .dialog a { color: var(--primary-color, #03a9f4); font-size: 13px; word-break: break-all; }
         .field { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
         .field label { font-size: 13px; font-weight: 500; }
-        .field input {
+        /* Direct children only: a radio nested in this field keeps its own size. */
+        .field > input {
           width: 100%;
           box-sizing: border-box;
           padding: 10px 12px;
