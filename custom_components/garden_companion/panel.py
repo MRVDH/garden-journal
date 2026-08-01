@@ -44,7 +44,6 @@ from .config_flow import (
     _stored_borrow,
     _stored_plant,
     _valid_day,
-    notify_contribution,
     picked_row,
     row_value,
 )
@@ -60,7 +59,7 @@ _COMPONENT = "garden-companion-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "13"
+_MODULE_VERSION = "14"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 
 # Set once the panel, views and commands are registered, so a config entry
@@ -462,7 +461,6 @@ def _ws_add_manual_plant(
             source,
             (msg.get("image_url") or "").strip() or None,
         )
-        notify_contribution(hass, botanical, name, stored_windows, source)
 
     subentry = ConfigSubentry(
         data=data, subentry_type="plant", title=name, unique_id=None

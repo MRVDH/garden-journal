@@ -24,9 +24,7 @@ const PAGE_SIZE = 24;
 const STRINGS = {
   en: {
     search: "Search plants",
-    loading: "Loading",
     loadingMore: "Loading more",
-    plants: (n) => `${n} plant${n === 1 ? "" : "s"}`,
     more: (n) => `Scroll for ${n} more`,
     noPhoto: "No photo",
     photo: (credit) => `Photo: ${credit}`,
@@ -34,8 +32,6 @@ const STRINGS = {
     plantedTimes: (n) => `Planted ${n}x`,
     plantedTitle: "You have this in your garden",
     plantedTitleTimes: (n) => `You have ${n} of these in your garden`,
-    addPlant: (name) => `Add ${name} to my garden`,
-    addAnother: (name) => `Add another ${name}`,
     nameLabel: "Name for this plant",
     nameHint: "This name labels the plant's device and entities. You can change it later.",
     add: "Add",
@@ -68,7 +64,7 @@ const STRINGS = {
     manualPlant: "Added by hand, not from the dataset",
     renameFailed: "Could not rename the plant",
     removeFailed: "Could not remove the plant",
-    notInList: "Not in the list? Add it by hand",
+    notInList: "Add by hand",
     manualTitle: "Add a plant by hand",
     manualIntro:
       "For a plant the dataset does not cover yet. Home Assistant will offer you a snippet to contribute it back.",
@@ -95,9 +91,7 @@ const STRINGS = {
   },
   nl: {
     search: "Zoek planten",
-    loading: "Laden",
     loadingMore: "Meer laden",
-    plants: (n) => `${n} plant${n === 1 ? "" : "en"}`,
     more: (n) => `Scroll voor nog ${n}`,
     noPhoto: "Geen foto",
     photo: (credit) => `Foto: ${credit}`,
@@ -105,8 +99,6 @@ const STRINGS = {
     plantedTimes: (n) => `${n}x geplant`,
     plantedTitle: "Deze staat in je tuin",
     plantedTitleTimes: (n) => `Hiervan staan er ${n} in je tuin`,
-    addPlant: (name) => `${name} toevoegen aan mijn tuin`,
-    addAnother: (name) => `Nog een ${name} toevoegen`,
     nameLabel: "Naam voor deze plant",
     nameHint: "Deze naam komt op het apparaat en de entiteiten van de plant. Je kunt hem later aanpassen.",
     add: "Toevoegen",
@@ -139,7 +131,7 @@ const STRINGS = {
     manualPlant: "Handmatig toegevoegd, niet uit de dataset",
     renameFailed: "Kon de plant niet hernoemen",
     removeFailed: "Kon de plant niet verwijderen",
-    notInList: "Staat er niet bij? Handmatig toevoegen",
+    notInList: "Handmatig invoeren",
     manualTitle: "Plant handmatig toevoegen",
     manualIntro:
       "Voor een plant die nog niet in de dataset staat. Home Assistant geeft je daarna een stukje YAML om hem terug te delen.",
@@ -305,9 +297,15 @@ class GardenCompanionPanel extends HTMLElement {
         .plant .chevron { display: flex; color: var(--secondary-text-color, #727272); }
         .plant .chevron svg { width: 22px; height: 22px; fill: currentColor; }
         .empty { margin: 28px 20px; color: var(--secondary-text-color, #727272); font-size: 15px; }
-        .toolbar { padding: 16px 20px 4px; }
+        .toolbar {
+          padding: 16px 20px 8px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
         input[type="search"] {
-          width: 100%;
+          flex: 1 1 auto;
+          min-width: 0;
           max-width: 420px;
           box-sizing: border-box;
           padding: 10px 12px;
@@ -317,7 +315,6 @@ class GardenCompanionPanel extends HTMLElement {
           border: 1px solid var(--divider-color, #e0e0e0);
           border-radius: 8px;
         }
-        .count { padding: 8px 20px; font-size: 13px; color: var(--secondary-text-color, #727272); }
         .grid {
           display: grid;
           gap: 16px;
@@ -350,11 +347,11 @@ class GardenCompanionPanel extends HTMLElement {
           color: var(--secondary-text-color, #727272);
         }
         /* Credit sits on the photo, over a wash dark enough to read against any
-           image, and stops short of the add button. */
+           image. */
         .credit {
           position: absolute;
           left: 0;
-          right: 56px;
+          right: 0;
           bottom: 0;
           padding: 14px 10px 6px;
           font-size: 11px;
@@ -366,24 +363,6 @@ class GardenCompanionPanel extends HTMLElement {
           text-overflow: ellipsis;
           white-space: nowrap;
         }
-        .add {
-          position: absolute;
-          right: 10px;
-          bottom: -20px;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          border: none;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: var(--primary-color, #03a9f4);
-          color: var(--text-primary-color, #fff);
-          box-shadow: 0 2px 6px rgba(0,0,0,.3);
-        }
-        .add svg { width: 22px; height: 22px; fill: currentColor; }
-        .add:hover { filter: brightness(1.08); }
         /* A badge on the photo, so what you own reads as a status rather than as
            another line of description. */
         .owned {
@@ -403,7 +382,7 @@ class GardenCompanionPanel extends HTMLElement {
         }
         .owned svg { width: 15px; height: 15px; fill: currentColor; }
         .body { padding: 14px 14px 14px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
-        .common { font-size: 16px; font-weight: 500; padding-right: 40px; }
+        .common { font-size: 16px; font-weight: 500; }
         .botanical { font-size: 13px; font-style: italic; color: var(--secondary-text-color, #727272); }
         .hint { font-size: 12px; color: var(--secondary-text-color, #727272); }
         /* The detail dialog: room for the photo, the advice and a name field,
@@ -573,14 +552,11 @@ class GardenCompanionPanel extends HTMLElement {
       <section class="view-catalogue" hidden>
         <div class="toolbar">
           <input type="search" autocomplete="off">
+          <button class="link manual"></button>
         </div>
-        <div class="count"></div>
         <div class="grid"></div>
         <div class="end"></div>
         <div class="more" hidden></div>
-        <div class="manual-entry">
-          <button class="link manual"></button>
-        </div>
       </section>
 
       <div class="dialog-host"></div>
@@ -868,14 +844,8 @@ class GardenCompanionPanel extends HTMLElement {
   }
 
   _renderCatalogue() {
-    const count = this.shadowRoot.querySelector(".count");
     const grid = this.shadowRoot.querySelector(".grid");
     const more = this.shadowRoot.querySelector(".more");
-
-    count.textContent =
-      this._loading && this._plants.length === 0
-        ? this._t("loading")
-        : this._t("plants")(this._total);
 
     const remaining = this._total - this._plants.length;
     more.hidden = remaining <= 0;
@@ -934,7 +904,6 @@ class GardenCompanionPanel extends HTMLElement {
     }
 
     if (plant.added) frame.appendChild(this._ownedBadge(plant));
-    frame.appendChild(this._addButton(plant));
     card.appendChild(frame);
 
     const body = document.createElement("div");
@@ -975,23 +944,6 @@ class GardenCompanionPanel extends HTMLElement {
         ? this._t("plantedTitleTimes")(plant.added)
         : this._t("plantedTitle");
     return badge;
-  }
-
-  _addButton(plant) {
-    const button = document.createElement("button");
-    button.className = "add";
-    const label = plant.added
-      ? this._t("addAnother")(plant.common)
-      : this._t("addPlant")(plant.common);
-    button.title = label;
-    button.setAttribute("aria-label", label);
-    button.innerHTML =
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>';
-    button.addEventListener("click", (event) => {
-      event.stopPropagation();
-      this._openDialog(plant);
-    });
-    return button;
   }
 
   _monthDay(value) {

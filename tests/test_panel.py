@@ -287,16 +287,15 @@ async def test_add_manual_plant_needs_one_kind_of_timing(
     assert (await client.receive_json())["error"]["code"] == "invalid_timing"
 
 
-async def test_add_manual_plant_notifies_for_contribution(
+async def test_adding_a_plant_raises_no_notification(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """Authoring a plant offers a snippet to contribute it back to the dataset."""
+    """Adding a plant by hand goes through quietly, with nothing to dismiss."""
     await _setup(hass)
     client = await hass_ws_client(hass)
 
     with patch(
-        "custom_components.garden_companion.config_flow"
-        ".persistent_notification.async_create"
+        "homeassistant.components.persistent_notification.async_create"
     ) as notify:
         await client.send_json_auto_id(
             {
@@ -311,10 +310,7 @@ async def test_add_manual_plant_notifies_for_contribution(
         assert (await client.receive_json())["success"]
         await hass.async_block_till_done()
 
-    assert notify.called
-    message = notify.call_args.args[1]
-    assert "genus: Buxus" in message
-    assert "species: sempervirens" in message
+    assert not notify.called
 
 
 async def test_rename_plant_changes_the_title(

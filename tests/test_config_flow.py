@@ -14,7 +14,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.garden_companion.config_flow import _snippet
 from custom_components.garden_companion.const import DOMAIN
 from custom_components.garden_companion.dataset import GardenCompanionData
 from custom_components.garden_companion.models import build_dataset
@@ -381,25 +380,6 @@ async def test_author_rejects_an_impossible_date(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "window"
     assert result["errors"] == {"base": "invalid_date"}
-
-
-def test_snippet_renders_a_paste_ready_row() -> None:
-    """The contribution snippet has the genus, names, source and window."""
-    snippet = _snippet(
-        "Buxus",
-        "sempervirens",
-        "Box hedge",
-        "en",
-        [{"when": {"start": "07-15", "end": "08-31"}, "description": {"en": "Trim"}}],
-        None,
-    )
-    assert "- genus: Buxus" in snippet
-    assert "species: sempervirens" in snippet
-    assert "en: [Box hedge]" in snippet
-    assert "nl: [TODO]" in snippet
-    assert "source: TODO" in snippet
-    assert 'when: { start: "07-15", end: "08-31" }' in snippet
-    assert "en: Trim" in snippet
 
 
 async def _add_plant(

@@ -11,7 +11,6 @@ from __future__ import annotations
 from typing import Any, override
 
 import voluptuous as vol
-from homeassistant.components import persistent_notification
 from homeassistant.config_entries import (
     SOURCE_RECONFIGURE,
     ConfigEntry,
@@ -20,7 +19,7 @@ from homeassistant.config_entries import (
     ConfigSubentryFlow,
     SubentryFlowResult,
 )
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import callback
 from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
@@ -265,62 +264,6 @@ def _stored_author(
     }
 
 
-def _snippet(
-    genus: str,
-    species: str | None,
-    display_name: str,
-    language: str,
-    windows: list[dict[str, Any]],
-    source: str | None,
-) -> str:
-    """Render a paste-ready species.yaml row for a manually added plant (3.7)."""
-    other = "nl" if language != "nl" else "en"
-    lines = [f"- genus: {genus}"]
-    if species:
-        lines.append(f"  species: {species}")
-    lines.append("  names:")
-    lines.append(f"    {language}: [{display_name}]")
-    lines.append(f"    {other}: [TODO]")
-    lines.append(f"  source: {source or 'TODO'}")
-    lines.append("  windows:")
-    for window in windows:
-        when = window["when"]
-        lines.append(
-            f'    - when: {{ start: "{when["start"]}", end: "{when["end"]}" }}'
-        )
-        lines.append("      description:")
-        for lang, text in window["description"].items():
-            lines.append(f"        {lang}: {text}")
-    return "\n".join(lines)
-
-
-def notify_contribution(
-    hass: HomeAssistant,
-    botanical: str,
-    display_name: str,
-    windows: list[dict[str, Any]],
-    source: str | None,
-) -> None:
-    """Raise a notification holding a paste-ready species.yaml snippet (3.7).
-
-    A plant added by hand is a gap in the dataset, so the snippet makes
-    contributing it back a copy and a paste.
-    """
-    genus, species = _parse_botanical(botanical)
-    snippet = _snippet(
-        genus, species, display_name, hass.config.language, windows, source
-    )
-    message = (
-        "A plant that is not in the Garden Companion dataset was added. If it "
-        "belongs in the dataset, paste this into species.yaml and open an issue:\n\n"
-        f"```yaml\n{snippet}\n```\n\n"
-        "Issues: https://github.com/MRVDH/garden-companion/issues"
-    )
-    persistent_notification.async_create(
-        hass, message, title="Garden Companion: new plant"
-    )
-
-
 class PlantSubentryFlow(ConfigSubentryFlow):
     """Add or reconfigure one plant."""
 
@@ -526,16 +469,6 @@ class PlantSubentryFlow(ConfigSubentryFlow):
         species = self._species()
         if user_input is not None:
             borrowed = species[int(user_input["borrowed"])]
-            windows = [
-                {
-                    "when": {"start": window.start, "end": window.end},
-                    "description": dict(window.description),
-                }
-                for window in borrowed.windows
-            ]
-            self._notify_contribution(
-                self._botanical or "", self._display or "", windows, None
-            )
             return self.async_create_entry(
                 title=self._display or "",
                 data=_stored_borrow(
@@ -558,16 +491,6 @@ class PlantSubentryFlow(ConfigSubentryFlow):
                 }
             ),
         )
-
-    def _notify_contribution(
-        self,
-        botanical: str,
-        display_name: str,
-        windows: list[dict[str, Any]],
-        source: str | None,
-    ) -> None:
-        """Raise a persistent notification with a paste-ready species.yaml snippet (3.7)."""
-        notify_contribution(self.hass, botanical, display_name, windows, source)
 
     async def async_step_author(
         self, user_input: dict[str, Any] | None = None
@@ -644,9 +567,6 @@ class PlantSubentryFlow(ConfigSubentryFlow):
         """Ask for an optional source and photo, then create the plant (3.7)."""
         if user_input is not None:
             source = user_input.get("source") or None
-            self._notify_contribution(
-                self._botanical or "", self._display or "", self._windows or [], source
-            )
             return self.async_create_entry(
                 title=self._display or "",
                 data=_stored_author(
