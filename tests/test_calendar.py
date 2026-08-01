@@ -99,6 +99,19 @@ async def test_event_is_the_active_or_next_pruning(hass: HomeAssistant) -> None:
         assert hass.states.get(_ENTITY_ID).state == "on"
 
 
+async def test_event_summary_is_translated(hass: HomeAssistant) -> None:
+    """On a Dutch instance the summary reads Dutch, verb last, not "Prune ..."."""
+    hass.config.language = "nl"
+    await _setup(hass, [("De blauwe regen", _plant("Wisteria", None))])
+
+    events = await _calendar(hass).async_get_events(
+        hass,
+        datetime(2026, 1, 1, tzinfo=dt_util.UTC),
+        datetime(2026, 3, 1, tzinfo=dt_util.UTC),
+    )
+    assert [event.summary for event in events] == ["De blauwe regen snoeien"]
+
+
 async def test_no_plants_means_no_event(hass: HomeAssistant) -> None:
     """With no plants the calendar exists but has no current event."""
     await _setup(hass, [])

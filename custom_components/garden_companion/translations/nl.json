@@ -7,6 +7,9 @@
       }
     }
   },
+  "calendar_event": {
+    "prune": "{name} snoeien"
+  },
   "entity": {
     "sensor": {
       "next_pruning": {

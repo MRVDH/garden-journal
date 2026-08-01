@@ -41,7 +41,7 @@ const STRINGS = {
     care: "Ongoing care",
     careOpen: "now",
     careNow: "Ongoing care",
-    source: "Source of this timing",
+    source: "Source",
     loadFailed: "Could not load plants",
     addFailed: "Could not add the plant",
     months: [
@@ -114,7 +114,7 @@ const STRINGS = {
     care: "Doorlopend onderhoud",
     careOpen: "nu",
     careNow: "Doorlopend onderhoud",
-    source: "Bron van deze timing",
+    source: "Bron",
     loadFailed: "Kon de planten niet laden",
     addFailed: "Kon de plant niet toevoegen",
     months: [

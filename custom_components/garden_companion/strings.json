@@ -7,6 +7,9 @@
       }
     }
   },
+  "calendar_event": {
+    "prune": "Prune {name}"
+  },
   "entity": {
     "sensor": {
       "next_pruning": {

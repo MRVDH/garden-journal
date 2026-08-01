@@ -6,6 +6,10 @@ Home Assistant asks for. End dates are exclusive, following the iCal all-day
 convention, so a window running to 31 August ends on 1 September. The base class
 reschedules the entity's on/off state at each event's boundaries, which for
 all-day events fall at local midnight, so no clock is read here.
+
+An event's summary is translated, so a Dutch instance does not read "Prune Roos"
+above a Dutch description. The whole line including its word order comes from the
+translation files, since Dutch puts the verb last.
 """
 
 from __future__ import annotations
@@ -16,12 +20,21 @@ from typing import Any
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.translation import async_get_translations
 from homeassistant.util import dt as dt_util
 
+from .const import DOMAIN
 from .dataset import GardenCompanionConfigEntry
 from .models import Window
 from .resolver import Resolver, resolve_windows
 from .windows import next_pruning, occurrence_end, occurrences_in_range
+
+# The category is this integration's own, which `onboarding` does for its area and
+# dashboard names too. English is loaded first as a fallback and the user's
+# language overlays it, so a language file missing the key still reads sensibly.
+_SUMMARY_CATEGORY = "calendar_event"
+_SUMMARY_KEY = f"component.{DOMAIN}.{_SUMMARY_CATEGORY}.prune"
+_SUMMARY_FALLBACK = "Prune {name}"
 
 
 def _description(window: Window, language: str) -> str:
@@ -31,6 +44,19 @@ def _description(window: Window, language: str) -> str:
         or window.description.get("en")
         or next(iter(window.description.values()), "")
     )
+
+
+async def _summary_template(hass: HomeAssistant) -> str:
+    """Return the localised "Prune {name}" template for an event summary.
+
+    Fetched once at setup because `event` is a sync property and translations load
+    asynchronously. A language change needs a restart, which is already true of
+    entity names.
+    """
+    translations = await async_get_translations(
+        hass, hass.config.language, _SUMMARY_CATEGORY, {DOMAIN}
+    )
+    return translations.get(_SUMMARY_KEY, _SUMMARY_FALLBACK)
 
 
 async def async_setup_entry(
@@ -44,7 +70,8 @@ async def async_setup_entry(
         (subentry.subentry_id, subentry.title, dict(subentry.data))
         for subentry in entry.get_subentries_of_type("plant")
     ]
-    async_add_entities([PruningCalendar(entry.entry_id, plants, resolver)])
+    summary = await _summary_template(hass)
+    async_add_entities([PruningCalendar(entry.entry_id, plants, resolver, summary)])
 
 
 class PruningCalendar(CalendarEntity):
@@ -59,10 +86,12 @@ class PruningCalendar(CalendarEntity):
         entry_id: str,
         plants: list[tuple[str, str, dict[str, Any]]],
         resolver: Resolver,
+        summary: str,
     ) -> None:
         """Set up the calendar over a snapshot of the current plants."""
         self._plants = plants
         self._resolver = resolver
+        self._summary = summary
         self._attr_unique_id = f"{entry_id}_calendar"
 
     def _plant_windows(self) -> list[tuple[str, str, list[Window]]]:
@@ -82,7 +111,7 @@ class PruningCalendar(CalendarEntity):
         return CalendarEvent(
             start=start,
             end=end,
-            summary=f"Prune {title}",
+            summary=self._summary.format(name=title),
             description=_description(window, self.hass.config.language),
             uid=f"{subentry_id}-{index}-{start.year}",
         )
