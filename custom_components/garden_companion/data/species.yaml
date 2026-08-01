@@ -81,7 +81,7 @@
   species: arborescens
   names:
     nl: [Sneeuwbalhortensia, Annabelle]
-    en: [Smooth hydrangea]
+    en: [Smooth hydrangea, Annabelle]
   source: https://groei.nl/artikel/hortensia-snoeien
   image:
     url: https://commons.wikimedia.org/wiki/Special:FilePath/Hydrangea%20arborescens%20Annabelle%20over%20a%20fence.jpg?width=600
@@ -286,7 +286,7 @@
   names:
     nl: [Laurierkers, Laurier]
     en: [Cherry laurel]
-  source: https://groei.nl/artikel/laurierkers-prunus-laurocerasus-snoeien-en-verjongen-video
+  source: https://www.directplant.nl/tuintips/laurier-snoeien/
   image:
     url: https://commons.wikimedia.org/wiki/Special:FilePath/Ruhland,%20Goethestr.%20bei%20Lange%20Str.%208a,%20Lorbeerkirschen-Hecke,%20Vorwinter,%2001.jpg?width=600
     author: Wilhelm Zimmerling PAR
@@ -298,12 +298,12 @@
         nl: >-
           Beste snoeien met een snoeischaar. Zo worden de bladeren niet
           beschadigd en blijft de hele haag er fraai uitzien. Net voor de takken
-          uit gaan lopen. Verwijder in het ook dode takken en takken met bruine
-          bladeren.
+          uit gaan lopen. Verwijder in het voorjaar ook dode takken en takken
+          met bruine bladeren.
         en: >-
           Best cut with secateurs. That leaves the leaves undamaged and keeps the
-          whole hedge looking good. Do it just before the shoots break. Take out
-          dead stems and stems with brown leaves as well.
+          whole hedge looking good. Do it just before the shoots break. In spring,
+          take out dead stems and stems with brown leaves as well.
     - when: { start: "08-15", end: "09-15" }
       description:
         nl: >-
@@ -330,12 +330,12 @@
         nl: >-
           Beste snoeien met een snoeischaar. Zo worden de bladeren niet
           beschadigd en blijft de hele haag er fraai uitzien. Net voor de takken
-          uit gaan lopen. Verwijder in het ook dode takken en takken met bruine
-          bladeren.
+          uit gaan lopen. Verwijder in het voorjaar ook dode takken en takken
+          met bruine bladeren.
         en: >-
           Best cut with secateurs. That leaves the leaves undamaged and keeps the
-          whole hedge looking good. Do it just before the shoots break. Take out
-          dead stems and stems with brown leaves as well.
+          whole hedge looking good. Do it just before the shoots break. In spring,
+          take out dead stems and stems with brown leaves as well.
     - when: { start: "08-15", end: "09-15" }
       description:
         nl: >-
