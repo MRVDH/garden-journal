@@ -74,6 +74,9 @@ const STRINGS = {
     timingBorrow: "Prune it like another plant",
     timingOwn: "Write the timing myself",
     borrowLabel: "Pruned like",
+    borrowSearch: "Search a plant",
+    noMatches: "No plant matched that name",
+    needBorrow: "Pick a plant from the results",
     windowStart: "From",
     windowEnd: "Until",
     windowWhat: "What to do",
@@ -141,6 +144,9 @@ const STRINGS = {
     timingBorrow: "Snoei hem als een andere plant",
     timingOwn: "Zelf de timing invullen",
     borrowLabel: "Gesnoeid als",
+    borrowSearch: "Zoek een plant",
+    noMatches: "Geen plant gevonden met die naam",
+    needBorrow: "Kies een plant uit de resultaten",
     windowStart: "Van",
     windowEnd: "Tot",
     windowWhat: "Wat te doen",
@@ -488,14 +494,45 @@ class GardenCompanionPanel extends HTMLElement {
           border-radius: 8px;
         }
         .modes { display: flex; flex-direction: column; gap: 6px; }
+        .borrow-input {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 10px 12px;
+          font: inherit;
+          font-size: 15px;
+          color: var(--primary-text-color, #212121);
+          background: var(--card-background-color, #fff);
+          border: 1px solid var(--divider-color, #bdbdbd);
+          border-radius: 8px;
+        }
+        .results {
+          display: flex;
+          flex-direction: column;
+          border: 1px solid var(--divider-color, #e0e0e0);
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        .results .note { margin: 0; padding: 10px 12px; }
+        button.hit {
+          font: inherit;
+          font-size: 14px;
+          text-align: left;
+          padding: 10px 12px;
+          border: none;
+          cursor: pointer;
+          background: transparent;
+          color: var(--primary-text-color, #212121);
+        }
+        button.hit:hover { background: var(--secondary-background-color, #eee); }
         .mode { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
         .windows-editor { display: flex; flex-direction: column; gap: 10px; }
         .window-row {
+          position: relative;
           display: flex;
           flex-wrap: wrap;
           align-items: flex-end;
           gap: 8px;
-          padding: 10px;
+          padding: 10px 44px 10px 10px;
           border: 1px solid var(--divider-color, #e0e0e0);
           border-radius: 10px;
         }
@@ -513,16 +550,23 @@ class GardenCompanionPanel extends HTMLElement {
           border: 1px solid var(--divider-color, #bdbdbd);
           border-radius: 8px;
         }
+        /* Top right of its own box, so it reads as belonging to that period. */
         button.drop {
-          font-size: 20px;
+          position: absolute;
+          top: 6px;
+          right: 6px;
+          font-size: 18px;
           line-height: 1;
-          padding: 4px 10px;
+          width: 30px;
+          height: 30px;
+          padding: 0;
           border: none;
-          border-radius: 8px;
+          border-radius: 50%;
           cursor: pointer;
           background: transparent;
           color: var(--error-color, #db4437);
         }
+        button.drop:hover { background: rgba(219,68,55,.12); }
         button.add-window {
           align-self: flex-start;
           font: inherit;
@@ -1228,19 +1272,8 @@ class GardenCompanionPanel extends HTMLElement {
     choice.append(choiceLabel, modes);
     content.appendChild(choice);
 
-    const borrowBox = document.createElement("div");
-    borrowBox.className = "field";
-    const borrowLabel = document.createElement("label");
-    borrowLabel.textContent = this._t("borrowLabel");
-    const borrowSelect = document.createElement("select");
-    for (const plant of this._plants) {
-      const option = document.createElement("option");
-      option.value = plant.key;
-      option.textContent = `${plant.common} (${plant.botanical})`;
-      borrowSelect.appendChild(option);
-    }
-    borrowBox.append(borrowLabel, borrowSelect);
-    content.appendChild(borrowBox);
+    const borrow = this._borrowPicker();
+    content.appendChild(borrow.wrap);
 
     const ownBox = document.createElement("div");
     ownBox.className = "windows-editor";
@@ -1249,9 +1282,13 @@ class GardenCompanionPanel extends HTMLElement {
     const addRow = document.createElement("button");
     addRow.className = "secondary add-window";
     addRow.textContent = this._t("addWindow");
-    addRow.addEventListener("click", () => rows.appendChild(this._windowRow(rows)));
+    addRow.addEventListener("click", () => {
+      rows.appendChild(this._windowRow(rows));
+      this._syncWindowRows(rows);
+    });
     ownBox.append(rows, addRow);
     rows.appendChild(this._windowRow(rows));
+    this._syncWindowRows(rows);
     content.appendChild(ownBox);
 
     const source = this._textField(this._t("sourceLabel"), "");
@@ -1266,7 +1303,7 @@ class GardenCompanionPanel extends HTMLElement {
     const swap = () => {
       const own = ownMode.input.checked;
       ownBox.hidden = !own;
-      borrowBox.hidden = own;
+      borrow.wrap.hidden = own;
     };
     borrowMode.input.addEventListener("change", swap);
     ownMode.input.addEventListener("change", swap);
@@ -1285,7 +1322,7 @@ class GardenCompanionPanel extends HTMLElement {
         name: name.input.value,
         botanical: botanical.input.value,
         own: ownMode.input.checked,
-        borrowKey: borrowSelect.value,
+        borrowKey: borrow.key(),
         rows,
         source: source.input.value,
         imageUrl: image.input.value,
@@ -1302,6 +1339,79 @@ class GardenCompanionPanel extends HTMLElement {
     };
     window.addEventListener("keydown", this._escape);
     setTimeout(() => name.input.focus(), 0);
+  }
+
+  /*
+   * Picking a plant to borrow timing from, by searching rather than by listing.
+   * The dataset is meant to grow, so the search runs on the server and only a
+   * handful of matches come back. A key is only set by choosing a match, so a
+   * half-typed name cannot pass for a choice.
+   */
+  _borrowPicker() {
+    const wrap = document.createElement("div");
+    wrap.className = "field borrow";
+    const label = document.createElement("label");
+    label.textContent = this._t("borrowLabel");
+    const input = document.createElement("input");
+    input.type = "search";
+    input.className = "borrow-input";
+    input.placeholder = this._t("borrowSearch");
+    input.autocomplete = "off";
+    const results = document.createElement("div");
+    results.className = "results";
+    results.hidden = true;
+    wrap.append(label, input, results);
+
+    let chosen = null;
+    let timer = null;
+
+    const show = (plants) => {
+      results.textContent = "";
+      if (!plants.length) {
+        const none = document.createElement("p");
+        none.className = "note";
+        none.textContent = this._t("noMatches");
+        results.appendChild(none);
+      }
+      for (const plant of plants) {
+        const hit = document.createElement("button");
+        hit.className = "hit";
+        hit.textContent = `${plant.common} (${plant.botanical})`;
+        hit.addEventListener("click", () => {
+          chosen = plant.key;
+          input.value = `${plant.common} (${plant.botanical})`;
+          results.hidden = true;
+        });
+        results.appendChild(hit);
+      }
+      results.hidden = false;
+    };
+
+    const search = async () => {
+      const query = input.value.trim();
+      if (!query) {
+        results.hidden = true;
+        return;
+      }
+      try {
+        const result = await this._request({
+          type: "garden_companion/plants",
+          query,
+          limit: 8,
+        });
+        show(result.plants);
+      } catch {
+        results.hidden = true;
+      }
+    };
+
+    input.addEventListener("input", () => {
+      chosen = null;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(search, DEBOUNCE_MS);
+    });
+
+    return { wrap, key: () => chosen };
   }
 
   _textField(labelText, hintText) {
@@ -1380,12 +1490,20 @@ class GardenCompanionPanel extends HTMLElement {
     drop.setAttribute("aria-label", this._t("removeWindow"));
     drop.textContent = "×";
     drop.addEventListener("click", () => {
-      if (container.querySelectorAll(".window-row").length > 1) row.remove();
+      row.remove();
+      this._syncWindowRows(container);
     });
 
     row.append(from.group, until.group, what, drop);
     row._fields = { from, until, what };
     return row;
+  }
+
+  /* The first period is the plant's timing, so only the extras can be dropped. */
+  _syncWindowRows(container) {
+    container.querySelectorAll(".window-row").forEach((row, index) => {
+      row.querySelector(".drop").hidden = index === 0;
+    });
   }
 
   async _addManual({ problem, name, botanical, own, borrowKey, rows, source, imageUrl }) {
@@ -1413,6 +1531,11 @@ class GardenCompanionPanel extends HTMLElement {
           fail("needWindow");
           return;
         }
+        const days = [Number(from.day.value), Number(until.day.value)];
+        if (days.some((day) => !Number.isInteger(day) || day < 1 || day > 31)) {
+          fail("badDate");
+          return;
+        }
         windows.push({
           start: `${pad(from.month.value)}-${pad(from.day.value)}`,
           end: `${pad(until.month.value)}-${pad(until.day.value)}`,
@@ -1428,7 +1551,7 @@ class GardenCompanionPanel extends HTMLElement {
       if (imageUrl.trim()) message.image_url = imageUrl.trim();
     } else {
       if (!borrowKey) {
-        fail("needWindow");
+        fail("needBorrow");
         return;
       }
       message.borrow_key = borrowKey;

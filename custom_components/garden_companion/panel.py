@@ -59,7 +59,7 @@ _COMPONENT = "garden-companion-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "15"
+_MODULE_VERSION = "16"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 
 # Set once the panel, views and commands are registered, so a config entry
