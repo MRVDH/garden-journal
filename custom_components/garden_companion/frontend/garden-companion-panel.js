@@ -393,7 +393,6 @@ class GardenCompanionPanel extends HTMLElement {
         .body { padding: 14px 14px 14px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
         .common { font-size: 16px; font-weight: 500; }
         .botanical { font-size: 13px; font-style: italic; color: var(--secondary-text-color, #727272); }
-        .hint { font-size: 12px; color: var(--secondary-text-color, #727272); }
         /* The detail dialog: room for the photo, the advice and a name field,
            which a 240px card could not give the input without squeezing it. */
         .backdrop {
@@ -967,13 +966,6 @@ class GardenCompanionPanel extends HTMLElement {
     botanical.textContent = plant.botanical;
     body.appendChild(botanical);
 
-    if (plant.distinguish) {
-      const hint = document.createElement("div");
-      hint.className = "hint";
-      hint.textContent = plant.distinguish;
-      body.appendChild(hint);
-    }
-
     card.appendChild(body);
     return card;
   }
@@ -1136,7 +1128,6 @@ class GardenCompanionPanel extends HTMLElement {
     this._openDialog({
       title: plant.common,
       botanical: plant.botanical,
-      hint: plant.distinguish,
       photoSrc: plant.photo,
       credit: plant.credit,
       windows: plant.windows,

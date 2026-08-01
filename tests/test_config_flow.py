@@ -32,9 +32,7 @@ def _row(
     windows: list[dict[str, Any]],
     *,
     species: str | None = None,
-    variant: str | None = None,
     names: dict[str, list[str]] | None = None,
-    distinguish: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build one record dict, defaulting the required fields."""
     row: dict[str, Any] = {
@@ -45,10 +43,6 @@ def _row(
     }
     if species is not None:
         row["species"] = species
-    if variant is not None:
-        row["variant"] = variant
-    if distinguish is not None:
-        row["distinguish"] = distinguish
     return row
 
 
@@ -110,7 +104,7 @@ async def test_add_a_dataset_plant(hass: HomeAssistant) -> None:
 
 
 async def test_the_first_step_lists_every_dataset_row(hass: HomeAssistant) -> None:
-    """The picker offers every row, labelled so variants of one genus differ."""
+    """The picker offers every row, labelled by common and botanical name, sorted."""
     entry = await _entry_with(
         hass,
         [
@@ -120,19 +114,11 @@ async def test_the_first_step_lists_every_dataset_row(hass: HomeAssistant) -> No
                 species="paniculata",
                 names={"nl": ["Pluimhortensia"], "en": ["Panicle hydrangea"]},
             ),
+            _row("Rosa", [_APRIL], names={"nl": ["Roos"], "en": ["Rose"]}),
             _row(
-                "Rosa",
-                [_APRIL],
-                variant="bush",
-                names={"nl": ["Roos"], "en": ["Rose"]},
-                distinguish={"nl": "Staat op zichzelf", "en": "Stands on its own"},
-            ),
-            _row(
-                "Rosa",
+                "Wisteria",
                 [_SUMMER],
-                variant="climber",
-                names={"nl": ["Klimroos"], "en": ["Climbing rose"]},
-                distinguish={"nl": "Tegen een muur", "en": "Trained against a wall"},
+                names={"nl": ["Blauwe regen"], "en": ["Wisteria"]},
             ),
         ],
     )
@@ -142,9 +128,9 @@ async def test_the_first_step_lists_every_dataset_row(hass: HomeAssistant) -> No
     options = result["data_schema"].schema[field].config["options"]
     labels = [option["label"] for option in options]
     assert labels == [
-        "Climbing rose (Rosa), Trained against a wall",
         "Panicle hydrangea (Hydrangea paniculata)",
-        "Rose (Rosa), Stands on its own",
+        "Rose (Rosa)",
+        "Wisteria",
     ]
 
 
@@ -297,7 +283,6 @@ async def test_manual_borrow_creates_a_plant(hass: HomeAssistant) -> None:
     assert data["windows_like"] == {
         "genus": "Wisteria",
         "species": None,
-        "variant": None,
     }
 
 

@@ -4,7 +4,7 @@
 # different licence from the code in this repository, which is MIT, so check it
 # before copying this file somewhere else.
 #
-# One record per plant, keyed on (genus, species, variant). Windows are inline.
+# One record per plant, keyed on (genus, species). Windows are inline.
 # when.start / when.end are quoted "MM-DD" strings on purpose: PyYAML is YAML 1.1,
 # so bare dates and unquoted no/yes/on/off would parse as the wrong type. See
 # plan.md sections 2.3 to 2.5 for the schema.

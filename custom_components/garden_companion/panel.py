@@ -59,7 +59,7 @@ _COMPONENT = "garden-companion-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "16"
+_MODULE_VERSION = "17"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 
 # Set once the panel, views and commands are registered, so a config entry
@@ -104,12 +104,10 @@ def _thumbnail(url: str) -> str:
 
 
 def _botanical(species: Species) -> str:
-    """Return the botanical name, variant included."""
+    """Return the botanical name."""
     name = species.genus
     if species.species:
         name += f" {species.species}"
-    if species.variant:
-        name += f" ({species.variant})"
     return name
 
 
@@ -146,11 +144,6 @@ def _as_json(species: Species, language: str, added: int) -> dict[str, Any]:
         "botanical": _botanical(species),
         "photo": f"{_PHOTO_URL}/{row_value(species)}" if species.image else None,
         "credit": _credit(species),
-        "distinguish": (
-            species.distinguish.get(language) or species.distinguish.get("en")
-            if species.distinguish
-            else None
-        ),
         "windows": _windows(species.windows, language),
         "source": species.source,
         "added": added,
@@ -188,11 +181,7 @@ def _added_counts(entry: GardenCompanionConfigEntry) -> Counter[str]:
         data = subentry.data
         if not data.get("in_dataset", True):
             continue
-        parts = (
-            data["genus"],
-            data.get("species") or "",
-            data.get("variant") or "",
-        )
+        parts = (data["genus"], data.get("species") or "")
         counts["dataset:" + "|".join(parts)] += 1
     return counts
 
@@ -264,9 +253,7 @@ def _garden_plant(
         "subentry_id": subentry.subentry_id,
         "name": subentry.title,
         "botanical": " ".join(
-            part
-            for part in (data["genus"], data.get("species"), data.get("variant"))
-            if part
+            part for part in (data["genus"], data.get("species")) if part
         ),
         "image_entity": _image_entity(hass, entry.entry_id, subentry.subentry_id),
         "needs_attention": repair_reason(data, resolver) is not None,
@@ -281,7 +268,7 @@ def _garden_plant(
     }
 
     row = (
-        resolver.resolve(data["genus"], data.get("species"), data.get("variant"))
+        resolver.resolve(data["genus"], data.get("species"))
         if data.get("in_dataset", True)
         else None
     )

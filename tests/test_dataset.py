@@ -34,7 +34,7 @@ def test_valid_row_builds_one_species() -> None:
     assert errors == []
     assert len(species) == 1
     assert isinstance(species[0], Species)
-    assert species[0].key == ("Hydrangea", "paniculata", None)
+    assert species[0].key == ("Hydrangea", "paniculata")
     assert species[0].windows[0] == Window(
         start="02-15",
         end="03-31",
@@ -116,7 +116,7 @@ def test_window_missing_dutch_description_is_rejected() -> None:
 
 
 def test_duplicate_key_is_rejected() -> None:
-    """(genus, species, variant) must be unique (2.3)."""
+    """(genus, species) must be unique (2.3)."""
     _, errors = build_dataset([_valid_row(), _valid_row()])
     assert any("duplicate" in error.lower() for error in errors)
 
@@ -129,42 +129,35 @@ def test_disallowed_language_is_rejected() -> None:
     assert any("allowlist" in error for error in errors)
 
 
-def test_variant_requires_distinguish() -> None:
-    """A variant row without distinguish is rejected (2.8)."""
+def test_a_genus_row_needs_no_species() -> None:
+    """A row without a species is the genus-level answer, keyed on the genus alone."""
     row = {
         "genus": "Rosa",
-        "variant": "bush",
         "names": {"nl": ["Roos"], "en": ["Rose"]},
         "source": "https://example.org/rozen",
         "windows": [
             {
-                "when": {"start": "02-15", "end": "03-31"},
-                "description": {"nl": "Snoei.", "en": "Prune."},
-            }
-        ],
-    }
-    _, errors = build_dataset([row])
-    assert any("distinguish" in error for error in errors)
-
-
-def test_variant_with_distinguish_is_valid() -> None:
-    """A variant row with distinguish.en parses cleanly."""
-    row = {
-        "genus": "Rosa",
-        "variant": "bush",
-        "names": {"nl": ["Roos"], "en": ["Rose"]},
-        "distinguish": {"en": "Stands on its own", "nl": "Staat op zichzelf"},
-        "source": "https://example.org/rozen",
-        "windows": [
-            {
-                "when": {"start": "02-15", "end": "03-31"},
+                "when": {"start": "03-01", "end": "03-31"},
                 "description": {"nl": "Snoei.", "en": "Prune."},
             }
         ],
     }
     species, errors = build_dataset([row])
     assert errors == []
-    assert species[0].key == ("Rosa", None, "bush")
+    assert species[0].key == ("Rosa", None)
+
+
+def test_an_unknown_field_is_ignored() -> None:
+    """A field the schema does not know is passed over rather than failing the row.
+
+    The dataset outlives any one version of the code, so an older install reading a
+    newer file keeps working.
+    """
+    row = _valid_row()
+    row["variant"] = "bush"
+    species, errors = build_dataset([row])
+    assert errors == []
+    assert species[0].key == ("Hydrangea", "paniculata")
 
 
 def test_image_without_url_is_rejected() -> None:

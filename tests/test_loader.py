@@ -31,7 +31,7 @@ def test_load_valid_file(tmp_path: Path) -> None:
     path.write_text(_VALID, encoding="utf-8")
     species = _load(path)
     assert len(species) == 1
-    assert species[0].key == ("Hydrangea", "paniculata", None)
+    assert species[0].key == ("Hydrangea", "paniculata")
 
 
 def test_missing_file_returns_empty(tmp_path: Path) -> None:

@@ -21,7 +21,6 @@ def _plant_data(genus: str, species: str | None) -> dict[str, Any]:
     return {
         "genus": genus,
         "species": species,
-        "variant": None,
         "display_name": "unused",
         "matched_on": "species",
         "in_dataset": True,

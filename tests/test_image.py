@@ -33,7 +33,6 @@ def _dataset_plant(genus: str, species: str | None) -> dict[str, Any]:
     return {
         "genus": genus,
         "species": species,
-        "variant": None,
         "display_name": "unused",
         "matched_on": "species" if species else "genus",
         "in_dataset": True,
@@ -49,7 +48,6 @@ def _manual_plant(image_url: str | None) -> dict[str, Any]:
     return {
         "genus": "Quercus",
         "species": "robur",
-        "variant": None,
         "display_name": "unused",
         "matched_on": "manual",
         "in_dataset": False,

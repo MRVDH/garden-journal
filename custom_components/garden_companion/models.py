@@ -45,22 +45,20 @@ class Window:
 
 @dataclass(frozen=True)
 class Species:
-    """One dataset record, keyed on (genus, species, variant) (2.3)."""
+    """One dataset record, keyed on (genus, species) (2.3)."""
 
     genus: str
     species: str | None
-    variant: str | None
     names: dict[str, list[str]]
     windows: tuple[Window, ...]
     source: str
     synonyms: tuple[str, ...] = ()
-    distinguish: dict[str, str] | None = None
     image: Image | None = None
 
     @property
-    def key(self) -> tuple[str, str | None, str | None]:
+    def key(self) -> tuple[str, str | None]:
         """The uniqueness key for this record."""
-        return (self.genus, self.species, self.variant)
+        return (self.genus, self.species)
 
 
 def _window_signature(window: Window) -> tuple[str, str, tuple[tuple[str, str], ...]]:
@@ -204,10 +202,6 @@ def _build_species(raw: object, index: int) -> tuple[Species | None, list[str]]:
     if species is not None and (not isinstance(species, str) or not species):
         errors.append(f"{label}: species, when present, must be a non-empty string")
 
-    variant = raw.get("variant")
-    if variant is not None and (not isinstance(variant, str) or not variant):
-        errors.append(f"{label}: variant, when present, must be a non-empty string")
-
     errors.extend(
         _lang_map_errors(
             raw.get("names"),
@@ -234,34 +228,6 @@ def _build_species(raw: object, index: int) -> tuple[Species | None, list[str]]:
             errors.extend(window_errors)
             if window is not None:
                 built_windows.append(window)
-
-    distinguish = raw.get("distinguish")
-    if isinstance(variant, str) and variant:
-        # Required on variant rows, and only `en` is mandated (2.8).
-        if distinguish is None:
-            errors.append(
-                f"{label}: distinguish is required when variant is set (at least en)"
-            )
-        else:
-            errors.extend(
-                _lang_map_errors(
-                    distinguish,
-                    "distinguish",
-                    label,
-                    values_are_lists=False,
-                    required_langs=("en",),
-                )
-            )
-    elif distinguish is not None:
-        errors.extend(
-            _lang_map_errors(
-                distinguish,
-                "distinguish",
-                label,
-                values_are_lists=False,
-                required_langs=(),
-            )
-        )
 
     built_image: Image | None = None
     image = raw.get("image")
@@ -296,12 +262,10 @@ def _build_species(raw: object, index: int) -> tuple[Species | None, list[str]]:
         Species(
             genus=genus,  # type: ignore[arg-type]
             species=species,
-            variant=variant,
             names=names,
             windows=tuple(built_windows),
             source=source,  # type: ignore[arg-type]
             synonyms=synonyms,
-            distinguish=dict(distinguish) if isinstance(distinguish, dict) else None,
             image=built_image,
         ),
         errors,

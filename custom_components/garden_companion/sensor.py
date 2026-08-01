@@ -97,6 +97,4 @@ class NextPruningSensor(PlantEntity, SensorEntity):
         parts = [self._data["genus"]]
         if self._data.get("species"):
             parts.append(self._data["species"])
-        if self._data.get("variant"):
-            parts.append(f"({self._data['variant']})")
         return " ".join(parts)

@@ -29,10 +29,8 @@ def _row(
     windows: list[dict[str, Any]],
     *,
     species: str | None = None,
-    variant: str | None = None,
     names: dict[str, list[str]] | None = None,
     synonyms: list[str] | None = None,
-    distinguish: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build one record dict, defaulting the required fields."""
     row: dict[str, Any] = {
@@ -43,12 +41,8 @@ def _row(
     }
     if species is not None:
         row["species"] = species
-    if variant is not None:
-        row["variant"] = variant
     if synonyms is not None:
         row["synonyms"] = synonyms
-    if distinguish is not None:
-        row["distinguish"] = distinguish
     return row
 
 
@@ -102,19 +96,12 @@ def test_resolve_falls_back_to_the_genus_row() -> None:
     assert match.genus == "Ligustrum"
 
 
-def test_resolve_variant() -> None:
-    """A variant key resolves to the variant row."""
-    resolver = _resolver(
-        _row(
-            "Rosa",
-            [_SPRING],
-            variant="bush",
-            distinguish={"en": "On its own", "nl": "Op zichzelf"},
-        )
-    )
-    match = resolver.resolve("Rosa", variant="bush")
-    assert match is not None
-    assert match.variant == "bush"
+def test_resolve_a_species_asked_for_by_genus_alone() -> None:
+    """Asking for a genus that only has a species row falls back to that row."""
+    resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
+    assert resolver.resolve("Hydrangea", "paniculata") is not None
+    # There is no bare Hydrangea row, so the genus on its own resolves to nothing.
+    assert resolver.resolve("Hydrangea") is None
 
 
 def test_resolve_no_match_returns_none() -> None:
@@ -256,7 +243,6 @@ def test_resolve_windows_for_a_dataset_plant() -> None:
     data = {
         "genus": "Hydrangea",
         "species": "paniculata",
-        "variant": None,
         "in_dataset": True,
         "windows": None,
         "windows_like": None,
@@ -272,10 +258,9 @@ def test_resolve_windows_for_a_borrowed_plant() -> None:
     data = {
         "genus": "Quercus",
         "species": "robur",
-        "variant": None,
         "in_dataset": False,
         "windows": None,
-        "windows_like": {"genus": "Wisteria", "species": None, "variant": None},
+        "windows_like": {"genus": "Wisteria", "species": None},
     }
     windows = resolve_windows(data, resolver)
     assert windows is not None
@@ -288,7 +273,6 @@ def test_resolve_windows_for_an_authored_plant() -> None:
     data = {
         "genus": "Quercus",
         "species": None,
-        "variant": None,
         "in_dataset": False,
         "windows_like": None,
         "windows": [
@@ -305,7 +289,6 @@ def test_resolve_windows_unknown_returns_none() -> None:
     data = {
         "genus": "Quercus",
         "species": "robur",
-        "variant": None,
         "in_dataset": True,
         "windows": None,
         "windows_like": None,
@@ -325,7 +308,6 @@ def test_resolve_photo_borrows_a_dataset_rows_image() -> None:
     data = {
         "genus": "Hydrangea",
         "species": "paniculata",
-        "variant": None,
         "in_dataset": True,
     }
     assert resolve_photo(data, resolver) == Image(
@@ -339,7 +321,6 @@ def test_resolve_photo_none_when_the_row_has_no_image() -> None:
     data = {
         "genus": "Hydrangea",
         "species": "paniculata",
-        "variant": None,
         "in_dataset": True,
     }
     assert resolve_photo(data, resolver) is None
@@ -365,7 +346,6 @@ def test_repair_reason_none_when_the_plant_resolves() -> None:
     data = {
         "genus": "Hydrangea",
         "species": "paniculata",
-        "variant": None,
         "in_dataset": True,
     }
     assert repair_reason(data, resolver) is None
@@ -374,7 +354,7 @@ def test_repair_reason_none_when_the_plant_resolves() -> None:
 def test_repair_reason_missing_row_for_a_gone_key() -> None:
     """A stored key that matches no row reports missing_row."""
     resolver = _resolver(_row("Hydrangea", [_SPRING], species="paniculata"))
-    data = {"genus": "Quercus", "species": "robur", "variant": None, "in_dataset": True}
+    data = {"genus": "Quercus", "species": "robur", "in_dataset": True}
     assert repair_reason(data, resolver) == "missing_row"
 
 
@@ -384,7 +364,7 @@ def test_repair_reason_ambiguous_genus() -> None:
         _row("Hydrangea", [_APR_HARD], species="paniculata"),
         _row("Hydrangea", [_APR_LIGHT], species="aspera"),
     )
-    data = {"genus": "Hydrangea", "species": None, "variant": None, "in_dataset": True}
+    data = {"genus": "Hydrangea", "species": None, "in_dataset": True}
     assert repair_reason(data, resolver) == "ambiguous_genus"
 
 
@@ -394,6 +374,6 @@ def test_repair_reason_missing_borrow() -> None:
     data = {
         "in_dataset": False,
         "windows": None,
-        "windows_like": {"genus": "Wisteria", "species": None, "variant": None},
+        "windows_like": {"genus": "Wisteria", "species": None},
     }
     assert repair_reason(data, resolver) == "missing_borrow"

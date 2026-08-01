@@ -71,17 +71,8 @@ def _default_display_name(species: Species, language: str) -> str:
     return " ".join(botanical)
 
 
-def _candidate_label(species: Species, language: str) -> str:
-    """Return a disambiguation label: the distinguish text, else botanical plus a name."""
-    if species.distinguish:
-        text = species.distinguish.get(language) or species.distinguish.get("en")
-        if text:
-            return text
-    return _borrow_label(species, language)
-
-
-def _borrow_label(species: Species, language: str) -> str:
-    """Label a plant in a picker: common name plus botanical name."""
+def _label(species: Species, language: str) -> str:
+    """Label a plant in a picker or a choice: common name plus botanical name."""
     botanical = species.genus
     if species.species:
         botanical += f" {species.species}"
@@ -91,15 +82,14 @@ def _borrow_label(species: Species, language: str) -> str:
 
 # Option values in the add picker. The prefix keeps them apart from a name the
 # user types, since the same field accepts both, and the key is the row's own
-# (genus, species, variant) so the custom panel can build the same value without
-# knowing anything about option ordering.
+# (genus, species) so the custom panel can build the same value without knowing
+# anything about option ordering.
 _ROW_PREFIX = "dataset:"
 
 
 def row_value(species: Species) -> str:
     """Return the picker value that identifies one dataset row."""
-    parts = (species.genus, species.species or "", species.variant or "")
-    return _ROW_PREFIX + "|".join(parts)
+    return _ROW_PREFIX + "|".join((species.genus, species.species or ""))
 
 
 def picked_row(value: str, resolver: Resolver) -> Species | None:
@@ -112,32 +102,13 @@ def picked_row(value: str, resolver: Resolver) -> Species | None:
     if not value.startswith(_ROW_PREFIX):
         return None
     parts = value.removeprefix(_ROW_PREFIX).split("|")
-    if len(parts) != 3 or not parts[0]:
+    if len(parts) != 2 or not parts[0]:
         return None
-    genus, species, variant = (part or None for part in parts)
-    row = resolver.resolve(genus, species, variant)
-    if row is None or (row.genus, row.species, row.variant) != (
-        genus,
-        species,
-        variant,
-    ):
+    genus, species = (part or None for part in parts)
+    row = resolver.resolve(genus, species)
+    if row is None or (row.genus, row.species) != (genus, species):
         return None
     return row
-
-
-def _picker_label(species: Species, language: str) -> str:
-    """Label a row in the add picker, telling variants of one genus apart.
-
-    Two rows of the same genus that differ only by variant would otherwise read
-    identically, so the distinguishing text is appended.
-    """
-    label = _borrow_label(species, language)
-    if not species.variant:
-        return label
-    hint = None
-    if species.distinguish:
-        hint = species.distinguish.get(language) or species.distinguish.get("en")
-    return f"{label}, {hint or species.variant}"
 
 
 def _distinct_by_timing(candidates: list[Species]) -> list[Species]:
@@ -159,12 +130,8 @@ def _parse_botanical(botanical: str) -> tuple[str, str | None]:
 
 
 def _matched_on(species: Species) -> str:
-    """Return how a dataset match resolved: variant, species or genus (3.2)."""
-    if species.variant:
-        return "variant"
-    if species.species:
-        return "species"
-    return "genus"
+    """Return how a dataset match resolved: species or genus (3.2)."""
+    return "species" if species.species else "genus"
 
 
 def _stored_plant(species: Species, display_name: str) -> dict[str, Any]:
@@ -172,7 +139,6 @@ def _stored_plant(species: Species, display_name: str) -> dict[str, Any]:
     return {
         "genus": species.genus,
         "species": species.species,
-        "variant": species.variant,
         "display_name": display_name,
         "matched_on": _matched_on(species),
         "in_dataset": True,
@@ -191,14 +157,12 @@ def _stored_borrow(
     return {
         "genus": genus,
         "species": species,
-        "variant": None,
         "display_name": display_name,
         "matched_on": "manual",
         "in_dataset": False,
         "windows_like": {
             "genus": borrowed.genus,
             "species": borrowed.species,
-            "variant": borrowed.variant,
         },
         "windows": None,
         "source": None,
@@ -253,7 +217,6 @@ def _stored_author(
     return {
         "genus": genus,
         "species": species,
-        "variant": None,
         "display_name": display_name,
         "matched_on": "manual",
         "in_dataset": False,
@@ -299,7 +262,6 @@ class PlantSubentryFlow(ConfigSubentryFlow):
                 **subentry.data,
                 "genus": species.genus,
                 "species": species.species,
-                "variant": species.variant,
                 "matched_on": _matched_on(species),
                 "in_dataset": True,
                 "windows_like": None,
@@ -335,9 +297,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     def _picker_rows(self) -> list[Species]:
         """Return every dataset row, ordered by the label the picker shows."""
         language = self.hass.config.language
-        return sorted(
-            self._species(), key=lambda row: _picker_label(row, language).casefold()
-        )
+        return sorted(self._species(), key=lambda row: _label(row, language).casefold())
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -368,7 +328,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
 
         language = self.hass.config.language
         options = [
-            SelectOptionDict(value=row_value(row), label=_picker_label(row, language))
+            SelectOptionDict(value=row_value(row), label=_label(row, language))
             for row in rows
         ]
         return self.async_show_form(
@@ -399,9 +359,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
 
         language = self.hass.config.language
         options = [
-            SelectOptionDict(
-                value=str(index), label=_candidate_label(candidate, language)
-            )
+            SelectOptionDict(value=str(index), label=_label(candidate, language))
             for index, candidate in enumerate(candidates)
         ]
         if self.source != SOURCE_RECONFIGURE:
@@ -478,7 +436,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
 
         language = self.hass.config.language
         options = [
-            SelectOptionDict(value=str(index), label=_borrow_label(row, language))
+            SelectOptionDict(value=str(index), label=_label(row, language))
             for index, row in enumerate(species)
         ]
         return self.async_show_form(

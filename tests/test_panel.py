@@ -27,8 +27,8 @@ from pytest_homeassistant_custom_component.typing import (
 from custom_components.garden_companion.const import DOMAIN
 from custom_components.garden_companion.panel import _MAX_LIMIT
 
-_HYDRANGEA = "dataset:Hydrangea|paniculata|"
-_WISTERIA = "dataset:Wisteria||"
+_HYDRANGEA = "dataset:Hydrangea|paniculata"
+_WISTERIA = "dataset:Wisteria|"
 _JPEG = b"\xff\xd8\xff\xe0panel"
 
 
@@ -37,7 +37,6 @@ def _plant(genus: str, species: str | None) -> dict[str, Any]:
     return {
         "genus": genus,
         "species": species,
-        "variant": None,
         "display_name": "unused",
         "matched_on": "species" if species else "genus",
         "in_dataset": True,
@@ -225,7 +224,7 @@ async def test_add_manual_plant_borrowing_timing(
             "type": f"{DOMAIN}/add_manual_plant",
             "name": "De taxus",
             "botanical": "Taxus baccata",
-            "borrow_key": "dataset:Ligustrum||",
+            "borrow_key": "dataset:Ligustrum|",
         }
     )
     assert (await client.receive_json())["success"]
@@ -235,7 +234,6 @@ async def test_add_manual_plant_borrowing_timing(
     assert subentry.data["windows_like"] == {
         "genus": "Ligustrum",
         "species": None,
-        "variant": None,
     }
     # The borrowed timing drives the sensor, so it has a date.
     state = hass.states.get("sensor.de_taxus_next_pruning")
@@ -286,7 +284,7 @@ async def test_add_manual_plant_needs_one_kind_of_timing(
             "type": f"{DOMAIN}/add_manual_plant",
             "name": "Nope",
             "botanical": "Quercus robur",
-            "borrow_key": "dataset:Ligustrum||",
+            "borrow_key": "dataset:Ligustrum|",
             "windows": [{"start": "05-01", "end": "05-31", "description": "Snoei"}],
         }
     )
@@ -438,36 +436,31 @@ async def test_plants_searches_by_a_common_name(
     keys = {plant["key"] for plant in result["plants"]}
     assert keys == {
         _HYDRANGEA,
-        "dataset:Hydrangea|arborescens|",
-        "dataset:Hydrangea|macrophylla|",
-        "dataset:Hydrangea|aspera|",
+        "dataset:Hydrangea|arborescens",
+        "dataset:Hydrangea|macrophylla",
+        "dataset:Hydrangea|aspera",
     }
     assert result["total"] == 4
 
 
-async def test_a_variant_row_reports_its_distinguishing_text() -> None:
-    """A variant row carries the text that tells it from its siblings.
-
-    No row in the packaged dataset uses a variant, so the field is exercised with a
-    row built here.
-    """
+async def test_a_row_names_itself_in_the_users_language() -> None:
+    """A card carries the common name for the language, falling back to English."""
     from custom_components.garden_companion.models import Species
     from custom_components.garden_companion.panel import _as_json
 
     row = Species(
         genus="Rosa",
         species=None,
-        variant="climber",
-        names={"en": ["Climbing rose"], "nl": ["Klimroos"]},
+        names={"en": ["Rose"], "nl": ["Roos"]},
         windows=(),
         source="https://example.test",
-        distinguish={"en": "Trained against a wall", "nl": "Tegen een muur"},
     )
 
-    assert _as_json(row, "nl", 0)["distinguish"] == "Tegen een muur"
-    assert _as_json(row, "en", 0)["distinguish"] == "Trained against a wall"
-    assert _as_json(row, "de", 0)["distinguish"] == "Trained against a wall"
-    assert _as_json(row, "nl", 0)["botanical"] == "Rosa (climber)"
+    assert _as_json(row, "nl", 0)["common"] == "Roos"
+    assert _as_json(row, "en", 0)["common"] == "Rose"
+    assert _as_json(row, "de", 0)["common"] == "Rose"
+    assert _as_json(row, "nl", 0)["botanical"] == "Rosa"
+    assert _as_json(row, "nl", 0)["key"] == "dataset:Rosa|"
 
 
 async def test_plants_pages_through_the_dataset(
@@ -550,7 +543,7 @@ async def test_add_plant_rejects_an_unknown_key(
     entry = await _setup(hass)
     client = await hass_ws_client(hass)
     await client.send_json_auto_id(
-        {"type": f"{DOMAIN}/add_plant", "key": "dataset:Quercus|robur|"}
+        {"type": f"{DOMAIN}/add_plant", "key": "dataset:Quercus|robur"}
     )
     response = await client.receive_json()
 
@@ -634,7 +627,7 @@ async def test_photo_proxy_unknown_plant_is_not_found(
     await _setup(hass)
     client = await hass_client()
 
-    response = await client.get(f"/api/{DOMAIN}/photo/dataset:Quercus|robur|")
+    response = await client.get(f"/api/{DOMAIN}/photo/dataset:Quercus|robur")
     assert response.status == 404
 
 
@@ -662,7 +655,6 @@ async def test_credit_joins_author_and_licence() -> None:
         return Species(
             genus="Test",
             species=None,
-            variant=None,
             names={"en": ["Test"]},
             windows=(),
             source="https://example.test",

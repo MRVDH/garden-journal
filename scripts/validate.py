@@ -36,7 +36,7 @@ DEFAULT_PATH = _PACKAGE / "data" / "species.yaml"
 
 def _key(species: Species) -> str:
     """Return a readable key for one record."""
-    return " ".join(p for p in (species.genus, species.species, species.variant) if p)
+    return " ".join(p for p in (species.genus, species.species) if p)
 
 
 def duplicate_groups(dataset: list[Species]) -> list[list[str]]:
