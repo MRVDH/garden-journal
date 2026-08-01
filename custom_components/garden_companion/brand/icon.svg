@@ -4,19 +4,35 @@
        icon.png (256px) and icon@2x.png (512px). Flat shapes and a small palette,
        so it stays readable at 256px: a leaf being cut by a pair of secateurs.
        Deliberately unlike Home Assistant's own mark, which would suggest this is
-       an official integration. -->
+       an official integration.
+
+       The artwork is drawn in its own frame and the group below shifts it so it
+       sits centred on the canvas: margins measure 33 left, 33 right, 36 top, 37
+       bottom. Re-measure after moving anything, since the eye does not catch a
+       lopsided margin on a rounded square but it is visible once pointed out.
+
+       The leaf is an ovate blade tapering into a petiole, with a midrib that bows
+       rather than running straight. Veins were tried and dropped: Home Assistant
+       draws this at around 48px in the integration list, where they turned the
+       blade to mush, and the silhouette plus petiole plus midrib is what survives
+       being scaled down. -->
   <rect width="256" height="256" rx="56" fill="#23703F"/>
-  <path d="M 56 192 C 56 128 96 80 152 64 C 144 126 108 174 56 192 Z" fill="#A7E48F"/>
-  <path d="M 56 192 L 152 64" stroke="#5B9E56" stroke-width="8" stroke-linecap="round" fill="none"/>
-  <g fill="none" stroke-linecap="round">
-    <g stroke="#E9962F" stroke-width="26">
-      <path d="M 172 166 Q 152 200 140 222"/>
-      <path d="M 172 166 Q 204 196 214 214"/>
+  <g transform="translate(-4,-16)">
+    <path d="M 58 190 C 42 147 92 93 150 52 C 141 102 100 182 58 190 Z" fill="#A7E48F"/>
+    <g stroke="#5B9E56" fill="none" stroke-linecap="round">
+      <path d="M 42 206 Q 48 199 58 190" stroke-width="10"/>
+      <path d="M 58 190 Q 93 123 141 64" stroke-width="8"/>
     </g>
-    <g stroke="#F1F6F2" stroke-width="13">
-      <path d="M 176 170 Q 146 132 110 92"/>
-      <path d="M 176 170 Q 188 126 190 78"/>
+    <g fill="none" stroke-linecap="round">
+      <g stroke="#E9962F" stroke-width="26">
+        <path d="M 172 166 Q 152 200 140 222"/>
+        <path d="M 172 166 Q 204 196 214 214"/>
+      </g>
+      <g stroke="#F1F6F2" stroke-width="13">
+        <path d="M 176 170 Q 146 132 110 92"/>
+        <path d="M 176 170 Q 188 126 190 78"/>
+      </g>
     </g>
+    <circle cx="174" cy="168" r="10" fill="#B9C9BF"/>
   </g>
-  <circle cx="174" cy="168" r="10" fill="#B9C9BF"/>
 </svg>
