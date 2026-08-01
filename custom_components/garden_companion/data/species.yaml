@@ -26,10 +26,10 @@
     en: [Wisteria]
   source: https://groei.nl/artikel/blauweregen-snoeien-in-de-zomer
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Wisteria%20in%20bloom%20at%20Fleetwood%20Park%20(26981934121).png?width=600
-    author: waferboard
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/N2%20Wisteria4.jpg?width=600
+    author: nlamore
     licence: CC BY 2.0
-    page: https://commons.wikimedia.org/wiki/File:Wisteria_in_bloom_at_Fleetwood_Park_(26981934121).png
+    page: https://commons.wikimedia.org/wiki/File:N2_Wisteria4.jpg
   windows:
     - when: { start: "07-15", end: "08-31" }
       description:
@@ -84,10 +84,10 @@
     en: [Smooth hydrangea, Annabelle]
   source: https://groei.nl/artikel/hortensia-snoeien
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Hydrangea%20arborescens%20Annabelle%20over%20a%20fence.jpg?width=600
-    author: W.carter
-    licence: CC0
-    page: https://commons.wikimedia.org/wiki/File:Hydrangea_arborescens_Annabelle_over_a_fence.jpg
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/SpringSummer2009%20226.jpg?width=600
+    author: Keckler
+    licence: CC BY 3.0
+    page: https://commons.wikimedia.org/wiki/File:SpringSummer2009_226.jpg
   windows:
     - when: { start: "03-01", end: "04-15" }
       description:
@@ -193,10 +193,10 @@
     en: [Oxeye daisy]
   source: https://tuiniertijd.nl/margriet-snoeien/
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Leucanthemum%20vulgare%20-%20Stadtgarten%20Karlsruhe%2001.jpg?width=600
-    author: H. Zell
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Leucanthemum%20vulgare%20%27Filigran%27%20Flower%202200px.jpg?width=600
+    author: Derek Ramsey (Ram-Man), co-attribution to the Chanticleer Garden
     licence: CC BY-SA 3.0
-    page: https://commons.wikimedia.org/wiki/File:Leucanthemum_vulgare_-_Stadtgarten_Karlsruhe_01.jpg
+    page: https://commons.wikimedia.org/wiki/File:Leucanthemum_vulgare_%27Filigran%27_Flower_2200px.jpg
   windows:
     - when: { start: "03-01", end: "03-31" }
       description:
@@ -230,10 +230,10 @@
     en: [Japanese holly, Box-leaved holly]
   source: https://www.ilexcrenata.nl/blog/ilex-crenata-snoeien/
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Laurelhurst%20Park,%20Portland%20-%20Japanese%20Holly%202012.JPG?width=600
-    author: Another Believer
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Ilex%20Crenata2.jpg?width=600
+    author: Raul654
     licence: CC BY-SA 3.0
-    page: https://commons.wikimedia.org/wiki/File:Laurelhurst_Park,_Portland_-_Japanese_Holly_2012.JPG
+    page: https://commons.wikimedia.org/wiki/File:Ilex_Crenata2.jpg
   windows:
     - when: { start: "05-15", end: "06-15" }
       description:
@@ -279,6 +279,41 @@
         en: >-
           Shear a second time in late summer so the cuts close before winter. Do
           not trim later than this; soft new shoots would freeze.
+
+# A clipped ball rather than a hedge, and cut back harder in spring than the
+# hedge is, which is why it is its own row. The bare Ligustrum row above still
+# answers on its own, so typing the genus is not turned into a question.
+- genus: Ligustrum
+  species: delavayanum
+  synonyms: [Ligustrum jonandrum]
+  names:
+    nl: [Bolliguster, Bolboom liguster]
+    en: [Delavay privet]
+  source: https://www.directplant.nl/bolliguster-ligustrum-delavayanum.html
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Ligustrum%20delavayanum%2001.jpg?width=600
+    author: FreCha
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Ligustrum_delavayanum_01.jpg
+  windows:
+    - when: { start: "04-01", end: "05-15" }
+      description:
+        nl: >-
+          Snoei in het voorjaar terug tot dicht op het raamwerk, tot ongeveer
+          tien centimeter van de stam, zodat de bol weer strak staat. Wacht tot
+          het niet meer vriest; hij is wintergroen en verdraagt vormsnoei goed.
+        en: >-
+          In spring, cut back close to the framework, to about ten centimetres
+          from the stem, so the ball reads as a ball again. Wait until the frosts
+          are done; it is evergreen and takes shaping well.
+    - when: { start: "09-01", end: "09-30" }
+      description:
+        nl: >-
+          Snoei in het najaar eventueel een tweede keer, maar minder diep: alleen
+          bijwerken wat uit de vorm loopt.
+        en: >-
+          Optionally cut a second time in autumn, but less deep: only tidy what
+          has grown out of shape.
 
 - genus: Prunus
   species: laurocerasus
@@ -444,10 +479,10 @@
     en: Stands on its own, not tied to a wall or arch
   source: https://groei.nl/artikel/roos-snoeien
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Rosa%20rugosa%20habitus.jpg?width=600
-    author: Gmihail
-    licence: CC BY-SA 3.0 RS
-    page: https://commons.wikimedia.org/wiki/File:Rosa_rugosa_habitus.jpg
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Light%20magenta%20rose%20Easton%20Lodge%20Gardens%20walled%20garden%20Little%20Easton%20Essex%2002.jpg?width=600
+    author: Acabashi
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Light_magenta_rose_Easton_Lodge_Gardens_walled_garden_Little_Easton_Essex_02.jpg
   windows:
     - when: { start: "03-01", end: "03-31" }
       description:
@@ -470,10 +505,10 @@
     en: Trained against a wall, fence or arch
   source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/klimroos-snoeien/
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Pale%20pink%20climbing%20rose%20at%20Harlow%20Museum%20%26%20Walled%20Gardens%2C%20Essex%2003.jpg?width=600
-    author: Acabashi
-    licence: CC BY-SA 4.0
-    page: https://commons.wikimedia.org/wiki/File:Pale_pink_climbing_rose_at_Harlow_Museum_%26_Walled_Gardens,_Essex_03.jpg
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Rosa%20New%20Dawn.jpg?width=600
+    author: Nockel12
+    licence: Public domain
+    page: https://commons.wikimedia.org/wiki/File:Rosa_New_Dawn.jpg
   windows:
     - when: { start: "12-01", end: "03-01" }
       description:

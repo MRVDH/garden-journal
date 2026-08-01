@@ -7,6 +7,7 @@ the suite stays offline.
 
 from __future__ import annotations
 
+import re
 import shutil
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,7 @@ from pytest_homeassistant_custom_component.typing import (
 )
 
 from custom_components.garden_companion.const import DOMAIN
+from custom_components.garden_companion.panel import _MAX_LIMIT
 
 _HYDRANGEA = "dataset:Hydrangea|paniculata|"
 _WISTERIA = "dataset:Wisteria||"
@@ -76,19 +78,24 @@ async def _setup(
 async def test_plants_lists_the_dataset(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """Every row comes back with the fields the grid renders."""
+    """Every row comes back with the fields the grid renders.
+
+    The row count is read from the answer rather than written down, so growing the
+    dataset does not break the test.
+    """
     await _setup(hass)
     client = await hass_ws_client(hass)
-    await client.send_json_auto_id({"type": f"{DOMAIN}/plants"})
+    await client.send_json_auto_id({"type": f"{DOMAIN}/plants", "limit": _MAX_LIMIT})
     result = (await client.receive_json())["result"]
 
-    assert result["total"] == 16
-    assert len(result["plants"]) == 16
+    assert result["total"] > 1
+    assert len(result["plants"]) == result["total"]
     hydrangea = next(p for p in result["plants"] if p["key"] == _HYDRANGEA)
     assert hydrangea["common"] == "Panicle hydrangea"
     assert hydrangea["botanical"] == "Hydrangea paniculata"
     assert hydrangea["photo"] == f"/api/{DOMAIN}/photo/{_HYDRANGEA}"
-    assert hydrangea["credit"] == "Hedwig Storch (CC BY-SA 3.0)"
+    # Composed from the row's author and licence, whichever photo it carries.
+    assert re.fullmatch(r".+ \(.+\)", hydrangea["credit"])
     assert hydrangea["added"] == 0
     # The dialog shows the windows and the source, so the card payload carries them.
     assert hydrangea["source"].startswith("https://groei.nl/")
@@ -167,7 +174,7 @@ async def test_garden_carries_what_the_dialog_shows(
 
     assert len(plant["windows"]) == 2
     assert plant["source"].startswith("https://groei.nl/")
-    assert plant["credit"] == "waferboard (CC BY 2.0)"
+    assert re.fullmatch(r".+ \(.+\)", plant["credit"])
     assert plant["in_dataset"] is True
 
 
@@ -442,18 +449,22 @@ async def test_plants_pages_through_the_dataset(
     await _setup(hass)
     client = await hass_ws_client(hass)
 
+    page = 5
     seen: list[str] = []
-    for offset in (0, 6, 12):
+    total = None
+    offset = 0
+    while total is None or offset < total:
         await client.send_json_auto_id(
-            {"type": f"{DOMAIN}/plants", "limit": 6, "offset": offset}
+            {"type": f"{DOMAIN}/plants", "limit": page, "offset": offset}
         )
         result = (await client.receive_json())["result"]
-        assert result["total"] == 16
+        total = result["total"]
         assert result["offset"] == offset
         seen.extend(plant["key"] for plant in result["plants"])
+        offset += page
 
-    assert len(seen) == 16
-    assert len(set(seen)) == 16
+    assert len(seen) == total
+    assert len(set(seen)) == total
 
 
 async def test_plants_past_the_end_is_empty(
@@ -462,11 +473,14 @@ async def test_plants_past_the_end_is_empty(
     """An offset beyond the last row returns nothing, which stops the scrolling."""
     await _setup(hass)
     client = await hass_ws_client(hass)
-    await client.send_json_auto_id({"type": f"{DOMAIN}/plants", "offset": 16})
+    await client.send_json_auto_id({"type": f"{DOMAIN}/plants"})
+    total = (await client.receive_json())["result"]["total"]
+
+    await client.send_json_auto_id({"type": f"{DOMAIN}/plants", "offset": total})
     result = (await client.receive_json())["result"]
 
     assert result["plants"] == []
-    assert result["total"] == 16
+    assert result["total"] == total
 
 
 async def test_add_plant_creates_the_plant_and_its_entities(
@@ -609,6 +623,30 @@ async def test_plants_reports_not_loaded_while_unloaded(
     response = await client.receive_json()
     assert not response["success"]
     assert response["error"]["code"] == "not_loaded"
+
+
+async def test_credit_joins_author_and_licence() -> None:
+    """A credit reads "author (licence)", and falls back to whichever is there."""
+    from custom_components.garden_companion.models import Image, Species
+    from custom_components.garden_companion.panel import _credit
+
+    def row(**image: str) -> Species:
+        return Species(
+            genus="Test",
+            species=None,
+            variant=None,
+            names={"en": ["Test"]},
+            windows=(),
+            source="https://example.test",
+            image=Image(url="https://example.test/x.jpg", **image) if image else None,
+        )
+
+    assert _credit(row(author="A. Photographer", licence="CC BY-SA 4.0")) == (
+        "A. Photographer (CC BY-SA 4.0)"
+    )
+    assert _credit(row(author="A. Photographer")) == "A. Photographer"
+    assert _credit(row(licence="CC0")) == "CC0"
+    assert _credit(row()) is None
 
 
 async def test_thumbnail_rewrites_the_width() -> None:
