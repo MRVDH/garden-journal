@@ -5,7 +5,7 @@ structure `yaml.safe_load` returns, so `scripts/validate.py` can run it in CI
 without installing Home Assistant, and the runtime loader in `dataset.py` reuses
 the same parsing. That keeps the schema in exactly one place.
 
-The dataclasses are the schema (2.3 to 2.5). `build_dataset` turns the parsed
+The dataclasses are the schema (2.3 to 2.5, 2.9). `build_dataset` turns the parsed
 YAML into a list of `Species`, collecting every problem it finds rather than
 raising on the first, so a contributor sees all of them at once.
 """
@@ -44,6 +44,20 @@ class Window:
 
 
 @dataclass(frozen=True)
+class Care:
+    """One continuous-care job: the season it runs in, plus localised prose (2.9).
+
+    Deadheading a rose is not a pruning window. It lasts months, it repeats, and
+    what triggers it is a spent flower rather than a date, so it carries a season
+    and advice instead of a job with a start.
+    """
+
+    start: str
+    end: str
+    description: dict[str, str]
+
+
+@dataclass(frozen=True)
 class Species:
     """One dataset record, keyed on (genus, species) (2.3)."""
 
@@ -54,6 +68,7 @@ class Species:
     source: str
     synonyms: tuple[str, ...] = ()
     image: Image | None = None
+    care: tuple[Care, ...] = ()
 
     @property
     def key(self) -> tuple[str, str | None]:
@@ -61,22 +76,28 @@ class Species:
         return (self.genus, self.species)
 
 
-def _window_signature(window: Window) -> tuple[str, str, tuple[tuple[str, str], ...]]:
-    """Return a hashable form of one window, so timings can be compared."""
-    return (window.start, window.end, tuple(sorted(window.description.items())))
+_Signature = tuple[str, str, tuple[tuple[str, str], ...]]
 
 
-def timing_signature(
-    species: Species,
-) -> tuple[tuple[str, str, tuple[tuple[str, str], ...]], ...]:
-    """Return a hashable signature of a row's whole set of windows (2.6).
+def _span_signature(span: Window | Care) -> _Signature:
+    """Return a hashable form of one window or care season, so rows can be compared."""
+    return (span.start, span.end, tuple(sorted(span.description.items())))
 
-    Two rows share timing when their signatures are equal; window order does not
-    matter. Descriptions are part of the signature, so two rows with the same
-    dates but different instructions (Hydrangea macrophylla against aspera) count
-    as different timings and must not be treated as one.
+
+def timing_signature(species: Species) -> tuple[tuple[_Signature, ...], ...]:
+    """Return a hashable signature of the whole advice a row gives (2.6).
+
+    Two rows say the same thing when their signatures are equal; order within
+    windows or care does not matter. Descriptions are part of it, so two rows with
+    the same dates but different instructions (Hydrangea macrophylla against
+    aspera) count as different advice and must not be treated as one. Care is
+    included for the same reason: rows that prune alike but need different
+    continuous care are still a question the user has to answer.
     """
-    return tuple(sorted(_window_signature(window) for window in species.windows))
+    return (
+        tuple(sorted(_span_signature(window) for window in species.windows)),
+        tuple(sorted(_span_signature(care) for care in species.care)),
+    )
 
 
 def _string_key_errors(node: object, path: str) -> list[str]:
@@ -141,17 +162,22 @@ def _lang_map_errors(
     return errors
 
 
-def _build_window(raw: object, label: str) -> tuple[Window | None, list[str]]:
-    """Validate one window and build it, or return the problems found."""
+def _build_span(
+    raw: object, label: str, kind: str
+) -> tuple[tuple[str, str, dict[str, str]] | None, list[str]]:
+    """Validate a `when` range with localised prose, shared by windows and care.
+
+    Returns the (start, end, description) it parsed, or None with the problems.
+    """
     if not isinstance(raw, dict):
-        return None, [f"{label}: each window must be a map"]
+        return None, [f"{label}: each {kind} must be a map"]
 
     errors: list[str] = []
     start: str | None = None
     end: str | None = None
     when = raw.get("when")
     if not isinstance(when, dict):
-        errors.append(f"{label}: window needs a `when` map with start and end")
+        errors.append(f"{label}: {kind} needs a `when` map with start and end")
     else:
         for bound in ("start", "end"):
             value = when.get(bound)
@@ -181,7 +207,25 @@ def _build_window(raw: object, label: str) -> tuple[Window | None, list[str]]:
 
     if errors or start is None or end is None:
         return None, errors
-    return Window(start=start, end=end, description=dict(description)), errors  # type: ignore[arg-type]
+    return (start, end, dict(description)), errors  # type: ignore[arg-type]
+
+
+def _build_window(raw: object, label: str) -> tuple[Window | None, list[str]]:
+    """Validate one pruning window and build it, or return the problems found."""
+    span, errors = _build_span(raw, label, "window")
+    if span is None:
+        return None, errors
+    start, end, description = span
+    return Window(start=start, end=end, description=description), errors
+
+
+def _build_care(raw: object, label: str) -> tuple[Care | None, list[str]]:
+    """Validate one care season and build it, or return the problems found."""
+    span, errors = _build_span(raw, label, "care season")
+    if span is None:
+        return None, errors
+    start, end, description = span
+    return Care(start=start, end=end, description=description), errors
 
 
 def _build_species(raw: object, index: int) -> tuple[Species | None, list[str]]:
@@ -229,6 +273,18 @@ def _build_species(raw: object, index: int) -> tuple[Species | None, list[str]]:
             if window is not None:
                 built_windows.append(window)
 
+    built_care: list[Care] = []
+    care_raw = raw.get("care")
+    if care_raw is not None:
+        if not isinstance(care_raw, list) or not care_raw:
+            errors.append(f"{label}: care, when present, must hold at least one season")
+        else:
+            for c_index, care_item in enumerate(care_raw):
+                care, care_errors = _build_care(care_item, f"{label} care {c_index}")
+                errors.extend(care_errors)
+                if care is not None:
+                    built_care.append(care)
+
     built_image: Image | None = None
     image = raw.get("image")
     if image is not None:
@@ -267,6 +323,7 @@ def _build_species(raw: object, index: int) -> tuple[Species | None, list[str]]:
             source=source,  # type: ignore[arg-type]
             synonyms=synonyms,
             image=built_image,
+            care=tuple(built_care),
         ),
         errors,
     )
@@ -293,7 +350,7 @@ def build_dataset(raw: object) -> tuple[list[Species], list[str]]:
         if species is not None:
             species_list.append(species)
 
-    seen: set[tuple[str, str | None, str | None]] = set()
+    seen: set[tuple[str, str | None]] = set()
     for species in species_list:
         if species.key in seen:
             errors.append(f"duplicate record key {species.key}; keys must be unique")

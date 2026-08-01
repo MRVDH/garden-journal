@@ -9,8 +9,25 @@ validation, so every MM-DD maps to a real date in any year.
 from __future__ import annotations
 
 from datetime import date
+from typing import Protocol
 
 from .models import Window
+
+
+class Span(Protocol):
+    """An inclusive MM-DD range: a pruning window or a care season (2.4, 2.9).
+
+    The two mean different things to a gardener and behave identically on a
+    calendar, so the range maths below is written once against this.
+    """
+
+    @property
+    def start(self) -> str:
+        """The inclusive start, as a validated "MM-DD" string."""
+
+    @property
+    def end(self) -> str:
+        """The inclusive end, as a validated "MM-DD" string."""
 
 
 def _month_day(value: str) -> tuple[int, int]:
@@ -19,17 +36,17 @@ def _month_day(value: str) -> tuple[int, int]:
     return int(month), int(day)
 
 
-def wraps(window: Window) -> bool:
-    """Return whether the window spans the New Year (end before start in the year)."""
-    return _month_day(window.end) < _month_day(window.start)
+def wraps(span: Span) -> bool:
+    """Return whether the range spans the New Year (end before start in the year)."""
+    return _month_day(span.end) < _month_day(span.start)
 
 
-def contains(window: Window, day: date) -> bool:
-    """Return whether day falls inside the window, inclusive of both bounds (2.4)."""
-    start = _month_day(window.start)
-    end = _month_day(window.end)
+def contains(span: Span, day: date) -> bool:
+    """Return whether day falls inside the range, inclusive of both bounds (2.4)."""
+    start = _month_day(span.start)
+    end = _month_day(span.end)
     point = (day.month, day.day)
-    if wraps(window):
+    if wraps(span):
         return point >= start or point <= end
     return start <= point <= end
 
@@ -66,9 +83,13 @@ def next_pruning(windows: list[Window], today: date) -> tuple[date, Window]:
     return min(projected, key=lambda pair: pair[0])
 
 
-def is_pruning_now(windows: list[Window], today: date) -> bool:
-    """Return whether today falls inside any of the windows."""
-    return any(contains(window, today) for window in windows)
+def in_season(spans: list[Window] | list[Span], today: date) -> bool:
+    """Return whether today falls inside any of the ranges (3.3).
+
+    Answers both "is it pruning time" over windows and "is the care season open"
+    over care, since the question is the same one.
+    """
+    return any(contains(span, today) for span in spans)
 
 
 def occurrence_start(window: Window, year: int) -> date:

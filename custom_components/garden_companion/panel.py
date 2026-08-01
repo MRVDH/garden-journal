@@ -49,9 +49,9 @@ from .config_flow import (
 )
 from .const import _LOGGER, DOMAIN
 from .dataset import GardenCompanionConfigEntry
-from .models import Species, Window
-from .resolver import Resolver, repair_reason, resolve_windows
-from .windows import is_pruning_now, next_pruning, occurrence_end
+from .models import Care, Species, Window
+from .resolver import Resolver, repair_reason, resolve_care, resolve_windows
+from .windows import in_season, next_pruning, occurrence_end
 
 _PANEL_URL = f"/{DOMAIN}_panel"
 _MODULE_URL = f"{_PANEL_URL}/garden-companion-panel.js"
@@ -59,7 +59,7 @@ _COMPONENT = "garden-companion-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "17"
+_MODULE_VERSION = "19"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 
 # Set once the panel, views and commands are registered, so a config entry
@@ -111,24 +111,26 @@ def _botanical(species: Species) -> str:
     return name
 
 
-def _describe(window: Window, language: str) -> str:
-    """Return a window's advice in the user's language, else English."""
+def _describe(span: Window | Care, language: str) -> str:
+    """Return a window's or care season's advice in the user's language, else English."""
     return (
-        window.description.get(language)
-        or window.description.get("en")
-        or next(iter(window.description.values()), "")
+        span.description.get(language)
+        or span.description.get("en")
+        or next(iter(span.description.values()), "")
     )
 
 
-def _windows(windows: Iterable[Window], language: str) -> list[dict[str, str]]:
-    """Return each pruning window as plain strings, for the detail dialog."""
+def _spans(
+    spans: Iterable[Window] | Iterable[Care], language: str
+) -> list[dict[str, str]]:
+    """Return each window or care season as plain strings, for the detail dialog."""
     return [
         {
-            "start": window.start,
-            "end": window.end,
-            "description": _describe(window, language),
+            "start": span.start,
+            "end": span.end,
+            "description": _describe(span, language),
         }
-        for window in windows
+        for span in spans
     ]
 
 
@@ -144,7 +146,8 @@ def _as_json(species: Species, language: str, added: int) -> dict[str, Any]:
         "botanical": _botanical(species),
         "photo": f"{_PHOTO_URL}/{row_value(species)}" if species.image else None,
         "credit": _credit(species),
-        "windows": _windows(species.windows, language),
+        "windows": _spans(species.windows, language),
+        "care": _spans(species.care, language),
         "source": species.source,
         "added": added,
     }
@@ -247,6 +250,7 @@ def _garden_plant(
     data = dict(subentry.data)
     language = hass.config.language
     windows = resolve_windows(data, resolver)
+    care = resolve_care(data, resolver)
     today = dt_util.now().date()
 
     entry_json: dict[str, Any] = {
@@ -262,7 +266,9 @@ def _garden_plant(
         "end": None,
         "prune_now": False,
         "advice": None,
-        "windows": _windows(windows or (), language),
+        "windows": _spans(windows or (), language),
+        "care": _spans(care, language),
+        "care_now": bool(care) and in_season(care, today),
         "source": data.get("source"),
         "credit": None,
     }
@@ -282,7 +288,7 @@ def _garden_plant(
     start, window = next_pruning(windows, today)
     entry_json["next"] = start.isoformat()
     entry_json["end"] = occurrence_end(window, start).isoformat()
-    entry_json["prune_now"] = is_pruning_now(windows, today)
+    entry_json["prune_now"] = in_season(windows, today)
     entry_json["advice"] = _describe(window, language)
     return entry_json
 

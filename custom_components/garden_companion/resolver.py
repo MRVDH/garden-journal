@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from .models import Image, Species, Window, timing_signature
+from .models import Care, Image, Species, Window, timing_signature
 
 # Straight and curly quotes, stripped during normalisation.
 _QUOTES = ("'", '"', "‘", "’", "“", "”")  # noqa: RUF001
@@ -137,6 +137,24 @@ def resolve_windows(data: Mapping[str, Any], resolver: Resolver) -> list[Window]
         return None
     row = resolver.resolve(data["genus"], data.get("species"))
     return list(row.windows) if row else None
+
+
+def resolve_care(data: Mapping[str, Any], resolver: Resolver) -> list[Care]:
+    """Resolve a stored plant to its continuous-care seasons, if it has any (2.9).
+
+    Care is not authored by hand, so a manual plant only has it when it borrows
+    another plant's timing: saying "prune it like a rose" takes the deadheading
+    along with the dates. Returns an empty list where there is nothing to do,
+    which is the common case.
+    """
+    if not data.get("in_dataset", True):
+        like = data.get("windows_like")
+        if not like:
+            return []
+        row = resolver.resolve(like["genus"], like.get("species"))
+    else:
+        row = resolver.resolve(data["genus"], data.get("species"))
+    return list(row.care) if row else []
 
 
 def repair_reason(data: Mapping[str, Any], resolver: Resolver) -> str | None:

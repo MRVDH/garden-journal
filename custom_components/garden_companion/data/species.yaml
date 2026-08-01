@@ -4,7 +4,8 @@
 # different licence from the code in this repository, which is MIT, so check it
 # before copying this file somewhere else.
 #
-# One record per plant, keyed on (genus, species). Windows are inline.
+# One record per plant, keyed on (genus, species). Windows are inline, and `care`
+# holds work that runs for a season rather than falling on a date (2.9).
 # when.start / when.end are quoted "MM-DD" strings on purpose: PyYAML is YAML 1.1,
 # so bare dates and unquoted no/yes/on/off would parse as the wrong type. See
 # plan.md sections 2.3 to 2.5 for the schema.
@@ -467,6 +468,11 @@
 # One row for roses, trained however you grow them. A shrub and a climber differ
 # in what you cut rather than when: both go in the same spring window, so the
 # difference is carried by the description and the genus answers on its own.
+#
+# The care season is the one place in this file where the dates are interpretation
+# rather than citation. The source says to deadhead "het hele seizoen" without
+# naming months; June to mid-October is the Dutch flowering season for a repeat
+# bloomer, so the advice is the source's and the bounds are a reading of it.
 
 - genus: Rosa
   names:
@@ -486,14 +492,21 @@
           een naar buiten gerichte knop, zodra de ergste vorst voorbij is. Laat
           je hem klimmen, dan is het net andersom: de lange hoofdtakken laat je
           staan en kort je een derde in, en je snoeit vooral de zijtakken; dat
-          mag al vanaf februari. Knip het hele seizoen uitgebloeide bloemen weg
-          tot op het eerste blad met vijf blaadjes, want daaruit komt de
-          volgende knop; dat is doorlopend onderhoud, geen snoeimoment.
+          mag al vanaf februari.
         en: >-
           Cut a shrub rose back to three to five eyes above the ground, to an
           outward-facing bud, once the worst frost has passed. Grown as a
           climber it is the other way round: leave the long main stems and
           shorten them by a third, and prune the side shoots instead; that can
-          start in February. All season, deadhead spent flowers down to the
-          first leaf with five leaflets, because the next bud comes from there;
-          that is ongoing care, not a pruning window.
+          start in February.
+  care:
+    - when: { start: "06-01", end: "10-15" }
+      description:
+        nl: >-
+          Knip uitgebloeide bloemen direct weg, tot op het eerste blad met vijf
+          blaadjes in plaats van drie: daaruit komt de volgende knop. Dat houdt
+          hem het hele seizoen doorbloeien.
+        en: >-
+          Deadhead spent flowers as they go over, cutting back to the first leaf
+          with five leaflets rather than three: that is where the next bud comes
+          from. It keeps a repeat-flowering rose going all season.

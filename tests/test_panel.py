@@ -174,6 +174,28 @@ async def test_garden_carries_what_the_dialog_shows(
     assert plant["source"].startswith("https://groei.nl/")
     assert re.fullmatch(r".+ \(.+\)", plant["credit"])
     assert plant["in_dataset"] is True
+    # Wisteria has nothing to do continuously, which is the common case.
+    assert plant["care"] == []
+    assert plant["care_now"] is False
+
+
+async def test_garden_carries_continuous_care_and_whether_it_is_open(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """A plant with care carries its season and, in season, that it applies now (2.9)."""
+    await _setup(hass, [("The rose", _plant("Rosa", None))])
+    # The connection is made against the real clock, which its token check needs.
+    client = await hass_ws_client(hass)
+    with freeze_time("2026-08-01"):
+        await client.send_json_auto_id({"type": f"{DOMAIN}/garden"})
+        plant = (await client.receive_json())["result"]["plants"][0]
+
+    assert len(plant["care"]) == 1
+    assert plant["care"][0]["start"] == "06-01"
+    assert plant["care"][0]["description"]
+    assert plant["care_now"] is True
+    # The pruning window is closed in August, so care is the only job open.
+    assert plant["prune_now"] is False
 
 
 async def test_add_manual_plant_with_its_own_windows(
@@ -461,6 +483,32 @@ async def test_a_row_names_itself_in_the_users_language() -> None:
     assert _as_json(row, "de", 0)["common"] == "Rose"
     assert _as_json(row, "nl", 0)["botanical"] == "Rosa"
     assert _as_json(row, "nl", 0)["key"] == "dataset:Rosa|"
+
+
+async def test_a_card_carries_care_in_the_users_language() -> None:
+    """Care reaches the dialog with its season and localised advice (2.9)."""
+    from custom_components.garden_companion.models import Care, Species
+    from custom_components.garden_companion.panel import _as_json
+
+    row = Species(
+        genus="Rosa",
+        species=None,
+        names={"en": ["Rose"], "nl": ["Roos"]},
+        windows=(),
+        source="https://example.test",
+        care=(
+            Care(
+                start="06-01",
+                end="10-15",
+                description={"en": "Deadhead.", "nl": "Knip bloemen weg."},
+            ),
+        ),
+    )
+
+    assert _as_json(row, "nl", 0)["care"] == [
+        {"start": "06-01", "end": "10-15", "description": "Knip bloemen weg."}
+    ]
+    assert _as_json(row, "de", 0)["care"][0]["description"] == "Deadhead."
 
 
 async def test_plants_pages_through_the_dataset(

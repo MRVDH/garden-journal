@@ -16,6 +16,9 @@
     "binary_sensor": {
       "prune_now": {
         "name": "Nu snoeien"
+      },
+      "care_now": {
+        "name": "Doorlopend onderhoud"
       }
     },
     "calendar": {

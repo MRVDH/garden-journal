@@ -9,7 +9,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from custom_components.garden_companion.models import Species, Window, build_dataset
+from custom_components.garden_companion.models import (
+    Care,
+    Species,
+    Window,
+    build_dataset,
+    timing_signature,
+)
 
 
 def _valid_row() -> dict[str, Any]:
@@ -158,6 +164,61 @@ def test_an_unknown_field_is_ignored() -> None:
     species, errors = build_dataset([row])
     assert errors == []
     assert species[0].key == ("Hydrangea", "paniculata")
+
+
+def test_care_is_optional_and_parses_like_a_window() -> None:
+    """A care season carries the same when-plus-description shape (2.9)."""
+    row = _valid_row()
+    assert build_dataset([row])[0][0].care == ()
+
+    row["care"] = [
+        {
+            "when": {"start": "06-01", "end": "10-15"},
+            "description": {"nl": "Knip uitgebloeide bloemen weg.", "en": "Deadhead."},
+        }
+    ]
+    species, errors = build_dataset([row])
+    assert errors == []
+    assert species[0].care == (
+        Care(
+            start="06-01",
+            end="10-15",
+            description={"nl": "Knip uitgebloeide bloemen weg.", "en": "Deadhead."},
+        ),
+    )
+
+
+def test_empty_care_list_is_rejected() -> None:
+    """`care: []` says nothing; omit the field instead (2.9)."""
+    row = _valid_row()
+    row["care"] = []
+    _, errors = build_dataset([row])
+    assert any("care" in error for error in errors)
+
+
+def test_care_missing_dutch_description_is_rejected() -> None:
+    """A care season needs both required languages, as a window does (2.9)."""
+    row = _valid_row()
+    row["care"] = [
+        {"when": {"start": "06-01", "end": "10-15"}, "description": {"en": "Deadhead."}}
+    ]
+    _, errors = build_dataset([row])
+    assert any("care" in error and "nl" in error for error in errors)
+
+
+def test_care_is_part_of_the_timing_signature() -> None:
+    """Rows that prune alike but need different care are still different advice (2.6)."""
+    plain = _valid_row()
+    with_care = _valid_row()
+    with_care["care"] = [
+        {
+            "when": {"start": "06-01", "end": "10-15"},
+            "description": {"nl": "Knip weg.", "en": "Deadhead."},
+        }
+    ]
+    built, errors = build_dataset([plain, {**with_care, "species": "arborescens"}])
+    assert errors == []
+    assert timing_signature(built[0]) != timing_signature(built[1])
 
 
 def test_image_without_url_is_rejected() -> None:

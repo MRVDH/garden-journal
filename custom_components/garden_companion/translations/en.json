@@ -16,6 +16,9 @@
     "binary_sensor": {
       "prune_now": {
         "name": "Prune now"
+      },
+      "care_now": {
+        "name": "Ongoing care"
       }
     },
     "calendar": {

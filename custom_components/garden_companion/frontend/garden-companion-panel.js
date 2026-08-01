@@ -38,6 +38,9 @@ const STRINGS = {
     cancel: "Cancel",
     close: "Close",
     pruning: "Pruning",
+    care: "Ongoing care",
+    careOpen: "now",
+    careNow: "Ongoing care",
     source: "Source of this timing",
     loadFailed: "Could not load plants",
     addFailed: "Could not add the plant",
@@ -108,6 +111,9 @@ const STRINGS = {
     cancel: "Annuleren",
     close: "Sluiten",
     pruning: "Snoeien",
+    care: "Doorlopend onderhoud",
+    careOpen: "nu",
+    careNow: "Doorlopend onderhoud",
     source: "Bron van deze timing",
     loadFailed: "Kon de planten niet laden",
     addFailed: "Kon de plant niet toevoegen",
@@ -301,6 +307,14 @@ class GardenCompanionPanel extends HTMLElement {
           background: var(--success-color, #0b8043);
         }
         .plant .flag.attention { background: var(--warning-color, #ffa600); color: #000; }
+        /* Care is a standing job, not a deadline, so it is outlined where
+           prune-now is filled. Same green as the dialog's care block, so the two
+           surfaces agree; a divider-coloured border was too faint to read. */
+        .plant .flag.care {
+          background: none;
+          color: var(--success-color, #43a047);
+          border: 1px solid currentColor;
+        }
         .plant { cursor: pointer; }
         .plant:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 2px; }
         .plant .chevron { display: flex; color: var(--secondary-text-color, #727272); }
@@ -439,6 +453,17 @@ class GardenCompanionPanel extends HTMLElement {
         .window { border-left: 3px solid var(--primary-color, #03a9f4); padding-left: 12px; }
         .window .when { font-size: 14px; font-weight: 500; }
         .window .what { font-size: 13px; line-height: 1.45; color: var(--secondary-text-color, #727272); }
+        /* Continuous care is a season, not a date, so it gets its own colour to
+           stop it reading as another pruning job. */
+        .window.care { border-left-color: var(--success-color, #43a047); }
+        .window.care .when { display: flex; align-items: center; gap: 6px; }
+        .window.care .open {
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: .04em;
+          text-transform: uppercase;
+          color: var(--success-color, #43a047);
+        }
         .dialog a { color: var(--primary-color, #03a9f4); font-size: 13px; word-break: break-all; }
         .field { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
         .field label { font-size: 13px; font-weight: 500; }
@@ -865,6 +890,16 @@ class GardenCompanionPanel extends HTMLElement {
       when.title = plant.advice || "";
       about.appendChild(when);
     }
+
+    // An open care season is a job for today even when the next pruning is months
+    // off, which is the whole reason it is not buried in a window description.
+    if (plant.care_now) {
+      const flag = document.createElement("span");
+      flag.className = "flag care";
+      flag.textContent = this._t("careNow");
+      flag.title = plant.care.map((season) => season.description).join(" ");
+      about.appendChild(flag);
+    }
     row.appendChild(about);
 
     const chevron = document.createElement("div");
@@ -992,11 +1027,38 @@ class GardenCompanionPanel extends HTMLElement {
   }
 
   /*
-   * Both dialogs show the same plant, so they share everything above the buttons:
-   * the photo, the names, the pruning windows and the source. Only the name field
-   * and the actions differ, which `build` fills in.
+   * One block of advice: a date range and what to do in it. Pruning windows and
+   * care seasons look the same and mean different things, so care is marked, and
+   * an open care season says so rather than making the reader compare dates.
    */
-  _openDialog({ title, botanical, hint, photoSrc, photoEntity, credit, windows, source, badge, nameValue, build }) {
+  _spanBlock(span, { care = false, open = false } = {}) {
+    const block = document.createElement("div");
+    block.className = care ? "window care" : "window";
+    const when = document.createElement("div");
+    when.className = "when";
+    when.textContent = this._t("range")(
+      this._monthDay(span.start),
+      this._monthDay(span.end),
+    );
+    if (open) {
+      const flag = document.createElement("span");
+      flag.className = "open";
+      flag.textContent = this._t("careOpen");
+      when.appendChild(flag);
+    }
+    const what = document.createElement("div");
+    what.className = "what";
+    what.textContent = span.description;
+    block.append(when, what);
+    return block;
+  }
+
+  /*
+   * Both dialogs show the same plant, so they share everything above the buttons:
+   * the photo, the names, the pruning windows, the continuous care and the source.
+   * Only the name field and the actions differ, which `build` fills in.
+   */
+  _openDialog({ title, botanical, hint, photoSrc, photoEntity, credit, windows, care, careNow, source, badge, nameValue, build }) {
     this._closeDialog();
     const host = this.shadowRoot.querySelector(".dialog-host");
 
@@ -1069,19 +1131,18 @@ class GardenCompanionPanel extends HTMLElement {
       label.textContent = this._t("pruning");
       content.appendChild(label);
       for (const window of windows) {
-        const block = document.createElement("div");
-        block.className = "window";
-        const when = document.createElement("div");
-        when.className = "when";
-        when.textContent = this._t("range")(
-          this._monthDay(window.start),
-          this._monthDay(window.end),
+        content.appendChild(this._spanBlock(window));
+      }
+    }
+
+    if (care && care.length) {
+      const label = document.createElement("h3");
+      label.textContent = this._t("care");
+      content.appendChild(label);
+      for (const season of care) {
+        content.appendChild(
+          this._spanBlock(season, { care: true, open: Boolean(careNow) }),
         );
-        const what = document.createElement("div");
-        what.className = "what";
-        what.textContent = window.description;
-        block.append(when, what);
-        content.appendChild(block);
       }
     }
 
@@ -1131,6 +1192,7 @@ class GardenCompanionPanel extends HTMLElement {
       photoSrc: plant.photo,
       credit: plant.credit,
       windows: plant.windows,
+      care: plant.care,
       source: plant.source,
       badge: plant.added ? this._ownedBadge(plant) : null,
       nameValue: plant.common,
@@ -1161,6 +1223,8 @@ class GardenCompanionPanel extends HTMLElement {
       photoEntity: plant.image_entity,
       credit: plant.credit,
       windows: plant.windows,
+      care: plant.care,
+      careNow: plant.care_now,
       source: plant.source,
       badge: null,
       nameValue: plant.name,

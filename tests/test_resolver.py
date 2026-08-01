@@ -13,6 +13,7 @@ from custom_components.garden_companion.resolver import (
     Resolver,
     normalise,
     repair_reason,
+    resolve_care,
     resolve_photo,
     resolve_windows,
     timing_signature,
@@ -31,6 +32,7 @@ def _row(
     species: str | None = None,
     names: dict[str, list[str]] | None = None,
     synonyms: list[str] | None = None,
+    care: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build one record dict, defaulting the required fields."""
     row: dict[str, Any] = {
@@ -43,6 +45,8 @@ def _row(
         row["species"] = species
     if synonyms is not None:
         row["synonyms"] = synonyms
+    if care is not None:
+        row["care"] = care
     return row
 
 
@@ -349,6 +353,46 @@ def test_repair_reason_none_when_the_plant_resolves() -> None:
         "in_dataset": True,
     }
     assert repair_reason(data, resolver) is None
+
+
+_DEADHEAD = _window("06-01", "10-15", "Deadhead spent flowers.", "Knip bloemen weg.")
+
+
+def test_resolve_care_from_the_dataset_row() -> None:
+    """A dataset plant gets its row's care seasons (2.9)."""
+    resolver = _resolver(_row("Rosa", [_SPRING], care=[_DEADHEAD]))
+    data = {"genus": "Rosa", "species": None, "in_dataset": True}
+    care = resolve_care(data, resolver)
+    assert [(season.start, season.end) for season in care] == [("06-01", "10-15")]
+
+
+def test_resolve_care_is_empty_where_a_row_has_none() -> None:
+    """Most rows have no care, which resolves to an empty list rather than None."""
+    resolver = _resolver(_row("Wisteria", [_SPRING]))
+    data = {"genus": "Wisteria", "species": None, "in_dataset": True}
+    assert resolve_care(data, resolver) == []
+
+
+def test_borrowing_timing_borrows_the_care_too() -> None:
+    """Pruning a plant like a rose takes the rose's deadheading with it (2.9)."""
+    resolver = _resolver(_row("Rosa", [_SPRING], care=[_DEADHEAD]))
+    data = {
+        "in_dataset": False,
+        "windows": None,
+        "windows_like": {"genus": "Rosa", "species": None},
+    }
+    assert len(resolve_care(data, resolver)) == 1
+
+
+def test_an_authored_plant_has_no_care() -> None:
+    """Care is not authored by hand, so a plant with its own windows has none."""
+    resolver = _resolver(_row("Rosa", [_SPRING], care=[_DEADHEAD]))
+    data = {
+        "in_dataset": False,
+        "windows": [_SPRING],
+        "windows_like": None,
+    }
+    assert resolve_care(data, resolver) == []
 
 
 def test_repair_reason_missing_row_for_a_gone_key() -> None:

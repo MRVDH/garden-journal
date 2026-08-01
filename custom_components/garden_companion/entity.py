@@ -17,8 +17,8 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_time_change
 
 from .const import DOMAIN
-from .models import Window
-from .resolver import Resolver, resolve_windows
+from .models import Care, Window
+from .resolver import Resolver, resolve_care, resolve_windows
 
 
 def plant_device_info(subentry_id: str, title: str) -> DeviceInfo:
@@ -61,3 +61,7 @@ class PlantEntity(Entity):
     def _windows(self) -> list[Window] | None:
         """Resolve this plant's effective windows, or None on a repair case (3.2)."""
         return resolve_windows(self._data, self._resolver)
+
+    def _care(self) -> list[Care]:
+        """Resolve this plant's continuous-care seasons, empty when it has none (2.9)."""
+        return resolve_care(self._data, self._resolver)

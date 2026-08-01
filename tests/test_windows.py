@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from datetime import date
 
-from custom_components.garden_companion.models import Window
+from custom_components.garden_companion.models import Care, Window
 from custom_components.garden_companion.windows import (
     contains,
-    is_pruning_now,
+    in_season,
     next_pruning,
     next_start,
     occurrence_end,
@@ -105,12 +105,19 @@ def test_next_pruning_active_window_wins_over_upcoming() -> None:
     assert window is spring
 
 
-def test_is_pruning_now() -> None:
-    """prune_now is on only while today falls inside a window."""
+def test_in_season() -> None:
+    """A set of ranges is open only while today falls inside one of them."""
     spring = _w("02-15", "03-31")
     summer = _w("07-15", "08-31")
-    assert is_pruning_now([spring, summer], date(2026, 3, 1))
-    assert not is_pruning_now([spring, summer], date(2026, 5, 1))
+    assert in_season([spring, summer], date(2026, 3, 1))
+    assert not in_season([spring, summer], date(2026, 5, 1))
+
+
+def test_in_season_answers_for_a_care_season() -> None:
+    """The same predicate serves care, whose season is months rather than days."""
+    care = Care(start="06-01", end="10-15", description={"nl": "x", "en": "y"})
+    assert in_season([care], date(2026, 8, 1))
+    assert not in_season([care], date(2026, 11, 1))
 
 
 def test_occurrence_end_non_wrapping() -> None:
