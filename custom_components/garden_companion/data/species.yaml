@@ -34,11 +34,12 @@
     - when: { start: "07-15", end: "08-31" }
       description:
         nl: >-
-          Kort de lange zomeruitlopers in tot ongeveer vijf bladeren. Dit remt
-          de groei en stuurt energie naar de bloemknoppen.
+          Kort na de bloei de lange zomeruitlopers in tot ongeveer vijf
+          bladeren. Dit remt de groei en stuurt energie naar de bloemknoppen.
         en: >-
-          Shorten this summer's whippy side shoots to about five leaves. This
-          checks the growth and pushes energy into flower buds.
+          After flowering, shorten this summer's whippy side shoots to about
+          five leaves. This checks the growth and pushes energy into flower
+          buds.
     - when: { start: "01-15", end: "02-15" }
       description:
         nl: >-
@@ -79,7 +80,7 @@
 - genus: Hydrangea
   species: arborescens
   names:
-    nl: [Sneeuwbalhortensia]
+    nl: [Sneeuwbalhortensia, Annabelle]
     en: [Smooth hydrangea]
   source: https://groei.nl/artikel/hortensia-snoeien
   image:
@@ -117,12 +118,14 @@
           Knip de oude bloemen weg tot op het eerste dikke knoppenpaar eronder.
           Hij bloeit op hout van vorig jaar, dus spaar de oude takken. Laat de
           uitgebloeide bloemen de winter staan: ze beschermen de knoppen, en
-          snoeien in maart kost bloei als het nog nachtvorst wordt.
+          snoeien in maart kost bloei als het nog nachtvorst wordt. Knip
+          mogelijk de oudste takken weg om de vorm te behouden.
         en: >-
           Take the old flower heads off down to the first fat pair of buds below
           them. It flowers on last year's wood, so spare the old stems. Leave
           the spent heads on over winter to shelter those buds; pruning in March
-          costs flowers if a night frost follows.
+          costs flowers if a night frost follows. Take out the oldest stems where
+          you need to, to keep its shape.
 
 - genus: Hydrangea
   species: aspera
@@ -290,14 +293,17 @@
     licence: CC BY-SA 4.0
     page: https://commons.wikimedia.org/wiki/File:Ruhland,_Goethestr._bei_Lange_Str._8a,_Lorbeerkirschen-Hecke,_Vorwinter,_01.jpg
   windows:
-    - when: { start: "05-15", end: "06-15" }
+    - when: { start: "03-15", end: "04-15" }
       description:
         nl: >-
-          Scheer voor het eerst als de nieuwe groei op gang is. Doe het op een
-          bewolkte dag, anders verbranden de gesneden bladranden in de zon.
+          Beste snoeien met een snoeischaar. Zo worden de bladeren niet
+          beschadigd en blijft de hele haag er fraai uitzien. Net voor de takken
+          uit gaan lopen. Verwijder in het ook dode takken en takken met bruine
+          bladeren.
         en: >-
-          Shear for the first time once the new growth is running. Pick an
-          overcast day, or the cut leaf edges scorch in the sun.
+          Best cut with secateurs. That leaves the leaves undamaged and keeps the
+          whole hedge looking good. Do it just before the shoots break. Take out
+          dead stems and stems with brown leaves as well.
     - when: { start: "08-15", end: "09-15" }
       description:
         nl: >-
@@ -319,14 +325,17 @@
     licence: CC BY-SA 4.0
     page: https://commons.wikimedia.org/wiki/File:2018-04-10_Bay_Laural_bush,_(Laurus_nobilis),_Northrepps,_Cromer.JPG
   windows:
-    - when: { start: "05-15", end: "06-15" }
+    - when: { start: "03-15", end: "04-15" }
       description:
         nl: >-
-          Scheer voor het eerst als de nieuwe groei op gang is. Doe het op een
-          bewolkte dag, anders verbranden de gesneden bladranden in de zon.
+          Beste snoeien met een snoeischaar. Zo worden de bladeren niet
+          beschadigd en blijft de hele haag er fraai uitzien. Net voor de takken
+          uit gaan lopen. Verwijder in het ook dode takken en takken met bruine
+          bladeren.
         en: >-
-          Shear for the first time once the new growth is running. Pick an
-          overcast day, or the cut leaf edges scorch in the sun.
+          Best cut with secateurs. That leaves the leaves undamaged and keeps the
+          whole hedge looking good. Do it just before the shoots break. Take out
+          dead stems and stems with brown leaves as well.
     - when: { start: "08-15", end: "09-15" }
       description:
         nl: >-
