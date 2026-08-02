@@ -2,8 +2,9 @@
 plan.md
 handoff.md
 
-# Claude Code local settings (personal, not shared)
+# Claude Code local settings and notes (personal or machine-specific, not shared)
 .claude/settings.local.json
+CLAUDE.local.md
 
 # Dev Home Assistant instance created by scripts/develop
 config/
