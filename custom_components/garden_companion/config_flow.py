@@ -1,9 +1,9 @@
 """Config flow and subentry flow for Garden Companion.
 
-The config entry stores nothing and is a single confirm step (step 1). Each
+The config entry stores nothing and is a single confirm step. Each
 plant is a subentry added and reconfigured through PlantSubentryFlow, which
 gives add, reconfigure and delete in the UI for free and makes each plant its
-own device (3.1).
+own device.
 """
 
 from __future__ import annotations
@@ -112,7 +112,7 @@ def picked_row(value: str, resolver: Resolver) -> Species | None:
 
 
 def _distinct_by_timing(candidates: list[Species]) -> list[Species]:
-    """Return one row per distinct timing, so identical timings are not offered twice (2.6)."""
+    """Return one row per distinct timing, so identical timings are not offered twice."""
     groups: dict[tuple[Any, ...], Species] = {}
     for candidate in candidates:
         groups.setdefault(timing_signature(candidate), candidate)
@@ -130,12 +130,12 @@ def _parse_botanical(botanical: str) -> tuple[str, str | None]:
 
 
 def _matched_on(species: Species) -> str:
-    """Return how a dataset match resolved: species or genus (3.2)."""
+    """Return how a dataset match resolved: species or genus."""
     return "species" if species.species else "genus"
 
 
 def _stored_plant(species: Species, display_name: str) -> dict[str, Any]:
-    """Build the stored subentry data for a plant matched in the dataset (3.2)."""
+    """Build the stored subentry data for a plant matched in the dataset."""
     return {
         "genus": species.genus,
         "species": species.species,
@@ -152,7 +152,7 @@ def _stored_plant(species: Species, display_name: str) -> dict[str, Any]:
 def _stored_borrow(
     botanical: str, display_name: str, borrowed: Species
 ) -> dict[str, Any]:
-    """Build stored data for a manual plant that borrows another plant's timing (3.2, 3.7)."""
+    """Build stored data for a manual plant that borrows another plant's timing."""
     genus, species = _parse_botanical(botanical)
     return {
         "genus": genus,
@@ -212,7 +212,7 @@ def _stored_author(
     source: str | None,
     image_url: str | None,
 ) -> dict[str, Any]:
-    """Build stored data for a manual plant with its own authored windows (3.2, 3.7)."""
+    """Build stored data for a manual plant with its own authored windows."""
     genus, species = _parse_botanical(botanical)
     return {
         "genus": genus,
@@ -253,7 +253,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
         return await self.async_step_name()
 
     def _apply_repick(self, species: Species) -> SubentryFlowResult:
-        """Re-map an existing plant to a dataset row, keeping its name (3.6)."""
+        """Re-map an existing plant to a dataset row, keeping its name."""
         subentry = self._get_reconfigure_subentry()
         return self.async_update_and_abort(
             self._get_entry(),
@@ -272,7 +272,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Re-pick which plant this maps to (3.6). Rename and delete are HA built-ins."""
+        """Re-pick which plant this maps to. Rename and delete are HA built-ins."""
         subentry = self._get_reconfigure_subentry()
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -317,7 +317,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
                 return await self._select_match(picked)
             groups = _distinct_by_timing(self._resolver().search(chosen))
             if not groups:
-                # No match: offer manual add, seeding the botanical name (3.6).
+                # No match: offer manual add, seeding the botanical name.
                 self._query = chosen
                 return await self.async_step_manual()
             if len(groups) == 1:
@@ -349,7 +349,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     async def async_step_disambiguate(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Choose between candidates that prune at different times (2.6, 3.6)."""
+        """Choose between candidates that prune at different times."""
         candidates = self._candidates or []
         if user_input is not None:
             choice = user_input["choice"]
@@ -398,7 +398,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     async def async_step_manual(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Collect a botanical name and display name for a plant not in the dataset (3.7)."""
+        """Collect a botanical name and display name for a plant not in the dataset."""
         if user_input is not None:
             self._botanical = user_input["botanical"]
             self._display = user_input["display_name"]
@@ -417,13 +417,13 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     async def async_step_timing(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Offer to borrow another plant's timing or author your own (3.7)."""
+        """Offer to borrow another plant's timing or author your own."""
         return self.async_show_menu(step_id="timing", menu_options=["borrow", "author"])
 
     async def async_step_borrow(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Reuse an existing plant's timing for the manual plant (3.7)."""
+        """Reuse an existing plant's timing for the manual plant."""
         species = self._species()
         if user_input is not None:
             borrowed = species[int(user_input["borrowed"])]
@@ -453,14 +453,14 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     async def async_step_author(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Start authoring one or more pruning windows (3.7)."""
+        """Start authoring one or more pruning windows."""
         self._windows = []
         return await self.async_step_window()
 
     async def async_step_window(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Collect one window: a start and end date and what to do (3.7)."""
+        """Collect one window: a start and end date and what to do."""
         if self._windows is None:
             self._windows = []
         errors: dict[str, str] = {}
@@ -514,7 +514,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     async def async_step_window_menu(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Offer another window or finishing up (3.7)."""
+        """Offer another window or finishing up."""
         return self.async_show_menu(
             step_id="window_menu", menu_options=["window", "details"]
         )
@@ -522,7 +522,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     async def async_step_details(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Ask for an optional source and photo, then create the plant (3.7)."""
+        """Ask for an optional source and photo, then create the plant."""
         if user_input is not None:
             source = user_input.get("source") or None
             return self.async_create_entry(

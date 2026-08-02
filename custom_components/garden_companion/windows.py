@@ -1,8 +1,8 @@
-"""Project pruning windows onto the calendar and find the next one (2.4, 3.2).
+"""Project pruning windows onto the calendar and find the next one.
 
 Pure logic over the Window dataclass, no Home Assistant. Dates arrive as
 datetime.date; Home Assistant decides what "today" means through its configured
-timezone and passes it in (3.5), so no clock is read here. 02-29 is rejected at
+timezone and passes it in, so no clock is read here. 02-29 is rejected at
 validation, so every MM-DD maps to a real date in any year.
 """
 
@@ -15,7 +15,7 @@ from .models import Window
 
 
 class Span(Protocol):
-    """An inclusive MM-DD range: a pruning window or a care season (2.4, 2.9).
+    """An inclusive MM-DD range: a pruning window or a care season.
 
     The two mean different things to a gardener and behave identically on a
     calendar, so the range maths below is written once against this.
@@ -42,7 +42,7 @@ def wraps(span: Span) -> bool:
 
 
 def contains(span: Span, day: date) -> bool:
-    """Return whether day falls inside the range, inclusive of both bounds (2.4)."""
+    """Return whether day falls inside the range, inclusive of both bounds."""
     start = _month_day(span.start)
     end = _month_day(span.end)
     point = (day.month, day.day)
@@ -52,7 +52,7 @@ def contains(span: Span, day: date) -> bool:
 
 
 def next_start(window: Window, today: date) -> date:
-    """Return the window's start as its current-or-next occurrence (3.2).
+    """Return the window's start as its current-or-next occurrence.
 
     While today is inside the window, this is the start of the occurrence in
     progress: a past-or-today date, and for a year-wrapping window it can be last
@@ -71,12 +71,12 @@ def next_start(window: Window, today: date) -> date:
 
 
 def next_pruning(windows: list[Window], today: date) -> tuple[date, Window]:
-    """Return the next-pruning date and the window it comes from (3.2).
+    """Return the next-pruning date and the window it comes from.
 
     Each window is projected to its current-or-next start and the earliest wins.
     A window in progress projects to a past start, so an active window always
     beats an upcoming one: this is why the sensor shows the open window while
-    prune_now is on (3.3). Requires at least one window, which the schema
+    prune_now is on. Requires at least one window, which the schema
     guarantees.
     """
     projected = [(next_start(window, today), window) for window in windows]
@@ -84,7 +84,7 @@ def next_pruning(windows: list[Window], today: date) -> tuple[date, Window]:
 
 
 def in_season(spans: list[Window] | list[Span], today: date) -> bool:
-    """Return whether today falls inside any of the ranges (3.3).
+    """Return whether today falls inside any of the ranges.
 
     Answers both "is it pruning time" over windows and "is the care season open"
     over care, since the question is the same one.
@@ -108,7 +108,7 @@ def occurrence_end(window: Window, start: date) -> date:
 def occurrences_in_range(
     window: Window, range_start: date, range_end: date
 ) -> list[tuple[int, date, date]]:
-    """Return each yearly occurrence overlapping the half-open range (3.4).
+    """Return each yearly occurrence overlapping the half-open range.
 
     Each is (start year, start date, end date), with the end inclusive of the
     last pruning day. range_end is exclusive. A caller wanting the iCal all-day

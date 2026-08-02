@@ -89,7 +89,7 @@ def test_unquoted_when_is_rejected() -> None:
 
 
 def test_year_wrapping_window_is_allowed() -> None:
-    """An end before start wraps the year and is supported (2.4)."""
+    """An end before start wraps the year and is supported."""
     row = _valid_row()
     row["windows"][0]["when"] = {"start": "12-01", "end": "02-28"}
     species, errors = build_dataset([row])
@@ -98,7 +98,7 @@ def test_year_wrapping_window_is_allowed() -> None:
 
 
 def test_missing_source_is_rejected() -> None:
-    """A missing source is rejected (2.3)."""
+    """A missing source is rejected."""
     row = _valid_row()
     del row["source"]
     _, errors = build_dataset([row])
@@ -106,7 +106,7 @@ def test_missing_source_is_rejected() -> None:
 
 
 def test_no_windows_is_rejected() -> None:
-    """Every row needs at least one window (2.3)."""
+    """Every row needs at least one window."""
     row = _valid_row()
     row["windows"] = []
     _, errors = build_dataset([row])
@@ -114,7 +114,7 @@ def test_no_windows_is_rejected() -> None:
 
 
 def test_window_missing_dutch_description_is_rejected() -> None:
-    """Every window needs description.nl and description.en (2.4)."""
+    """Every window needs description.nl and description.en."""
     row = _valid_row()
     del row["windows"][0]["description"]["nl"]
     _, errors = build_dataset([row])
@@ -122,13 +122,13 @@ def test_window_missing_dutch_description_is_rejected() -> None:
 
 
 def test_duplicate_key_is_rejected() -> None:
-    """(genus, species) must be unique (2.3)."""
+    """(genus, species) must be unique."""
     _, errors = build_dataset([_valid_row(), _valid_row()])
     assert any("duplicate" in error.lower() for error in errors)
 
 
 def test_disallowed_language_is_rejected() -> None:
-    """Language codes come from an explicit allowlist (2.8)."""
+    """Language codes come from an explicit allowlist."""
     row = _valid_row()
     row["names"]["fr"] = ["Hortensia paniculte"]
     _, errors = build_dataset([row])
@@ -167,7 +167,7 @@ def test_an_unknown_field_is_ignored() -> None:
 
 
 def test_care_is_optional_and_parses_like_a_window() -> None:
-    """A care season carries the same when-plus-description shape (2.9)."""
+    """A care season carries the same when-plus-description shape."""
     row = _valid_row()
     assert build_dataset([row])[0][0].care == ()
 
@@ -189,7 +189,7 @@ def test_care_is_optional_and_parses_like_a_window() -> None:
 
 
 def test_empty_care_list_is_rejected() -> None:
-    """`care: []` says nothing; omit the field instead (2.9)."""
+    """`care: []` says nothing; omit the field instead."""
     row = _valid_row()
     row["care"] = []
     _, errors = build_dataset([row])
@@ -197,7 +197,7 @@ def test_empty_care_list_is_rejected() -> None:
 
 
 def test_care_missing_dutch_description_is_rejected() -> None:
-    """A care season needs both required languages, as a window does (2.9)."""
+    """A care season needs both required languages, as a window does."""
     row = _valid_row()
     row["care"] = [
         {"when": {"start": "06-01", "end": "10-15"}, "description": {"en": "Deadhead."}}
@@ -207,7 +207,7 @@ def test_care_missing_dutch_description_is_rejected() -> None:
 
 
 def test_care_is_part_of_the_timing_signature() -> None:
-    """Rows that prune alike but need different care are still different advice (2.6)."""
+    """Rows that prune alike but need different care are still different advice."""
     plain = _valid_row()
     with_care = _valid_row()
     with_care["care"] = [
@@ -222,7 +222,7 @@ def test_care_is_part_of_the_timing_signature() -> None:
 
 
 def test_image_without_url_is_rejected() -> None:
-    """An image, where present, must have a url (2.8)."""
+    """An image, where present, must have a url."""
     row = _valid_row()
     row["image"] = {"author": "Someone"}
     _, errors = build_dataset([row])
@@ -230,7 +230,7 @@ def test_image_without_url_is_rejected() -> None:
 
 
 def test_synonym_colliding_with_a_genus_row_is_rejected() -> None:
-    """A synonym must not collide with an existing genus row key (2.8)."""
+    """A synonym must not collide with an existing genus row key."""
     other = {
         "genus": "Buddleja",
         "names": {"nl": ["Vlinderstruik"], "en": ["Butterfly bush"]},

@@ -1,4 +1,4 @@
-"""Tests for the prune-now and care-now binary sensors (step 7, 2.9).
+"""Tests for the prune-now and care-now binary sensors.
 
 Time is frozen so the on/off state is deterministic against the packaged dataset
 (Wisteria prunes mid-July to end of August; Hydrangea paniculata in spring; Rosa

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the species dataset against the schema (2.8).
+"""Validate the species dataset against the schema.
 
 Runs in CI on every pull request and by hand while editing the dataset. It
 prints every problem it finds and exits non-zero when there are any, so a broken

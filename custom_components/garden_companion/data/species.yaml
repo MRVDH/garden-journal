@@ -5,10 +5,11 @@
 # before copying this file somewhere else.
 #
 # One record per plant, keyed on (genus, species). Windows are inline, and `care`
-# holds work that runs for a season rather than falling on a date (2.9).
+# holds work that runs for a season rather than falling on a date.
 # when.start / when.end are quoted "MM-DD" strings on purpose: PyYAML is YAML 1.1,
-# so bare dates and unquoted no/yes/on/off would parse as the wrong type. See
-# plan.md sections 2.3 to 2.5 for the schema.
+# so bare dates and unquoted no/yes/on/off would parse as the wrong type. The
+# schema is the dataclasses in ../models.py, which scripts/validate.py checks
+# this file against.
 #
 # Every row cites the Dutch page its timing comes from. Where sources disagree,
 # the safer window wins: for a plant that flowers on old wood, cutting too early

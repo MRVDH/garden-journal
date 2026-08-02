@@ -9,6 +9,11 @@ line of advice in Dutch or English explaining what to actually do. Every plant's
 windows also land on one calendar, so reminders are a normal Home Assistant
 automation rather than anything this integration has to build.
 
+Some jobs are not a date. Deadheading a rose runs from June to October and repeats
+whenever a flower goes over, so plants with that kind of work get a sensor that is
+on for the season instead of a calendar entry that would sit on top of the pruning
+dates all summer.
+
 Timing comes from a dataset that ships with the integration. Every plant's
 windows are taken from a cited Dutch horticultural source, because pruning advice
 that is confidently wrong is worse than no advice.
@@ -19,6 +24,7 @@ that is confidently wrong is worse than no advice.
 |---|---|
 | `sensor.<plant>_next_pruning` | The date this plant should next be pruned, with the window's end date and what to do as attributes |
 | `binary_sensor.<plant>_prune_now` | On while today falls inside a pruning window |
+| `binary_sensor.<plant>_care_now` | On while a continuous-care season is open, deadheading a rose for instance. Only exists for plants that have such a job |
 | `image.<plant>_photo` | A photo, so you can check you picked the right plant |
 | `calendar.garden_companion` | Every plant's windows as all-day events, one calendar for the whole garden |
 
@@ -61,10 +67,10 @@ plant that is not in the dataset.
 
 Some names cannot be answered on their own. Hydrangeas are the clear case: a
 panicle hydrangea is cut hard in spring and a velvet hydrangea must not be cut
-back at all, so typing `hortensia` asks which one you have. A rose asks whether
-it is freestanding or trained against a wall, because that changes when it is
-pruned. Names that resolve to the same timing never ask: `laurier` matches both
-cherry laurel and bay, and they are pruned alike.
+back at all, so typing `hortensia` asks which one you have. Names that resolve to
+the same timing never ask: `laurier` matches both cherry laurel and bay, and they
+are pruned alike. Nor does a rose, whether you grow it as a shrub or up a wall,
+because habit changes what you cut rather than when: the advice covers both.
 
 If a plant is not in the dataset yet, you can still add it: either borrow the
 timing of a plant that is pruned the same way, or enter your own windows.
@@ -72,9 +78,9 @@ timing of a plant that is pruned the same way, or enter your own windows.
 ## The dataset
 
 `custom_components/garden_companion/data/species.yaml` holds one record per
-plant, keyed on genus, species and variant. Corrections arrive by updating that
-file: timing is looked up fresh on every restart, so a fixed month reaches
-plants you already added without any migration.
+plant, keyed on genus and species. Corrections arrive by updating that file:
+timing is looked up fresh on every restart, so a fixed month reaches plants you
+already added without any migration.
 
 Adding or correcting a plant is a pull request against that file. `scripts/validate.py`
 checks it against the schema and runs in CI. It has two report modes,

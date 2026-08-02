@@ -1,4 +1,4 @@
-"""Tests for the next-pruning sensor entity (step 6).
+"""Tests for the next-pruning sensor entity.
 
 The plant is preloaded as a subentry so the sensor platform creates it at setup.
 The dataset is the packaged one, so the subentry references a plant that is in it.

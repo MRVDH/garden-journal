@@ -2,7 +2,7 @@
 
 The dataset is static per install, so there is no coordinator and no polling. It
 is read once at setup in an executor thread and cached on the entry's runtime
-data, where the entities and calendar in later steps read it from (3.5).
+data, where the entities and calendar in later steps read it from.
 """
 
 from __future__ import annotations
@@ -34,9 +34,9 @@ def _load(path: Path) -> list[Species]:
     """Read and parse the dataset. Never raises: a bad dataset yields no plants.
 
     Runs in an executor thread. Parsing a file inside the event loop is the
-    classic Home Assistant integration mistake (3.5), so this is only ever
+    classic Home Assistant integration mistake, so this is only ever
     reached through async_add_executor_job. A missing or malformed file must not
-    stop the integration from loading (3.8), so problems are logged and an empty
+    stop the integration from loading, so problems are logged and an empty
     dataset is returned.
     """
     if not path.exists():

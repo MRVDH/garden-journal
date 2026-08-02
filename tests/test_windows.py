@@ -1,4 +1,4 @@
-"""Tests for the window maths: projection, year-wrapping, next-pruning (2.4, 3.2).
+"""Tests for the window maths: projection, year-wrapping, next-pruning.
 
 Pure logic. Every test passes an explicit reference date, so nothing depends on
 the real clock.

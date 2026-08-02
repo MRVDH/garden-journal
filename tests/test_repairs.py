@@ -1,4 +1,4 @@
-"""Tests for the repair path (step 10).
+"""Tests for the repair path.
 
 A plant whose stored key no longer matches a dataset row raises a repair issue
 and its entities read unknown, while the integration still loads. A plant that

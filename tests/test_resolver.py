@@ -1,4 +1,4 @@
-"""Tests for the resolver: normalisation, matching, ambiguity, search (2.6).
+"""Tests for the resolver: normalisation, matching, ambiguity, search.
 
 Pure logic, no Home Assistant. The datasets are built in the tests because the
 shipped three-row fixture cannot exercise ambiguity or one-to-many common names.
@@ -93,7 +93,7 @@ def test_resolve_exact_species() -> None:
 
 
 def test_resolve_falls_back_to_the_genus_row() -> None:
-    """An unknown species falls back to the genus-level row (2.6)."""
+    """An unknown species falls back to the genus-level row."""
     resolver = _resolver(_row("Ligustrum", [_SUMMER]))
     match = resolver.resolve("Ligustrum", "ovalifolium")
     assert match is not None
@@ -142,7 +142,7 @@ def test_agreeing_species_are_not_ambiguous() -> None:
 
 
 def test_a_genus_row_is_never_ambiguous() -> None:
-    """A genus-level row is a single answer, so the genus answers directly (2.6)."""
+    """A genus-level row is a single answer, so the genus answers directly."""
     resolver = _resolver(
         _row("Ligustrum", [_SUMMER]),
         _row("Ligustrum", [_APR_HARD], species="lucidum"),
@@ -359,7 +359,7 @@ _DEADHEAD = _window("06-01", "10-15", "Deadhead spent flowers.", "Knip bloemen w
 
 
 def test_resolve_care_from_the_dataset_row() -> None:
-    """A dataset plant gets its row's care seasons (2.9)."""
+    """A dataset plant gets its row's care seasons."""
     resolver = _resolver(_row("Rosa", [_SPRING], care=[_DEADHEAD]))
     data = {"genus": "Rosa", "species": None, "in_dataset": True}
     care = resolve_care(data, resolver)
@@ -374,7 +374,7 @@ def test_resolve_care_is_empty_where_a_row_has_none() -> None:
 
 
 def test_borrowing_timing_borrows_the_care_too() -> None:
-    """Pruning a plant like a rose takes the rose's deadheading with it (2.9)."""
+    """Pruning a plant like a rose takes the rose's deadheading with it."""
     resolver = _resolver(_row("Rosa", [_SPRING], care=[_DEADHEAD]))
     data = {
         "in_dataset": False,

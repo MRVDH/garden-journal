@@ -1,11 +1,11 @@
-"""Plant photo: one image entity per plant that has a photo (3.7).
+"""Plant photo: one image entity per plant that has a photo.
 
 Home Assistant fetches the photo server-side and caches it, so the browser never
 contacts the remote host and the photo still renders on a device with no internet
 once cached. The photo never changes, so image_last_updated is stamped once at
 creation. A fetch that fails serves no bytes and is retried on the next request;
 the base class does not mark the entity unavailable, and a missing photo is only
-cosmetic (3.9).
+cosmetic.
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ async def async_setup_entry(
 
 
 class PlantPhotoImage(ImageEntity):
-    """A plant's photo, fetched and cached by Home Assistant (3.7)."""
+    """A plant's photo, fetched and cached by Home Assistant."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "photo"

@@ -1,4 +1,4 @@
-"""Tests for the plant photo image entity (step 9).
+"""Tests for the plant photo image entity.
 
 A dataset plant borrows its row's photo and credit; a manual plant carries a bare
 URL with no credit, or none at all and then gets no image entity. The fetch itself
@@ -138,7 +138,7 @@ async def test_photo_fetches_and_caches(hass: HomeAssistant) -> None:
 
 @respx.mock
 async def test_photo_fetch_failure_is_graceful(hass: HomeAssistant) -> None:
-    """With no network the fetch returns no bytes and does not raise (3.9)."""
+    """With no network the fetch returns no bytes and does not raise."""
     respx.get(_MANUAL_PHOTO).mock(side_effect=httpx.ConnectError("no network"))
     await _setup(hass, [("Backyard oak", _manual_plant(_MANUAL_PHOTO))])
 

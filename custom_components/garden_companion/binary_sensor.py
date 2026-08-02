@@ -1,4 +1,4 @@
-"""Two binary sensors per plant: is it pruning time, and is care season open (3.3).
+"""Two binary sensors per plant: is it pruning time, and is care season open.
 
 Prune-now, read together with the next-pruning sensor, says the job is open and
 when it opened. Care-now says a continuous job like deadheading applies right now,
@@ -60,7 +60,7 @@ async def async_setup_entry(
 
 
 class PruneNowBinarySensor(PlantEntity, BinarySensorEntity):
-    """On while today falls inside one of the plant's pruning windows (3.3)."""
+    """On while today falls inside one of the plant's pruning windows."""
 
     _attr_translation_key = "prune_now"
     _attr_icon = "mdi:content-cut"
@@ -82,7 +82,7 @@ class PruneNowBinarySensor(PlantEntity, BinarySensorEntity):
 
 
 class CareNowBinarySensor(PlantEntity, BinarySensorEntity):
-    """On while a continuous-care season is open, deadheading a rose say (2.9, 3.3).
+    """On while a continuous-care season is open, deadheading a rose say.
 
     This is deliberately not a calendar event. A season runs for months, so it
     would sit over the pruning windows and hide them, and an automation on the

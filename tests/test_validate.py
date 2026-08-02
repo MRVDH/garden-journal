@@ -1,4 +1,4 @@
-"""Tests for the standalone dataset validator's report modes (step 11).
+"""Tests for the standalone dataset validator's report modes.
 
 The validator is run as a subprocess, the way CI invokes it, so its own
 Home-Assistant-free import path is exercised as shipped and does not collide with

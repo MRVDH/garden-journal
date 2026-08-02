@@ -1,4 +1,4 @@
-"""Pruning calendar: every plant's windows projected as all-day events (3.4).
+"""Pruning calendar: every plant's windows projected as all-day events.
 
 One entity for the whole integration, with no device. Each pruning window recurs
 every year, so an occurrence is projected for each year overlapping the range
@@ -75,7 +75,7 @@ async def async_setup_entry(
 
 
 class PruningCalendar(CalendarEntity):
-    """Every plant's pruning windows on one calendar (3.4)."""
+    """Every plant's pruning windows on one calendar."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "garden_companion"
@@ -118,7 +118,7 @@ class PruningCalendar(CalendarEntity):
 
     @property
     def event(self) -> CalendarEvent | None:
-        """Return the pruning happening now, else the soonest upcoming one (3.4)."""
+        """Return the pruning happening now, else the soonest upcoming one."""
         today = dt_util.now().date()
         best: tuple[Any, str, str, Window, int] | None = None
         for subentry_id, title, windows in self._plant_windows():
@@ -133,7 +133,7 @@ class PruningCalendar(CalendarEntity):
     async def async_get_events(
         self, hass: HomeAssistant, start_date: datetime, end_date: datetime
     ) -> list[CalendarEvent]:
-        """Return every window occurrence overlapping the requested range (3.4)."""
+        """Return every window occurrence overlapping the requested range."""
         range_start = dt_util.as_local(start_date).date()
         range_end = dt_util.as_local(end_date).date()
         events: list[CalendarEvent] = []

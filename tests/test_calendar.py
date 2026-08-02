@@ -1,4 +1,4 @@
-"""Tests for the pruning calendar (step 8).
+"""Tests for the pruning calendar.
 
 One calendar aggregates every plant's windows. Time is frozen so the current
 event is deterministic against the packaged dataset (Wisteria prunes mid-July to

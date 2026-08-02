@@ -1,8 +1,8 @@
-"""Resolve a plant to its dataset record, and search by name (2.6).
+"""Resolve a plant to its dataset record, and search by name.
 
 Pure logic over the Species dataclasses, with no Home Assistant import, so it
-runs and tests in plain Python. The add flow (step 5) searches with it, and
-load-time re-resolution (3.2) looks up the stored key with it.
+runs and tests in plain Python. The add flow searches with it, and load-time
+re-resolution looks up the stored key with it.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ _QUOTES = ("'", '"', "‘", "’", "“", "”")  # noqa: RUF001
 
 
 def normalise(text: str) -> str:
-    """Lowercase, strip quotes and the x/hybrid marker, collapse whitespace (2.6).
+    """Lowercase, strip quotes and the x/hybrid marker, collapse whitespace.
 
     The hybrid marker is a standalone `x` or the Unicode multiplication sign, so
     `Hydrangea x macrophylla` normalises to `hydrangea macrophylla`. An `x`
@@ -57,7 +57,7 @@ class Resolver:
         self._name_terms.append((species, tuple(terms)))
 
     def resolve(self, genus: str, species: str | None = None) -> Species | None:
-        """Most-specific-wins lookup: exact key, then the genus row, else None (2.6)."""
+        """Most-specific-wins lookup: exact key, then the genus row, else None."""
         g = normalise(genus)
         s = normalise(species) if species else None
         exact = self._by_key.get((g, s))
@@ -70,7 +70,7 @@ class Resolver:
         return list(self._by_genus.get(normalise(genus), []))
 
     def is_ambiguous(self, genus: str) -> bool:
-        """Report whether a genus resolves to more than one distinct timing (2.6).
+        """Report whether a genus resolves to more than one distinct timing.
 
         A genus-level row is a single answer, so such a genus is never ambiguous.
         """
@@ -80,7 +80,7 @@ class Resolver:
         return len({timing_signature(row) for row in rows}) > 1
 
     def search(self, query: str) -> list[Species]:
-        """Find rows by botanical name, synonym or common name in any language (2.6).
+        """Find rows by botanical name, synonym or common name in any language.
 
         Common names and synonyms match as a substring, so "hortensia" finds
         Pluimhortensia and its siblings; botanical names match by genus and
@@ -120,11 +120,11 @@ def _window_from_stored(stored: Mapping[str, Any]) -> Window:
 
 
 def resolve_windows(data: Mapping[str, Any], resolver: Resolver) -> list[Window] | None:
-    """Resolve a stored plant to its effective windows (3.2).
+    """Resolve a stored plant to its effective windows.
 
     A manual plant with authored windows uses them; with windows_like it resolves
     that key; otherwise the stored (genus, species) key is resolved in the dataset.
-    Returns None when nothing resolves, which is a repair case (3.8).
+    Returns None when nothing resolves, which is a repair case.
     """
     if not data.get("in_dataset", True):
         stored = data.get("windows")
@@ -140,7 +140,7 @@ def resolve_windows(data: Mapping[str, Any], resolver: Resolver) -> list[Window]
 
 
 def resolve_care(data: Mapping[str, Any], resolver: Resolver) -> list[Care]:
-    """Resolve a stored plant to its continuous-care seasons, if it has any (2.9).
+    """Resolve a stored plant to its continuous-care seasons, if it has any.
 
     Care is not authored by hand, so a manual plant only has it when it borrows
     another plant's timing: saying "prune it like a rose" takes the deadheading
@@ -158,7 +158,7 @@ def resolve_care(data: Mapping[str, Any], resolver: Resolver) -> list[Care]:
 
 
 def repair_reason(data: Mapping[str, Any], resolver: Resolver) -> str | None:
-    """Return why a stored plant no longer resolves, or None if it is fine (3.8).
+    """Return why a stored plant no longer resolves, or None if it is fine.
 
     The reason is a stable code that maps to a repair issue: `ambiguous_genus`
     when a bare genus has gained a disagreeing species row, `missing_borrow` when
@@ -176,7 +176,7 @@ def repair_reason(data: Mapping[str, Any], resolver: Resolver) -> str | None:
 
 
 def resolve_photo(data: Mapping[str, Any], resolver: Resolver) -> Image | None:
-    """Resolve a stored plant to its photo, or None when it has none (2.5, 3.7).
+    """Resolve a stored plant to its photo, or None when it has none.
 
     A manually added plant carries a bare photo URL with no credit; a dataset
     plant borrows the row's image, credit and all. A dataset plant whose key no

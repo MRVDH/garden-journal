@@ -10,7 +10,7 @@ depends on the whole dataset fitting in one payload.
 
 Photos are proxied rather than linked directly: the panel fetches them from Home
 Assistant, which fetches them from the remote host, so a browser looking at the
-grid never contacts Wikimedia and no viewer's IP is exposed (3.7). That is the
+grid never contacts Wikimedia and no viewer's IP is exposed. That is the
 same reason the photo entity uses `image_url` rather than `entity_picture`.
 """
 
@@ -399,7 +399,7 @@ def _ws_add_manual_plant(
     connection: websocket_api.ActiveConnection,
     msg: dict[str, Any],
 ) -> None:
-    """Add a plant that is not in the dataset (3.7).
+    """Add a plant that is not in the dataset.
 
     Timing is either borrowed from a plant that is pruned the same way, or written
     out here. The stored shape is the one the add flow writes, so both routes

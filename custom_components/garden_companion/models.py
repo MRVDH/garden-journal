@@ -15,18 +15,18 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-# Language codes the dataset may use (2.7). `nl` and `en` are required on every
+# Language codes the dataset may use. `nl` and `en` are required on every
 # row; the set is extended by pull request as translations arrive.
 ALLOWED_LANGUAGES = frozenset({"nl", "en"})
 
-# Both bounds of a window are quoted MM-DD strings (2.4). 02-29 matches this but
+# Both bounds of a window are quoted MM-DD strings. 02-29 matches this but
 # is rejected separately: it is not an annual date.
 _MMDD = re.compile(r"^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$")
 
 
 @dataclass(frozen=True)
 class Image:
-    """A linked photo of the plant (2.5). Only `url` is required."""
+    """A linked photo of the plant. Only `url` is required."""
 
     url: str
     author: str | None = None
@@ -36,7 +36,7 @@ class Image:
 
 @dataclass(frozen=True)
 class Window:
-    """One pruning window: an inclusive MM-DD range plus localised prose (2.4)."""
+    """One pruning window: an inclusive MM-DD range plus localised prose."""
 
     start: str
     end: str
@@ -45,7 +45,7 @@ class Window:
 
 @dataclass(frozen=True)
 class Care:
-    """One continuous-care job: the season it runs in, plus localised prose (2.9).
+    """One continuous-care job: the season it runs in, plus localised prose.
 
     Deadheading a rose is not a pruning window. It lasts months, it repeats, and
     what triggers it is a spent flower rather than a date, so it carries a season
@@ -59,7 +59,7 @@ class Care:
 
 @dataclass(frozen=True)
 class Species:
-    """One dataset record, keyed on (genus, species) (2.3)."""
+    """One dataset record, keyed on (genus, species)."""
 
     genus: str
     species: str | None
@@ -85,7 +85,7 @@ def _span_signature(span: Window | Care) -> _Signature:
 
 
 def timing_signature(species: Species) -> tuple[tuple[_Signature, ...], ...]:
-    """Return a hashable signature of the whole advice a row gives (2.6).
+    """Return a hashable signature of the whole advice a row gives.
 
     Two rows say the same thing when their signatures are equal; order within
     windows or care does not matter. Descriptions are part of it, so two rows with
@@ -105,7 +105,7 @@ def _string_key_errors(node: object, path: str) -> list[str]:
 
     PyYAML is YAML 1.1, so an unquoted `no`, `yes`, `on` or `off` parses as a
     boolean, and `no` is the ISO code for Norwegian. This catches the class of
-    bug rather than the instances anyone happens to think of (2.2, 2.8).
+    bug rather than the instances anyone happens to think of.
     """
     errors: list[str] = []
     if isinstance(node, dict):

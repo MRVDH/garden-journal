@@ -1,7 +1,7 @@
 """Tests for the dataset loader (dataset._load).
 
 The loader must never raise: a missing or malformed file has to degrade to an
-empty dataset rather than stop the integration from loading (3.8).
+empty dataset rather than stop the integration from loading.
 """
 
 from __future__ import annotations

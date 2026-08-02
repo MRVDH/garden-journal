@@ -1,4 +1,4 @@
-"""Tests for the plant subentry flow: search, disambiguation, naming (step 5).
+"""Tests for the plant subentry flow: search, disambiguation, naming.
 
 These drive the real subentry flow through hass.config_entries.subentries. The
 dataset is injected into the entry's runtime data, so disambiguation can be

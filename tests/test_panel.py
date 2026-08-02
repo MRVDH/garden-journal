@@ -1,4 +1,4 @@
-"""Tests for the browse panel's backend (step 13).
+"""Tests for the browse panel's backend.
 
 The panel is JavaScript, so what is tested here is the contract it depends on:
 two WebSocket commands and the photo proxy. The proxy is exercised with respx so
@@ -182,7 +182,7 @@ async def test_garden_carries_what_the_dialog_shows(
 async def test_garden_carries_continuous_care_and_whether_it_is_open(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
-    """A plant with care carries its season and, in season, that it applies now (2.9)."""
+    """A plant with care carries its season and, in season, that it applies now."""
     await _setup(hass, [("The rose", _plant("Rosa", None))])
     # The connection is made against the real clock, which its token check needs.
     client = await hass_ws_client(hass)
@@ -486,7 +486,7 @@ async def test_a_row_names_itself_in_the_users_language() -> None:
 
 
 async def test_a_card_carries_care_in_the_users_language() -> None:
-    """Care reaches the dialog with its season and localised advice (2.9)."""
+    """Care reaches the dialog with its season and localised advice."""
     from custom_components.garden_companion.models import Care, Species
     from custom_components.garden_companion.panel import _as_json
 

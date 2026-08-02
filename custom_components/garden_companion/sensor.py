@@ -1,7 +1,7 @@
-"""Next-pruning sensor: one per plant, the date it should next be pruned (3.3).
+"""Next-pruning sensor: one per plant, the date it should next be pruned.
 
 The value is computed locally from the resolved windows; there is no polling and
-no coordinator (3.5). It refreshes at local midnight (see the base entity) and
+no coordinator. It refreshes at local midnight (see the base entity) and
 when the config entry reloads on a plant change.
 """
 
@@ -50,7 +50,7 @@ async def async_setup_entry(
 
 
 class NextPruningSensor(PlantEntity, SensorEntity):
-    """The date a plant should next be pruned (3.3)."""
+    """The date a plant should next be pruned."""
 
     _attr_translation_key = "next_pruning"
     _attr_device_class = SensorDeviceClass.DATE
@@ -77,7 +77,7 @@ class NextPruningSensor(PlantEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return the window end, description and provenance (3.3)."""
+        """Return the window end, description and provenance."""
         attributes: dict[str, Any] = {
             "botanical_name": self._botanical_name(),
             "matched_on": self._data.get("matched_on"),
