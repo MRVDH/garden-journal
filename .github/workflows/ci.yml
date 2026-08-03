@@ -42,6 +42,10 @@ jobs:
       - uses: astral-sh/setup-uv@v9.0.0
       - run: scripts/setup
       - run: .venv/bin/python scripts/validate.py
+      # Reads the committed PNGs, so it needs no rasteriser. Shares this job
+      # rather than getting its own, since both check committed assets and a
+      # separate job would spend a minute on setup to run for a second.
+      - run: .venv/bin/python scripts/check_icon.py
 
   hacs:
     name: HACS

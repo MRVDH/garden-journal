@@ -141,3 +141,9 @@ the code is MIT. Keep that boundary in mind before moving text between them.
   `requirements-dev.txt` so CI never needs a rasteriser. Judge an icon change at
   48px as well as at 256px, because that is roughly the size the integration list
   draws it at.
+- `scripts/check_icon.py` measures the rendered PNGs and fails when the artwork is
+  off centre, which CI runs on every pull request. It reads the committed files
+  rather than the SVG, so it needs no rasteriser, only the Pillow that arrives with
+  homeassistant. It exists because the artwork once shipped 11px right and 19px
+  below centre with a 52px left margin against 29px on the right, and nobody sees
+  that on a rounded square until it is pointed out.
