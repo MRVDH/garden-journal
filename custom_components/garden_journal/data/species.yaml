@@ -524,6 +524,11 @@
     nl: [Italiaanse clematis, Clematis]
     en: [Italian clematis, Viticella clematis]
   source: https://groei.nl/artikel/clematis-snoeien
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Clematis%20viticella%20-%202024-06-28.jpg?width=600
+    author: Jeangagnon
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Clematis_viticella_-_2024-06-28.jpg
   windows:
     - when: { start: "02-20", end: "03-31" }
       description:
@@ -542,6 +547,11 @@
     nl: [Bergbosrank, Bergclematis]
     en: [Mountain clematis]
   source: https://groei.nl/artikel/clematis-snoeien
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Cl%C3%A9matite%20montana%20%27Gistar%27.JPG?width=600
+    author: Vegetal45
+    licence: CC BY-SA 3.0
+    page: https://commons.wikimedia.org/wiki/File:Cl%C3%A9matite_montana_'Gistar'.JPG
   windows:
     - when: { start: "05-01", end: "06-30" }
       description:
@@ -562,6 +572,11 @@
     nl: [Kaukasische klimop, Klimop]
     en: [Persian ivy]
   source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/klimop-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Hedera%20colchica%20%27Dendroides%27%20Bluszcz%20kolchidzki%202019-04-28%2002.jpg?width=600
+    author: Agnieszka Kwiecień, Nova
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Hedera_colchica_'Dendroides'_Bluszcz_kolchidzki_2019-04-28_02.jpg
   windows:
     - when: { start: "03-01", end: "04-30" }
       description:
@@ -592,6 +607,11 @@
     nl: [Scheefkelk, Scheefbloem]
     en: [Evergreen candytuft]
   source: https://plantnu.nl/iberis-sempervirens/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Trauttmansdorff%20gardens%20-%20Iberis%20sempervirens%2001.jpg?width=600
+    author: Syrio
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Trauttmansdorff_gardens_-_Iberis_sempervirens_01.jpg
   windows:
     - when: { start: "06-15", end: "07-15" }
       description:
@@ -610,6 +630,11 @@
     nl: [Rode zonnehoed, Zonnehoed]
     en: [Purple coneflower]
   source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/zonnehoed-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Echinacea%20purpurea%20Feldanbau.jpg?width=600
+    author: Burkhard Mücke
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Echinacea_purpurea_Feldanbau.jpg
   windows:
     - when: { start: "04-01", end: "04-30" }
       description:
@@ -629,6 +654,11 @@
     nl: [Glanzend duifkruid, Duifkruid]
     en: [Shining scabious]
   source: https://www.gardenersworldmagazine.nl/planten/scabiosa-duifkruid/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Scabiosa%20lucida%20RF.jpg?width=600
+    author: Robert Flogaus-Faust
+    licence: CC BY 4.0
+    page: https://commons.wikimedia.org/wiki/File:Scabiosa_lucida_RF.jpg
   windows:
     - when: { start: "02-01", end: "03-15" }
       description:
@@ -656,6 +686,11 @@
     nl: [Geel duizendblad, Duizendblad]
     en: [Fernleaf yarrow]
   source: https://www.hovenier.nl/planten/asteraceae/achillea
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/00%203068%20Bl%C3%BCtenstand%20der%20Goldgarbe%20(Achillea%20filipendulina).jpg?width=600
+    author: W. Bulach
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:00_3068_Bl%C3%BCtenstand_der_Goldgarbe_(Achillea_filipendulina).jpg
   windows:
     - when: { start: "03-01", end: "03-31" }
       description:
@@ -682,6 +717,11 @@
     nl: [Pluimspirea, Prachtspirea]
     en: [Japanese astilbe]
   source: https://tuiniertijd.nl/astilbe-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/%E8%90%BD%E6%96%B0%E5%A9%A6%E5%B1%AC%20Astilbe%20japonica%20-%E6%B7%B1%E5%9C%B3%E8%8A%B1%E5%B1%95%20Shenzhen%20Flower%20Show%2C%20China-%20(39386513705).jpg?width=600
+    author: 阿橋 HQ
+    licence: CC BY-SA 2.0
+    page: https://commons.wikimedia.org/wiki/File:%E8%90%BD%E6%96%B0%E5%A9%A6%E5%B1%AC_Astilbe_japonica_-%E6%B7%B1%E5%9C%B3%E8%8A%B1%E5%B1%95_Shenzhen_Flower_Show%2C_China-_(39386513705).jpg
   windows:
     - when: { start: "03-01", end: "04-30" }
       description:
@@ -702,6 +742,11 @@
     nl: [Klein purperklokje, Purperklokje]
     en: [Small-flowered alumroot]
   source: https://tuiniertijd.nl/heuchera-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Heuchera%20micrantha%20%60Palace%20Purple%60a2.jpg?width=600
+    author: Jerzy Opioła
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Heuchera_micrantha_%60Palace_Purple%60a2.jpg
   windows:
     - when: { start: "02-01", end: "03-31" }
       description:
@@ -736,6 +781,11 @@
     nl: [Reuze rhododendron, Rhododendron]
     en: [Great rhododendron, Rosebay]
   source: https://groei.nl/artikel/rododendron-en-azalea-snoeien-en-verzorgen
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Rhododendron%20maximum%2001.jpg?width=600
+    author: Syrio
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Rhododendron_maximum_01.jpg
   windows:
     - when: { start: "05-25", end: "07-05" }
       description:
@@ -757,6 +807,11 @@
     nl: [Skimmia]
     en: [Japanese skimmia]
   source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/skimmia-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Skimmia%20japonica%20RF.jpg?width=600
+    author: Robert Flogaus-Faust
+    licence: CC BY 4.0
+    page: https://commons.wikimedia.org/wiki/File:Skimmia_japonica_RF.jpg
   windows:
     - when: { start: "04-01", end: "06-30" }
       description:
@@ -777,6 +832,11 @@
     nl: [Kardinaalsmuts]
     en: [Wintercreeper]
   source: https://tuiniertijd.nl/kardinaalsmuts-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Euonymus%20fortunei%20%27Emerald%20Gaiety%27%20kz02.jpg?width=600
+    author: Krzysztof Ziarnek, Kenraiz
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Euonymus_fortunei_'Emerald_Gaiety'_kz02.jpg
   windows:
     - when: { start: "03-01", end: "04-30" }
       description:
@@ -796,6 +856,11 @@
     nl: [Specerijstruik]
     en: [Carolina allspice, Sweetshrub]
   source: https://yarinde.nl/products/specerijstruik-calycanthus-floridus
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Calycanthus%20floridus%20kz07.jpg?width=600
+    author: Krzysztof Ziarnek, Kenraiz
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Calycanthus_floridus_kz07.jpg
   windows:
     - when: { start: "07-15", end: "08-15" }
       description:
@@ -814,6 +879,11 @@
     nl: [Kuisheidsstruik, Monnikspeper]
     en: [Chaste tree]
   source: https://plantnu.nl/vitex-agnus-castus/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Vitex%20agnus-castus%20Niepokalanek%20pieprzowy%202020-07-31%2004.jpg?width=600
+    author: Agnieszka Kwiecień, Nova
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Vitex_agnus-castus_Niepokalanek_pieprzowy_2020-07-31_04.jpg
   windows:
     - when: { start: "03-15", end: "04-15" }
       description:
@@ -840,6 +910,11 @@
     nl: [Gewone robinia, Valse acacia, Acacia]
     en: [Black locust, False acacia]
   source: https://floraweb.nl/hoe-houd-je-robinia-compact-in-een-kleine-tuin-tips-en-trucs/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/20170515Robinia%20pseudoacacia6.jpg?width=600
+    author: AnRo0002
+    licence: CC0
+    page: https://commons.wikimedia.org/wiki/File:20170515Robinia_pseudoacacia6.jpg
   windows:
     - when: { start: "08-01", end: "09-15" }
       description:
@@ -873,6 +948,11 @@
     nl: [Bamboe, Schermbamboe]
     en: [Umbrella bamboo]
   source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/bamboe-snoeien/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/2009-07-31%20(35)%20Bamboo%2C%20Bambus%2C%20Fargesia%20murielae.JPG?width=600
+    author: Vera Buhl
+    licence: CC BY-SA 3.0
+    page: https://commons.wikimedia.org/wiki/File:2009-07-31_(35)_Bamboo%2C_Bambus%2C_Fargesia_murielae.JPG
   windows:
     - when: { start: "03-01", end: "04-15" }
       description:
@@ -899,6 +979,11 @@
     nl: [Hanggeranium, Geranium]
     en: [Ivy-leaved geranium]
   source: https://www.directplant.nl/tuintips/geranium-verzorging/
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/A%20pink%20Pelargonium%20peltatum%20flower%20and%20plant.jpg?width=600
+    author: Bobjgalindo
+    licence: CC BY 4.0
+    page: https://commons.wikimedia.org/wiki/File:A_pink_Pelargonium_peltatum_flower_and_plant.jpg
   windows:
     - when: { start: "03-01", end: "04-15" }
       description:
@@ -928,6 +1013,11 @@
     nl: [Kamermalva, Kaapse malva]
     en: [Cape mallow]
   source: https://www.tuinadvies.nl/plantengids/1444/anisodontea-capensis
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Anisodontea%20capensis3.jpg?width=600
+    author: Qumarchi
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Anisodontea_capensis3.jpg
   windows:
     - when: { start: "03-01", end: "04-15" }
       description:
@@ -959,6 +1049,11 @@
     nl: [Gentse azalea, Kamerazalea, Azalea]
     en: [Indian azalea, Florist's azalea]
   source: https://www.tuinadvies.nl/plantengids/20941/rhododendron-simsii-sachsenstern
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Rhododendron%20simsii%20%27Sachsenstern%27%20kz01.jpg?width=600
+    author: Krzysztof Ziarnek, Kenraiz
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Rhododendron_simsii_'Sachsenstern'_kz01.jpg
   windows:
     - when: { start: "03-15", end: "04-30" }
       description:
