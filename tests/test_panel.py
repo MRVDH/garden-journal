@@ -426,10 +426,15 @@ async def test_plants_counts_what_is_already_added(
         ],
     )
     client = await hass_ws_client(hass)
-    await client.send_json_auto_id({"type": f"{DOMAIN}/plants"})
-    plants = (await client.receive_json())["result"]["plants"]
 
+    # Queried by name rather than read off the first page, so the assertion does
+    # not depend on where these two rows fall once the dataset grows.
+    await client.send_json_auto_id({"type": f"{DOMAIN}/plants", "query": "hortensia"})
+    plants = (await client.receive_json())["result"]["plants"]
     assert next(p for p in plants if p["key"] == _HYDRANGEA)["added"] == 2
+
+    await client.send_json_auto_id({"type": f"{DOMAIN}/plants", "query": "wisteria"})
+    plants = (await client.receive_json())["result"]["plants"]
     assert next(p for p in plants if p["key"] == _WISTERIA)["added"] == 0
 
 
