@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from datetime import date
 
-from custom_components.garden_companion.models import Care, Window
-from custom_components.garden_companion.windows import (
+from custom_components.garden_journal.models import Care, Window
+from custom_components.garden_journal.windows import (
     contains,
     in_season,
     next_pruning,

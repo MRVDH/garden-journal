@@ -18,7 +18,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_component import DATA_INSTANCES
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.garden_companion.const import DOMAIN
+from custom_components.garden_journal.const import DOMAIN
 
 _HYDRANGEA_PHOTO = (
     "https://commons.wikimedia.org/wiki/Special:FilePath/"
@@ -64,7 +64,7 @@ async def _setup(hass: HomeAssistant, plants: list[tuple[str, dict[str, Any]]]) 
     """Set up the integration with the given (title, data) plant subentries."""
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="Garden Companion",
+        title="Garden Journal",
         subentries_data=[
             ConfigSubentryData(
                 subentry_type="plant", title=title, data=data, unique_id=None

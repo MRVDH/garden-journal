@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Set up Garden Companion",
+        "title": "Set up Garden Journal",
         "description": "Add your plants after setup to get pruning reminders tuned to the Dutch climate."
       }
     }
@@ -25,8 +25,8 @@
       }
     },
     "calendar": {
-      "garden_companion": {
-        "name": "Garden Companion"
+      "garden_journal": {
+        "name": "Garden Journal"
       }
     },
     "image": {
@@ -37,15 +37,15 @@
   },
   "issues": {
     "missing_row": {
-      "title": "Garden Companion: {name} needs attention",
+      "title": "Garden Journal: {name} needs attention",
       "description": "{name} points to a plant that is not in the dataset, so its pruning dates are unknown. Reconfigure it to pick the plant again."
     },
     "ambiguous_genus": {
-      "title": "Garden Companion: {name} needs attention",
+      "title": "Garden Journal: {name} needs attention",
       "description": "The dataset now has several plants under this genus that are pruned at different times, so {name} cannot be timed from the genus alone. Reconfigure it to pick the exact plant."
     },
     "missing_borrow": {
-      "title": "Garden Companion: {name} needs attention",
+      "title": "Garden Journal: {name} needs attention",
       "description": "{name} borrows its timing from another plant that is not in the dataset, so its pruning dates are unknown. Reconfigure it to set the timing again."
     }
   },

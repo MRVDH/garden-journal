@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from .dataset import GardenCompanionConfigEntry
+from .dataset import GardenJournalConfigEntry
 from .entity import plant_device_info
 from .models import Image
 from .resolver import Resolver, resolve_photo
@@ -32,7 +32,7 @@ def _attribution(photo: Image) -> str | None:
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: GardenCompanionConfigEntry,
+    entry: GardenJournalConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Create a photo entity for each plant that has one."""

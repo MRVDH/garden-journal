@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from custom_components.garden_companion.models import (
+from custom_components.garden_journal.models import (
     Care,
     Species,
     Window,

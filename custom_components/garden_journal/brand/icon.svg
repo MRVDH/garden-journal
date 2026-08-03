@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-  <title>Garden Companion</title>
+  <title>Garden Journal</title>
   <!-- Source of truth for the brand icons. scripts/render_icon.py renders it to
        icon.png (256px) and icon@2x.png (512px). Flat shapes and a small palette,
        so it stays readable at 256px: a leaf being cut by a pair of secateurs.

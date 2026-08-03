@@ -21,13 +21,13 @@ DATA_FILE = Path(__file__).parent / "data" / "species.yaml"
 
 
 @dataclass
-class GardenCompanionData:
+class GardenJournalData:
     """Runtime data cached on the config entry."""
 
     species: list[Species]
 
 
-type GardenCompanionConfigEntry = ConfigEntry[GardenCompanionData]
+type GardenJournalConfigEntry = ConfigEntry[GardenJournalData]
 
 
 def _load(path: Path) -> list[Species]:

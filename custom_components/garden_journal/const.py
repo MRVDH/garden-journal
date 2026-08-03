@@ -1,9 +1,9 @@
-"""Constants for the Garden Companion integration."""
+"""Constants for the Garden Journal integration."""
 
 from __future__ import annotations
 
 import logging
 
-DOMAIN = "garden_companion"
+DOMAIN = "garden_journal"
 
 _LOGGER = logging.getLogger(__package__)

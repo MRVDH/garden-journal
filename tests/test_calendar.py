@@ -18,9 +18,9 @@ from homeassistant.helpers.entity_component import DATA_INSTANCES
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.garden_companion.const import DOMAIN
+from custom_components.garden_journal.const import DOMAIN
 
-_ENTITY_ID = "calendar.garden_companion"
+_ENTITY_ID = "calendar.garden_journal"
 
 
 def _plant(genus: str, species: str | None) -> dict[str, Any]:
@@ -42,7 +42,7 @@ async def _setup(hass: HomeAssistant, plants: list[tuple[str, dict[str, Any]]]) 
     """Set up the integration with the given (title, data) plant subentries."""
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="Garden Companion",
+        title="Garden Journal",
         subentries_data=[
             ConfigSubentryData(
                 subentry_type="plant", title=title, data=data, unique_id=None

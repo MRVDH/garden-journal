@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Garden Companion instellen",
+        "title": "Garden Journal instellen",
         "description": "Voeg na het instellen je planten toe voor snoeiherinneringen die op het Nederlandse klimaat zijn afgestemd."
       }
     }
@@ -25,8 +25,8 @@
       }
     },
     "calendar": {
-      "garden_companion": {
-        "name": "Garden Companion"
+      "garden_journal": {
+        "name": "Garden Journal"
       }
     },
     "image": {
@@ -37,15 +37,15 @@
   },
   "issues": {
     "missing_row": {
-      "title": "Garden Companion: {name} heeft aandacht nodig",
+      "title": "Garden Journal: {name} heeft aandacht nodig",
       "description": "{name} verwijst naar een plant die niet in de dataset staat, dus de snoeimomenten zijn onbekend. Configureer de plant opnieuw om hem weer te kiezen."
     },
     "ambiguous_genus": {
-      "title": "Garden Companion: {name} heeft aandacht nodig",
+      "title": "Garden Journal: {name} heeft aandacht nodig",
       "description": "Er staan nu meerdere planten van dit geslacht in de dataset die op verschillende momenten gesnoeid worden, dus {name} kan niet meer op het geslacht alleen getimed worden. Configureer de plant opnieuw en kies de precieze plant."
     },
     "missing_borrow": {
-      "title": "Garden Companion: {name} heeft aandacht nodig",
+      "title": "Garden Journal: {name} heeft aandacht nodig",
       "description": "{name} neemt de timing over van een andere plant die niet in de dataset staat, dus de snoeimomenten zijn onbekend. Configureer de plant opnieuw om de timing weer in te stellen."
     }
   },

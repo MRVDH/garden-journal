@@ -109,7 +109,7 @@ reading of the code. Reopen any of them on new evidence, not on first impression
 
 ## The dataset
 
-`custom_components/garden_companion/data/species.yaml` is **CC BY-SA 4.0** while
+`custom_components/garden_journal/data/species.yaml` is **CC BY-SA 4.0** while
 the code is MIT. Keep that boundary in mind before moving text between them.
 
 - **Every row cites a Dutch source for its timing.** Do not add or change a window

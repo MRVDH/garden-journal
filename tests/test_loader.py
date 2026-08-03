@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from custom_components.garden_companion.dataset import DATA_FILE, _load
+from custom_components.garden_journal.dataset import DATA_FILE, _load
 
 _VALID = """\
 - genus: Hydrangea

@@ -1,5 +1,5 @@
 /*
- * Garden Companion browse panel.
+ * Garden Journal browse panel.
  *
  * Plain custom element with no dependencies and no build step, so the file that
  * ships is the file that was written. Home Assistant sets `hass`, `narrow` and
@@ -170,7 +170,7 @@ const STRINGS = {
   },
 };
 
-class GardenCompanionPanel extends HTMLElement {
+class GardenJournalPanel extends HTMLElement {
   constructor() {
     super();
     this._hass = null;
@@ -704,7 +704,7 @@ class GardenCompanionPanel extends HTMLElement {
     this._loading = true;
     this._render();
     try {
-      const result = await this._request({ type: "garden_companion/garden" });
+      const result = await this._request({ type: "garden_journal/garden" });
       this._garden = result.plants;
       this._gardenLoaded = true;
       this._error = null;
@@ -726,7 +726,7 @@ class GardenCompanionPanel extends HTMLElement {
     this._render();
 
     const message = {
-      type: "garden_companion/plants",
+      type: "garden_journal/plants",
       limit: PAGE_SIZE,
       offset: reset ? 0 : this._plants.length,
     };
@@ -788,7 +788,7 @@ class GardenCompanionPanel extends HTMLElement {
   async _add(plant, name) {
     try {
       await this._hass.connection.sendMessagePromise({
-        type: "garden_companion/add_plant",
+        type: "garden_journal/add_plant",
         key: plant.key,
         name,
       });
@@ -1450,7 +1450,7 @@ class GardenCompanionPanel extends HTMLElement {
       }
       try {
         const result = await this._request({
-          type: "garden_companion/plants",
+          type: "garden_journal/plants",
           query,
           limit: 8,
         });
@@ -1573,7 +1573,7 @@ class GardenCompanionPanel extends HTMLElement {
     }
 
     const message = {
-      type: "garden_companion/add_manual_plant",
+      type: "garden_journal/add_manual_plant",
       name: name.trim(),
       botanical: botanical.trim(),
     };
@@ -1634,7 +1634,7 @@ class GardenCompanionPanel extends HTMLElement {
     if (!trimmed) return;
     try {
       await this._hass.connection.sendMessagePromise({
-        type: "garden_companion/rename_plant",
+        type: "garden_journal/rename_plant",
         subentry_id: plant.subentry_id,
         name: trimmed,
       });
@@ -1649,7 +1649,7 @@ class GardenCompanionPanel extends HTMLElement {
   async _remove(plant) {
     try {
       await this._hass.connection.sendMessagePromise({
-        type: "garden_companion/remove_plant",
+        type: "garden_journal/remove_plant",
         subentry_id: plant.subentry_id,
       });
       this._closeDialog();
@@ -1671,4 +1671,4 @@ class GardenCompanionPanel extends HTMLElement {
   }
 }
 
-customElements.define("garden-companion-panel", GardenCompanionPanel);
+customElements.define("garden-journal-panel", GardenJournalPanel);

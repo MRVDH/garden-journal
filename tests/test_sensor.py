@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.garden_companion.const import DOMAIN
+from custom_components.garden_journal.const import DOMAIN
 
 
 def _plant_data(genus: str, species: str | None) -> dict[str, Any]:
@@ -37,7 +37,7 @@ async def _setup_with_plant(
     """Set up the integration with one preloaded plant subentry."""
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="Garden Companion",
+        title="Garden Journal",
         subentries_data=[
             ConfigSubentryData(
                 subentry_type="plant", title=title, data=data, unique_id=None
@@ -76,7 +76,7 @@ async def test_unknown_plant_sensor_is_unknown(hass: HomeAssistant) -> None:
 
 async def test_adding_a_plant_creates_its_entities(hass: HomeAssistant) -> None:
     """Adding a plant reloads the entry so its entities appear without a restart."""
-    entry = MockConfigEntry(domain=DOMAIN, title="Garden Companion")
+    entry = MockConfigEntry(domain=DOMAIN, title="Garden Journal")
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()

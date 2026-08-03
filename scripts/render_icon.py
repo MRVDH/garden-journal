@@ -18,7 +18,7 @@ import cairosvg
 _BRAND = (
     Path(__file__).resolve().parent.parent
     / "custom_components"
-    / "garden_companion"
+    / "garden_journal"
     / "brand"
 )
 _SOURCE = _BRAND / "icon.svg"

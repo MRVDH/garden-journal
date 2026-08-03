@@ -48,14 +48,14 @@ from .config_flow import (
     row_value,
 )
 from .const import _LOGGER, DOMAIN
-from .dataset import GardenCompanionConfigEntry
+from .dataset import GardenJournalConfigEntry
 from .models import Care, Species, Window
 from .resolver import Resolver, repair_reason, resolve_care, resolve_windows
 from .windows import in_season, next_pruning, occurrence_end
 
 _PANEL_URL = f"/{DOMAIN}_panel"
-_MODULE_URL = f"{_PANEL_URL}/garden-companion-panel.js"
-_COMPONENT = "garden-companion-panel"
+_MODULE_URL = f"{_PANEL_URL}/garden-journal-panel.js"
+_COMPONENT = "garden-journal-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
@@ -77,8 +77,8 @@ _CACHE_LIMIT = 64
 # read about it. Requests carrying one are served happily in parallel, while a
 # generic agent is refused with a 429, so this header is what makes the grid work.
 _USER_AGENT = (
-    "GardenCompanion/0.1.0 (Home Assistant integration; "
-    "https://github.com/MRVDH/garden-companion)"
+    "GardenJournal/0.1.0 (Home Assistant integration; "
+    "https://github.com/MRVDH/garden-journal)"
 )
 
 # The grid wants thumbnails, not full-size files, and a modest number of
@@ -164,7 +164,7 @@ def _credit(species: Species) -> str | None:
     return author or licence
 
 
-def _entry(hass: HomeAssistant) -> GardenCompanionConfigEntry | None:
+def _entry(hass: HomeAssistant) -> GardenJournalConfigEntry | None:
     """Return the config entry while it is loaded, else None.
 
     The dataset lives on the entry's runtime data, which is only there in the
@@ -177,7 +177,7 @@ def _entry(hass: HomeAssistant) -> GardenCompanionConfigEntry | None:
     return None
 
 
-def _added_counts(entry: GardenCompanionConfigEntry) -> Counter[str]:
+def _added_counts(entry: GardenJournalConfigEntry) -> Counter[str]:
     """Count the plants in the garden against the dataset row each came from."""
     counts: Counter[str] = Counter()
     for subentry in entry.get_subentries_of_type("plant"):
@@ -210,7 +210,7 @@ def _ws_plants(
     """
     entry = _entry(hass)
     if entry is None:
-        connection.send_error(msg["id"], "not_loaded", "Garden Companion is not loaded")
+        connection.send_error(msg["id"], "not_loaded", "Garden Journal is not loaded")
         return
     resolver = Resolver(entry.runtime_data.species)
     query = (msg.get("query") or "").strip()
@@ -242,7 +242,7 @@ def _image_entity(hass: HomeAssistant, entry_id: str, subentry_id: str) -> str |
 
 def _garden_plant(
     hass: HomeAssistant,
-    entry: GardenCompanionConfigEntry,
+    entry: GardenJournalConfigEntry,
     subentry: ConfigSubentry,
     resolver: Resolver,
 ) -> dict[str, Any]:
@@ -303,7 +303,7 @@ def _ws_garden(
     """Return the plants in the garden, the most urgent first."""
     entry = _entry(hass)
     if entry is None:
-        connection.send_error(msg["id"], "not_loaded", "Garden Companion is not loaded")
+        connection.send_error(msg["id"], "not_loaded", "Garden Journal is not loaded")
         return
     resolver = Resolver(entry.runtime_data.species)
     plants = [
@@ -332,7 +332,7 @@ def _ws_add_plant(
     """Add a dataset plant, the same stored shape the add flow writes."""
     entry = _entry(hass)
     if entry is None:
-        connection.send_error(msg["id"], "not_loaded", "Garden Companion is not loaded")
+        connection.send_error(msg["id"], "not_loaded", "Garden Journal is not loaded")
         return
     resolver = Resolver(entry.runtime_data.species)
     row = picked_row(msg["key"], resolver)
@@ -407,7 +407,7 @@ def _ws_add_manual_plant(
     """
     entry = _entry(hass)
     if entry is None:
-        connection.send_error(msg["id"], "not_loaded", "Garden Companion is not loaded")
+        connection.send_error(msg["id"], "not_loaded", "Garden Journal is not loaded")
         return
 
     name = msg["name"].strip()
@@ -463,7 +463,7 @@ def _ws_add_manual_plant(
 
 
 def _find_subentry(
-    entry: GardenCompanionConfigEntry, subentry_id: str
+    entry: GardenJournalConfigEntry, subentry_id: str
 ) -> ConfigSubentry | None:
     """Return one plant subentry by id, or None when there is no such plant."""
     for subentry in entry.get_subentries_of_type("plant"):
@@ -489,7 +489,7 @@ def _ws_rename_plant(
     """Rename a plant, which renames its device once the entry reloads."""
     entry = _entry(hass)
     if entry is None:
-        connection.send_error(msg["id"], "not_loaded", "Garden Companion is not loaded")
+        connection.send_error(msg["id"], "not_loaded", "Garden Journal is not loaded")
         return
     subentry = _find_subentry(entry, msg["subentry_id"])
     if subentry is None:
@@ -524,7 +524,7 @@ def _ws_remove_plant(
     """Remove a plant, along with its device and entities."""
     entry = _entry(hass)
     if entry is None:
-        connection.send_error(msg["id"], "not_loaded", "Garden Companion is not loaded")
+        connection.send_error(msg["id"], "not_loaded", "Garden Journal is not loaded")
         return
     if _find_subentry(entry, msg["subentry_id"]) is None:
         connection.send_error(msg["id"], "unknown_plant", "No such plant")
@@ -533,7 +533,7 @@ def _ws_remove_plant(
     connection.send_result(msg["id"], {})
 
 
-class GardenCompanionPhotoView(HomeAssistantView):
+class GardenJournalPhotoView(HomeAssistantView):
     """Serve a dataset photo, fetched server-side so the browser stays off the host."""
 
     url = f"{_PHOTO_URL}/{{key}}"
@@ -649,7 +649,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
     await hass.http.async_register_static_paths(
         [StaticPathConfig(_PANEL_URL, str(Path(__file__).parent / "frontend"), False)]
     )
-    hass.http.register_view(GardenCompanionPhotoView(hass))
+    hass.http.register_view(GardenJournalPhotoView(hass))
     websocket_api.async_register_command(hass, _ws_garden)
     websocket_api.async_register_command(hass, _ws_plants)
     websocket_api.async_register_command(hass, _ws_add_plant)
@@ -660,7 +660,7 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         hass,
         frontend_url_path=DOMAIN,
         webcomponent_name=_COMPONENT,
-        sidebar_title="Garden Companion",
+        sidebar_title="Garden Journal",
         sidebar_icon="mdi:content-cut",
         module_url=f"{_MODULE_URL}?v={_MODULE_VERSION}",
         require_admin=True,

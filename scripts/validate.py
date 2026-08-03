@@ -25,7 +25,7 @@ import yaml
 # the path lets us import models.py on its own, so validation stays fast and
 # has no Home Assistant dependency, while the schema still lives in one place.
 _PACKAGE = (
-    Path(__file__).resolve().parent.parent / "custom_components" / "garden_companion"
+    Path(__file__).resolve().parent.parent / "custom_components" / "garden_journal"
 )
 sys.path.insert(0, str(_PACKAGE))
 
@@ -64,7 +64,7 @@ def uncredited(dataset: list[Species]) -> list[str]:
 def main(argv: list[str] | None = None) -> int:
     """Validate the dataset file and report the outcome."""
     parser = argparse.ArgumentParser(
-        description="Validate the Garden Companion species dataset."
+        description="Validate the Garden Journal species dataset."
     )
     parser.add_argument(
         "path",

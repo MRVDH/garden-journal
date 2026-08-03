@@ -14,9 +14,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.garden_companion.const import DOMAIN
-from custom_components.garden_companion.dataset import GardenCompanionData
-from custom_components.garden_companion.models import build_dataset
+from custom_components.garden_journal.const import DOMAIN
+from custom_components.garden_journal.dataset import GardenJournalData
+from custom_components.garden_journal.models import build_dataset
 
 
 def _window(start: str, end: str) -> dict[str, Any]:
@@ -55,11 +55,11 @@ async def _entry_with(hass: HomeAssistant, rows: list[dict[str, Any]]) -> Config
     """Set up a config entry, then swap in a dataset built from rows."""
     species, errors = build_dataset(rows)
     assert errors == []
-    entry = MockConfigEntry(domain=DOMAIN, title="Garden Companion", data={})
+    entry = MockConfigEntry(domain=DOMAIN, title="Garden Journal", data={})
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
-    entry.runtime_data = GardenCompanionData(species=species)
+    entry.runtime_data = GardenJournalData(species=species)
     return entry
 
 
@@ -411,7 +411,7 @@ async def test_reconfigure_repicks_the_species(hass: HomeAssistant) -> None:
             _row("Hydrangea", [_APRIL], species="macrophylla"),
         ]
     )
-    entry.runtime_data = GardenCompanionData(species=species)
+    entry.runtime_data = GardenJournalData(species=species)
 
     result = await hass.config_entries.subentries.async_init(
         (entry.entry_id, "plant"),

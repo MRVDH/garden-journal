@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from custom_components.garden_companion.models import Image, Window, build_dataset
-from custom_components.garden_companion.resolver import (
+from custom_components.garden_journal.models import Image, Window, build_dataset
+from custom_components.garden_journal.resolver import (
     Resolver,
     normalise,
     repair_reason,

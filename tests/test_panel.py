@@ -24,8 +24,8 @@ from pytest_homeassistant_custom_component.typing import (
     WebSocketGenerator,
 )
 
-from custom_components.garden_companion.const import DOMAIN
-from custom_components.garden_companion.panel import _MAX_LIMIT
+from custom_components.garden_journal.const import DOMAIN
+from custom_components.garden_journal.panel import _MAX_LIMIT
 
 _HYDRANGEA = "dataset:Hydrangea|paniculata"
 _WISTERIA = "dataset:Wisteria|"
@@ -59,7 +59,7 @@ async def _setup(
     shutil.rmtree(hass.config.cache_path(DOMAIN), ignore_errors=True)
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="Garden Companion",
+        title="Garden Journal",
         subentries_data=[
             ConfigSubentryData(
                 subentry_type="plant", title=title, data=data, unique_id=None
@@ -467,8 +467,8 @@ async def test_plants_searches_by_a_common_name(
 
 async def test_a_row_names_itself_in_the_users_language() -> None:
     """A card carries the common name for the language, falling back to English."""
-    from custom_components.garden_companion.models import Species
-    from custom_components.garden_companion.panel import _as_json
+    from custom_components.garden_journal.models import Species
+    from custom_components.garden_journal.panel import _as_json
 
     row = Species(
         genus="Rosa",
@@ -487,8 +487,8 @@ async def test_a_row_names_itself_in_the_users_language() -> None:
 
 async def test_a_card_carries_care_in_the_users_language() -> None:
     """Care reaches the dialog with its season and localised advice."""
-    from custom_components.garden_companion.models import Care, Species
-    from custom_components.garden_companion.panel import _as_json
+    from custom_components.garden_journal.models import Care, Species
+    from custom_components.garden_journal.panel import _as_json
 
     row = Species(
         genus="Rosa",
@@ -696,8 +696,8 @@ async def test_plants_reports_not_loaded_while_unloaded(
 
 async def test_credit_joins_author_and_licence() -> None:
     """A credit reads "author (licence)", and falls back to whichever is there."""
-    from custom_components.garden_companion.models import Image, Species
-    from custom_components.garden_companion.panel import _credit
+    from custom_components.garden_journal.models import Image, Species
+    from custom_components.garden_journal.panel import _credit
 
     def row(**image: str) -> Species:
         return Species(
@@ -719,7 +719,7 @@ async def test_credit_joins_author_and_licence() -> None:
 
 async def test_thumbnail_rewrites_the_width() -> None:
     """A photo URL with a width parameter is asked for at thumbnail size."""
-    from custom_components.garden_companion.panel import _thumbnail
+    from custom_components.garden_journal.panel import _thumbnail
 
     assert _thumbnail("https://x.test/a.jpg?width=600") == (
         "https://x.test/a.jpg?width=320"

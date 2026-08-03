@@ -1,4 +1,4 @@
-"""Config flow and subentry flow for Garden Companion.
+"""Config flow and subentry flow for Garden Journal.
 
 The config entry stores nothing and is a single confirm step. Each
 plant is a subentry added and reconfigured through PlantSubentryFlow, which
@@ -35,8 +35,8 @@ from .models import Species
 from .resolver import Resolver, normalise, timing_signature
 
 
-class GardenCompanionConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle the config flow for Garden Companion."""
+class GardenJournalConfigFlow(ConfigFlow, domain=DOMAIN):
+    """Handle the config flow for Garden Journal."""
 
     VERSION = 1
 
@@ -54,7 +54,7 @@ class GardenCompanionConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Handle the initial step: a confirm with nothing to fill in."""
         if user_input is not None:
-            return self.async_create_entry(title="Garden Companion", data={})
+            return self.async_create_entry(title="Garden Journal", data={})
 
         return self.async_show_form(step_id="user")
 

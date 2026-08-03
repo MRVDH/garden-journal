@@ -1,4 +1,4 @@
-"""The Garden Companion integration.
+"""The Garden Journal integration.
 
 The config entry stores nothing of its own. On setup it loads the species
 dataset off the event loop, caches it on the entry's runtime data for the
@@ -15,8 +15,8 @@ from homeassistant.helpers import issue_registry as ir
 
 from .const import _LOGGER, DOMAIN
 from .dataset import (
-    GardenCompanionConfigEntry,
-    GardenCompanionData,
+    GardenJournalConfigEntry,
+    GardenJournalData,
     async_load_dataset,
 )
 from .panel import async_setup_panel
@@ -31,11 +31,11 @@ _PLATFORMS = [
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: GardenCompanionConfigEntry
+    hass: HomeAssistant, entry: GardenJournalConfigEntry
 ) -> bool:
-    """Set up Garden Companion from a config entry."""
+    """Set up Garden Journal from a config entry."""
     species = await async_load_dataset(hass)
-    entry.runtime_data = GardenCompanionData(species=species)
+    entry.runtime_data = GardenJournalData(species=species)
     _LOGGER.debug("Loaded %d species from the dataset", len(species))
     _refresh_repairs(hass, entry)
     await async_setup_panel(hass)
@@ -44,7 +44,7 @@ async def async_setup_entry(
     return True
 
 
-def _refresh_repairs(hass: HomeAssistant, entry: GardenCompanionConfigEntry) -> None:
+def _refresh_repairs(hass: HomeAssistant, entry: GardenJournalConfigEntry) -> None:
     """Raise or clear a repair per plant, according to whether its key resolves."""
     resolver = Resolver(entry.runtime_data.species)
     plants = {s.subentry_id: s for s in entry.get_subentries_of_type("plant")}
@@ -70,14 +70,14 @@ def _refresh_repairs(hass: HomeAssistant, entry: GardenCompanionConfigEntry) -> 
 
 
 async def _async_reload_entry(
-    hass: HomeAssistant, entry: GardenCompanionConfigEntry
+    hass: HomeAssistant, entry: GardenJournalConfigEntry
 ) -> None:
     """Reload so a plant added, changed or removed updates its entities."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(
-    hass: HomeAssistant, entry: GardenCompanionConfigEntry
+    hass: HomeAssistant, entry: GardenJournalConfigEntry
 ) -> bool:
     """Unload a config entry."""
     return await hass.config_entries.async_unload_platforms(entry, _PLATFORMS)

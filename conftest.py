@@ -1,4 +1,4 @@
-"""Shared fixtures for the Garden Companion test suite."""
+"""Shared fixtures for the Garden Journal test suite."""
 
 from __future__ import annotations
 

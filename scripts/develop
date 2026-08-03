@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
 CONFIG="${ROOT}/config"
-DOMAIN="garden_companion"
+DOMAIN="garden_journal"
 
 if [ ! -x "${ROOT}/.venv/bin/hass" ]; then
     echo "No virtualenv found. Run scripts/setup first." >&2
@@ -24,7 +24,7 @@ mkdir -p "${CONFIG}/custom_components"
 if [ ! -f "${CONFIG}/configuration.yaml" ]; then
     cat >"${CONFIG}/configuration.yaml" <<'YAML'
 homeassistant:
-  name: Garden Companion Dev
+  name: Garden Journal Dev
   time_zone: Europe/Amsterdam
   country: NL
   currency: EUR
@@ -37,7 +37,7 @@ frontend:
 logger:
   default: warning
   logs:
-    custom_components.garden_companion: debug
+    custom_components.garden_journal: debug
 YAML
     echo "Wrote ${CONFIG}/configuration.yaml"
 fi

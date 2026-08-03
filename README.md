@@ -1,4 +1,4 @@
-# Garden Companion
+# Garden Journal
 
 A Home Assistant integration that tells you when to prune the plants in your
 garden, with timing tuned to the Dutch climate.
@@ -26,7 +26,7 @@ that is confidently wrong is worse than no advice.
 | `binary_sensor.<plant>_prune_now` | On while today falls inside a pruning window |
 | `binary_sensor.<plant>_care_now` | On while a continuous-care season is open, deadheading a rose for instance. Only exists for plants that have such a job |
 | `image.<plant>_photo` | A photo, so you can check you picked the right plant |
-| `calendar.garden_companion` | Every plant's windows as all-day events, one calendar for the whole garden |
+| `calendar.garden_journal` | Every plant's windows as all-day events, one calendar for the whole garden |
 
 Everything is computed locally at midnight. Nothing polls, and the only network
 request is Home Assistant fetching a plant photo once.
@@ -40,19 +40,19 @@ Home Assistant 2026.7.0 or newer.
 Through HACS as a custom repository:
 
 1. In HACS, open the three-dot menu and choose **Custom repositories**.
-2. Add `https://github.com/MRVDH/garden-companion` with category **Integration**.
-3. Download **Garden Companion**, then restart Home Assistant.
+2. Add `https://github.com/MRVDH/garden-journal` with category **Integration**.
+3. Download **Garden Journal**, then restart Home Assistant.
 4. Go to **Settings > Devices & services > Add integration** and search for
-   Garden Companion.
+   Garden Journal.
 
-Or copy `custom_components/garden_companion` into your `config/custom_components`
+Or copy `custom_components/garden_journal` into your `config/custom_components`
 directory and restart.
 
 ## Adding plants
 
 Two ways, whichever suits you.
 
-**Browse the Garden Companion panel** in the sidebar. It shows every plant in the
+**Browse the Garden Journal panel** in the sidebar. It shows every plant in the
 dataset as a card with its photo, common name, botanical name and pruning dates,
 with a search box over the top. Click a plant, give it a name, and it is added.
 Cards for plants you already have say so. Photos are fetched by Home Assistant
@@ -77,7 +77,7 @@ timing of a plant that is pruned the same way, or enter your own windows.
 
 ## The dataset
 
-`custom_components/garden_companion/data/species.yaml` holds one record per
+`custom_components/garden_journal/data/species.yaml` holds one record per
 plant, keyed on genus and species. Corrections arrive by updating that file:
 timing is looked up fresh on every restart, so a fixed month reaches plants you
 already added without any migration.
@@ -92,9 +92,9 @@ fail.
 Two licences, because code and data are different things:
 
 - The code is **MIT**, see [LICENSE](LICENSE).
-- The dataset in `custom_components/garden_companion/data/` is
+- The dataset in `custom_components/garden_journal/data/` is
   **CC BY-SA 4.0**, see
-  [data/LICENSE](custom_components/garden_companion/data/LICENSE). Reuse it, and
+  [data/LICENSE](custom_components/garden_journal/data/LICENSE). Reuse it, and
   share your version alike.
 
 Neither licence covers the linked photos. Those are freely licensed Wikimedia

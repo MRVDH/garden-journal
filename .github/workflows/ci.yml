@@ -63,6 +63,6 @@ jobs:
       - uses: actions/checkout@v7
       - run: |
           tag="${GITHUB_REF_NAME#v}"
-          manifest=$(python3 -c "import json; print(json.load(open('custom_components/garden_companion/manifest.json'))['version'])")
+          manifest=$(python3 -c "import json; print(json.load(open('custom_components/garden_journal/manifest.json'))['version'])")
           echo "tag=$tag manifest=$manifest"
           test "$tag" = "$manifest"

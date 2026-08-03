@@ -24,7 +24,7 @@ from homeassistant.helpers.translation import async_get_translations
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
-from .dataset import GardenCompanionConfigEntry
+from .dataset import GardenJournalConfigEntry
 from .models import Window
 from .resolver import Resolver, resolve_windows
 from .windows import next_pruning, occurrence_end, occurrences_in_range
@@ -61,7 +61,7 @@ async def _summary_template(hass: HomeAssistant) -> str:
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: GardenCompanionConfigEntry,
+    entry: GardenJournalConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Create the single pruning calendar for all plants."""
@@ -78,7 +78,7 @@ class PruningCalendar(CalendarEntity):
     """Every plant's pruning windows on one calendar."""
 
     _attr_has_entity_name = True
-    _attr_translation_key = "garden_companion"
+    _attr_translation_key = "garden_journal"
     _attr_should_poll = False
 
     def __init__(

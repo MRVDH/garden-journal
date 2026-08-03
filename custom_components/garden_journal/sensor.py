@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from .dataset import GardenCompanionConfigEntry
+from .dataset import GardenJournalConfigEntry
 from .entity import PlantEntity
 from .models import Window
 from .resolver import Resolver
@@ -33,7 +33,7 @@ def _pick_description(window: Window, language: str) -> str:
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: GardenCompanionConfigEntry,
+    entry: GardenJournalConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Create a next-pruning sensor for each plant subentry."""
