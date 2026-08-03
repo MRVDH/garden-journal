@@ -7,3 +7,11 @@
 homeassistant==2026.7.4
 pytest-homeassistant-custom-component==0.13.348
 ruff==0.16.0
+
+# Home Assistant installs an integration's own requirements at runtime, so a
+# running instance fetches this itself on first start. The tests never do, and
+# they set up `frontend` because the panel depends on it, so without this pin a
+# freshly created venv fails 62 tests on `No module named 'hass_frontend'`. The
+# version is the one core 2026.7.4 asks for in its frontend manifest, so it moves
+# when homeassistant does.
+home-assistant-frontend==20260624.6
