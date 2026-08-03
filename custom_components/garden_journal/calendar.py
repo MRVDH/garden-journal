@@ -29,11 +29,13 @@ from .models import Window
 from .resolver import Resolver, resolve_windows
 from .windows import next_pruning, occurrence_end, occurrences_in_range
 
-# The category is this integration's own, which `onboarding` does for its area and
-# dashboard names too. English is loaded first as a fallback and the user's
-# language overlays it, so a language file missing the key still reads sensibly.
-_SUMMARY_CATEGORY = "calendar_event"
-_SUMMARY_KEY = f"component.{DOMAIN}.{_SUMMARY_CATEGORY}.prune"
+# `common` is the category for strings that are not tied to an entity, a service or
+# a flow, and hassfest's translation schema accepts a fixed set of top-level keys of
+# which it is one. Anything invented gets rejected. English is loaded first as a
+# fallback and the user's language overlays it, so a language file missing the key
+# still reads sensibly.
+_SUMMARY_CATEGORY = "common"
+_SUMMARY_KEY = f"component.{DOMAIN}.{_SUMMARY_CATEGORY}.prune_summary"
 _SUMMARY_FALLBACK = "Prune {name}"
 
 

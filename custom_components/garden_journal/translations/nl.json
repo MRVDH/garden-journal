@@ -7,9 +7,6 @@
       }
     }
   },
-  "calendar_event": {
-    "prune": "{name} snoeien"
-  },
   "entity": {
     "sensor": {
       "next_pruning": {
@@ -143,5 +140,8 @@
         "reconfigure_successful": "Plant bijgewerkt."
       }
     }
+  },
+  "common": {
+    "prune_summary": "{name} snoeien"
   }
 }

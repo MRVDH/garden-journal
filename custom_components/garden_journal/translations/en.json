@@ -7,9 +7,6 @@
       }
     }
   },
-  "calendar_event": {
-    "prune": "Prune {name}"
-  },
   "entity": {
     "sensor": {
       "next_pruning": {
@@ -143,5 +140,8 @@
         "reconfigure_successful": "Plant updated."
       }
     }
+  },
+  "common": {
+    "prune_summary": "Prune {name}"
   }
 }
