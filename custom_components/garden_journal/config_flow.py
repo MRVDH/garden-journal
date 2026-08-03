@@ -1,9 +1,15 @@
 """Config flow and subentry flow for Garden Journal.
 
-The config entry stores nothing and is a single confirm step. Each
-plant is a subentry added and reconfigured through PlantSubentryFlow, which
-gives add, reconfigure and delete in the UI for free and makes each plant its
-own device.
+The config entry stores nothing and is a single confirm step. Each plant is a
+subentry, which makes it its own device and gives rename and delete in the UI for
+free.
+
+Plants are added in the panel, not here. What is left of the subentry flow is
+reconfigure, the route that re-points a plant at a different dataset row, plus the
+helpers the panel imports for building stored plant data. The add step exists only
+to say where to go: Home Assistant shows an "Add plant" button for every subentry
+type an integration declares, and declaring the type is what keeps reconfigure
+reachable.
 """
 
 from __future__ import annotations
@@ -12,7 +18,6 @@ from typing import Any, override
 
 import voluptuous as vol
 from homeassistant.config_entries import (
-    SOURCE_RECONFIGURE,
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
@@ -21,13 +26,9 @@ from homeassistant.config_entries import (
 )
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
-    NumberSelector,
-    NumberSelectorConfig,
-    NumberSelectorMode,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
-    SelectSelectorMode,
 )
 
 from .const import DOMAIN
@@ -170,20 +171,6 @@ def _stored_borrow(
     }
 
 
-_MONTHS = (
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-)
 _DAYS_IN_MONTH = {
     1: 31,
     2: 28,
@@ -228,14 +215,14 @@ def _stored_author(
 
 
 class PlantSubentryFlow(ConfigSubentryFlow):
-    """Add or reconfigure one plant."""
+    """Re-point one plant at a different dataset row.
 
-    _match: Species | None = None
+    Adding happens in the panel. This flow is declared so that reconfigure
+    exists, since Home Assistant refuses a subentry flow whose type an
+    integration does not declare, and the add step says as much.
+    """
+
     _candidates: list[Species] | None = None
-    _query: str | None = None
-    _botanical: str | None = None
-    _display: str | None = None
-    _windows: list[dict[str, Any]] | None = None
 
     def _species(self) -> list[Species]:
         """Return the config entry's cached dataset."""
@@ -244,13 +231,6 @@ class PlantSubentryFlow(ConfigSubentryFlow):
     def _resolver(self) -> Resolver:
         """Build a resolver over the config entry's cached dataset."""
         return Resolver(self._species())
-
-    async def _select_match(self, species: Species) -> SubentryFlowResult:
-        """Route a chosen dataset row: update on reconfigure, else name it (add)."""
-        if self.source == SOURCE_RECONFIGURE:
-            return self._apply_repick(species)
-        self._match = species
-        return await self.async_step_name()
 
     def _apply_repick(self, species: Species) -> SubentryFlowResult:
         """Re-map an existing plant to a dataset row, keeping its name."""
@@ -280,7 +260,7 @@ class PlantSubentryFlow(ConfigSubentryFlow):
             if not groups:
                 errors["base"] = "not_found"
             elif len(groups) == 1:
-                return await self._select_match(groups[0])
+                return self._apply_repick(groups[0])
             else:
                 self._candidates = groups
                 return await self.async_step_disambiguate()
@@ -294,76 +274,41 @@ class PlantSubentryFlow(ConfigSubentryFlow):
             errors=errors,
         )
 
-    def _picker_rows(self) -> list[Species]:
-        """Return every dataset row, ordered by the label the picker shows."""
-        language = self.hass.config.language
-        return sorted(self._species(), key=lambda row: _label(row, language).casefold())
-
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Pick a plant from the dataset, or type any name to search for it.
+        """Send the reader to the panel, which is where plants are added.
 
-        The picker is a combo box holding every row, so the whole dataset can be
-        browsed, and typing filters it. A name typed that is not one of the
-        options falls through to the same search that drives disambiguation and
-        manual add, so a plant that is not in the dataset still works.
+        Home Assistant shows an "Add plant" button for every subentry type an
+        integration declares, and there is no way to declare one without it. The
+        panel is the only place plants are added, so this step exists to say so
+        rather than to offer a second route that behaves differently.
+
+        The type stays declared because dropping it would take reconfigure with
+        it: `async_create_flow` rejects any subentry flow whose type is not
+        declared, whatever its source, and reconfigure is what the repair issues
+        tell people to use when a dataset update orphans one of their plants.
         """
-        rows = self._picker_rows()
-        if user_input is not None:
-            chosen = user_input["query"]
-            picked = picked_row(chosen, self._resolver())
-            if picked is not None:
-                return await self._select_match(picked)
-            groups = _distinct_by_timing(self._resolver().search(chosen))
-            if not groups:
-                # No match: offer manual add, seeding the botanical name.
-                self._query = chosen
-                return await self.async_step_manual()
-            if len(groups) == 1:
-                # One answer (a single row, or several that share timing).
-                return await self._select_match(groups[0])
-            self._candidates = groups
-            return await self.async_step_disambiguate()
-
-        language = self.hass.config.language
-        options = [
-            SelectOptionDict(value=row_value(row), label=_label(row, language))
-            for row in rows
-        ]
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required("query"): SelectSelector(
-                        SelectSelectorConfig(
-                            options=options,
-                            mode=SelectSelectorMode.DROPDOWN,
-                            custom_value=True,
-                        )
-                    )
-                }
-            ),
-        )
+        return self.async_abort(reason="add_from_panel")
 
     async def async_step_disambiguate(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Choose between candidates that prune at different times."""
+        """Choose between candidates that prune at different times.
+
+        Only reconfigure reaches this, so every option is a dataset row. There is
+        no "I am not sure" way out: the plant already exists, and the question is
+        which row it should point at rather than whether to create it.
+        """
         candidates = self._candidates or []
         if user_input is not None:
-            choice = user_input["choice"]
-            if choice == "unsure":
-                return await self.async_step_manual()
-            return await self._select_match(candidates[int(choice)])
+            return self._apply_repick(candidates[int(user_input["choice"])])
 
         language = self.hass.config.language
         options = [
             SelectOptionDict(value=str(index), label=_label(candidate, language))
             for index, candidate in enumerate(candidates)
         ]
-        if self.source != SOURCE_RECONFIGURE:
-            options.append(SelectOptionDict(value="unsure", label="I am not sure"))
         return self.async_show_form(
             step_id="disambiguate",
             data_schema=vol.Schema(
@@ -371,177 +316,6 @@ class PlantSubentryFlow(ConfigSubentryFlow):
                     vol.Required("choice"): SelectSelector(
                         SelectSelectorConfig(options=options)
                     )
-                }
-            ),
-        )
-
-    async def async_step_name(
-        self, user_input: dict[str, Any] | None = None
-    ) -> SubentryFlowResult:
-        """Name a dataset plant, then create the subentry."""
-        if self._match is None:
-            return await self.async_step_user()
-        if user_input is not None:
-            return self.async_create_entry(
-                title=user_input["display_name"],
-                data=_stored_plant(self._match, user_input["display_name"]),
-            )
-
-        default = _default_display_name(self._match, self.hass.config.language)
-        return self.async_show_form(
-            step_id="name",
-            data_schema=vol.Schema(
-                {vol.Required("display_name", default=default): str}
-            ),
-        )
-
-    async def async_step_manual(
-        self, user_input: dict[str, Any] | None = None
-    ) -> SubentryFlowResult:
-        """Collect a botanical name and display name for a plant not in the dataset."""
-        if user_input is not None:
-            self._botanical = user_input["botanical"]
-            self._display = user_input["display_name"]
-            return await self.async_step_timing()
-
-        return self.async_show_form(
-            step_id="manual",
-            data_schema=vol.Schema(
-                {
-                    vol.Required("botanical", default=self._query or ""): str,
-                    vol.Required("display_name"): str,
-                }
-            ),
-        )
-
-    async def async_step_timing(
-        self, user_input: dict[str, Any] | None = None
-    ) -> SubentryFlowResult:
-        """Offer to borrow another plant's timing or author your own."""
-        return self.async_show_menu(step_id="timing", menu_options=["borrow", "author"])
-
-    async def async_step_borrow(
-        self, user_input: dict[str, Any] | None = None
-    ) -> SubentryFlowResult:
-        """Reuse an existing plant's timing for the manual plant."""
-        species = self._species()
-        if user_input is not None:
-            borrowed = species[int(user_input["borrowed"])]
-            return self.async_create_entry(
-                title=self._display or "",
-                data=_stored_borrow(
-                    self._botanical or "", self._display or "", borrowed
-                ),
-            )
-
-        language = self.hass.config.language
-        options = [
-            SelectOptionDict(value=str(index), label=_label(row, language))
-            for index, row in enumerate(species)
-        ]
-        return self.async_show_form(
-            step_id="borrow",
-            data_schema=vol.Schema(
-                {
-                    vol.Required("borrowed"): SelectSelector(
-                        SelectSelectorConfig(options=options)
-                    )
-                }
-            ),
-        )
-
-    async def async_step_author(
-        self, user_input: dict[str, Any] | None = None
-    ) -> SubentryFlowResult:
-        """Start authoring one or more pruning windows."""
-        self._windows = []
-        return await self.async_step_window()
-
-    async def async_step_window(
-        self, user_input: dict[str, Any] | None = None
-    ) -> SubentryFlowResult:
-        """Collect one window: a start and end date and what to do."""
-        if self._windows is None:
-            self._windows = []
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            start_month = int(user_input["start_month"])
-            start_day = int(user_input["start_day"])
-            end_month = int(user_input["end_month"])
-            end_day = int(user_input["end_day"])
-            if not _valid_day(start_month, start_day) or not _valid_day(
-                end_month, end_day
-            ):
-                errors["base"] = "invalid_date"
-            else:
-                language = self.hass.config.language
-                self._windows.append(
-                    {
-                        "when": {
-                            "start": f"{start_month:02d}-{start_day:02d}",
-                            "end": f"{end_month:02d}-{end_day:02d}",
-                        },
-                        "description": {language: user_input["description"]},
-                    }
-                )
-                return await self.async_step_window_menu()
-
-        months = SelectSelector(
-            SelectSelectorConfig(
-                options=[
-                    SelectOptionDict(value=str(number), label=name)
-                    for number, name in enumerate(_MONTHS, start=1)
-                ]
-            )
-        )
-        day = NumberSelector(
-            NumberSelectorConfig(min=1, max=31, step=1, mode=NumberSelectorMode.BOX)
-        )
-        return self.async_show_form(
-            step_id="window",
-            data_schema=vol.Schema(
-                {
-                    vol.Required("start_month"): months,
-                    vol.Required("start_day"): day,
-                    vol.Required("end_month"): months,
-                    vol.Required("end_day"): day,
-                    vol.Required("description"): str,
-                }
-            ),
-            errors=errors,
-        )
-
-    async def async_step_window_menu(
-        self, user_input: dict[str, Any] | None = None
-    ) -> SubentryFlowResult:
-        """Offer another window or finishing up."""
-        return self.async_show_menu(
-            step_id="window_menu", menu_options=["window", "details"]
-        )
-
-    async def async_step_details(
-        self, user_input: dict[str, Any] | None = None
-    ) -> SubentryFlowResult:
-        """Ask for an optional source and photo, then create the plant."""
-        if user_input is not None:
-            source = user_input.get("source") or None
-            return self.async_create_entry(
-                title=self._display or "",
-                data=_stored_author(
-                    self._botanical or "",
-                    self._display or "",
-                    self._windows or [],
-                    source,
-                    user_input.get("image_url") or None,
-                ),
-            )
-
-        return self.async_show_form(
-            step_id="details",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional("source"): str,
-                    vol.Optional("image_url"): str,
                 }
             ),
         )

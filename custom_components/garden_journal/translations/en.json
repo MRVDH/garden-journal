@@ -54,13 +54,6 @@
       },
       "entry_type": "Plant",
       "step": {
-        "user": {
-          "title": "Add a plant",
-          "description": "Pick a plant from the list, or type any name to search for it. Typing filters the list, and both botanical and common names work, in Dutch or English.",
-          "data": {
-            "query": "Plant"
-          }
-        },
         "reconfigure": {
           "title": "Re-pick the plant",
           "description": "Search again to change which plant in the dataset this maps to.",
@@ -74,70 +67,14 @@
           "data": {
             "choice": "Plant"
           }
-        },
-        "name": {
-          "title": "Name this plant",
-          "description": "This name labels the plant's device and entities. You can change it later.",
-          "data": {
-            "display_name": "Display name"
-          }
-        },
-        "manual": {
-          "title": "Add a plant manually",
-          "description": "This plant is not in the dataset yet. Give its botanical name and a name to show.",
-          "data": {
-            "botanical": "Botanical name",
-            "display_name": "Display name"
-          }
-        },
-        "timing": {
-          "title": "How should its pruning be timed?",
-          "description": "Borrow the timing of a plant pruned the same way, or enter your own.",
-          "menu_options": {
-            "borrow": "Borrow another plant's timing",
-            "author": "Enter my own timing"
-          }
-        },
-        "borrow": {
-          "title": "Borrow timing from",
-          "description": "Pick a plant that is pruned like yours.",
-          "data": {
-            "borrowed": "Plant"
-          }
-        },
-        "window": {
-          "title": "Add a pruning window",
-          "description": "Enter when to prune and what to do. Leave the year out; an end before the start wraps past New Year.",
-          "data": {
-            "start_month": "Start month",
-            "start_day": "Start day",
-            "end_month": "End month",
-            "end_day": "End day",
-            "description": "What to do"
-          }
-        },
-        "window_menu": {
-          "title": "Add another window?",
-          "menu_options": {
-            "window": "Add another window",
-            "details": "Done"
-          }
-        },
-        "details": {
-          "title": "Source and photo (optional)",
-          "description": "Where the timing came from, and a link to a photo. Both optional.",
-          "data": {
-            "source": "Source URL",
-            "image_url": "Photo URL"
-          }
         }
       },
       "error": {
-        "invalid_date": "That is not a real date. Check the day against the month; there is no 31 February or 29 February.",
         "not_found": "No plant matched that name."
       },
       "abort": {
-        "reconfigure_successful": "Plant updated."
+        "reconfigure_successful": "Plant updated.",
+        "add_from_panel": "Plants are added in Garden Journal, in the sidebar on the left."
       }
     }
   },

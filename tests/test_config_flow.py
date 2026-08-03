@@ -1,15 +1,21 @@
-"""Tests for the plant subentry flow: search, disambiguation, naming.
+"""Tests for the plant subentry flow: the add signpost, and reconfigure.
 
-These drive the real subentry flow through hass.config_entries.subentries. The
-dataset is injected into the entry's runtime data, so disambiguation can be
-exercised even though the shipped three-row fixture has no ambiguous genus.
+Plants are added in the panel, covered by tests/test_panel.py. What this drives is
+the flow Home Assistant still shows on the integration page: an add step that
+points at the panel, and reconfigure, which re-points an existing plant at a
+different dataset row.
+
+Plants are seeded straight onto the config entry rather than created through a
+flow, since no flow creates them. The dataset is injected into the entry's runtime
+data so an ambiguous genus can be exercised, which the packaged dataset's own rows
+cannot always provide.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigSubentryData
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -46,16 +52,47 @@ def _row(
     return row
 
 
+def _plant(genus: str, species: str | None, display_name: str) -> dict[str, Any]:
+    """Return stored subentry data for a dataset plant."""
+    return {
+        "genus": genus,
+        "species": species,
+        "display_name": display_name,
+        "matched_on": "genus" if species is None else "species",
+        "in_dataset": True,
+        "windows_like": None,
+        "windows": None,
+        "source": None,
+        "image_url": None,
+    }
+
+
 _SPRING = _window("03-01", "04-15")
 _APRIL = _window("04-01", "04-30")
-_SUMMER = _window("07-15", "08-31")
 
 
-async def _entry_with(hass: HomeAssistant, rows: list[dict[str, Any]]) -> ConfigEntry:
-    """Set up a config entry, then swap in a dataset built from rows."""
+async def _entry_with(
+    hass: HomeAssistant,
+    rows: list[dict[str, Any]],
+    plants: list[dict[str, Any]] | None = None,
+) -> ConfigEntry:
+    """Set up an entry holding the given plants, with a dataset built from rows."""
     species, errors = build_dataset(rows)
     assert errors == []
-    entry = MockConfigEntry(domain=DOMAIN, title="Garden Journal", data={})
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Garden Journal",
+        data={},
+        subentries_data=[
+            ConfigSubentryData(
+                subentry_type="plant",
+                title=plant["display_name"],
+                data=plant,
+                unique_id=None,
+            )
+            for plant in plants or []
+        ],
+    )
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
@@ -63,360 +100,56 @@ async def _entry_with(hass: HomeAssistant, rows: list[dict[str, Any]]) -> Config
     return entry
 
 
-async def _start(hass: HomeAssistant, entry: ConfigEntry) -> dict[str, Any]:
-    """Start the add-plant subentry flow and return its first step."""
+async def _reconfigure(
+    hass: HomeAssistant, entry: ConfigEntry, subentry_id: str
+) -> dict[str, Any]:
+    """Start the reconfigure flow for one plant and return its first step."""
     return await hass.config_entries.subentries.async_init(
-        (entry.entry_id, "plant"), context={"source": "user"}
-    )
-
-
-async def test_add_a_dataset_plant(hass: HomeAssistant) -> None:
-    """A single match advances to naming and creates a subentry with 3.2 data."""
-    entry = await _entry_with(
-        hass,
-        [
-            _row(
-                "Hydrangea",
-                [_SPRING],
-                species="paniculata",
-                names={"nl": ["Pluimhortensia"], "en": ["Panicle hydrangea"]},
-            )
-        ],
-    )
-    result = await _start(hass, entry)
-    assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "user"
-
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"query": "hortensia"}
-    )
-    assert result["step_id"] == "name"
-
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"display_name": "By the shed"}
-    )
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["title"] == "By the shed"
-    assert result["data"]["genus"] == "Hydrangea"
-    assert result["data"]["species"] == "paniculata"
-    assert result["data"]["matched_on"] == "species"
-    assert result["data"]["in_dataset"] is True
-
-
-async def test_the_first_step_lists_every_dataset_row(hass: HomeAssistant) -> None:
-    """The picker offers every row, labelled by common and botanical name, sorted."""
-    entry = await _entry_with(
-        hass,
-        [
-            _row(
-                "Hydrangea",
-                [_SPRING],
-                species="paniculata",
-                names={"nl": ["Pluimhortensia"], "en": ["Panicle hydrangea"]},
-            ),
-            _row("Rosa", [_APRIL], names={"nl": ["Roos"], "en": ["Rose"]}),
-            _row(
-                "Wisteria",
-                [_SUMMER],
-                names={"nl": ["Blauwe regen"], "en": ["Wisteria"]},
-            ),
-        ],
-    )
-    result = await _start(hass, entry)
-
-    field = next(f for f in result["data_schema"].schema if f == "query")
-    options = result["data_schema"].schema[field].config["options"]
-    labels = [option["label"] for option in options]
-    assert labels == [
-        "Panicle hydrangea (Hydrangea paniculata)",
-        "Rose (Rosa)",
-        "Wisteria",
-    ]
-
-
-async def test_picking_from_the_list_skips_the_search(hass: HomeAssistant) -> None:
-    """Choosing an option names that exact row, with no disambiguation."""
-    entry = await _entry_with(
-        hass,
-        [
-            _row("Hydrangea", [_SPRING], species="paniculata"),
-            _row("Hydrangea", [_APRIL], species="macrophylla"),
-        ],
-    )
-    result = await _start(hass, entry)
-    options = result["data_schema"].schema["query"].config["options"]
-    macrophylla = next(o for o in options if "macrophylla" in o["label"])
-
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"query": macrophylla["value"]}
-    )
-    assert result["step_id"] == "name"
-
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"display_name": "By the door"}
-    )
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"]["species"] == "macrophylla"
-
-
-async def test_distinct_timings_ask_then_create(hass: HomeAssistant) -> None:
-    """A genus whose species disagree shows a choice, then creates the picked one."""
-    entry = await _entry_with(
-        hass,
-        [
-            _row("Hydrangea", [_SPRING], species="paniculata"),
-            _row("Hydrangea", [_APRIL], species="macrophylla"),
-        ],
-    )
-    result = await _start(hass, entry)
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"query": "hydrangea"}
-    )
-    assert result["step_id"] == "disambiguate"
-
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"choice": "0"}
-    )
-    assert result["step_id"] == "name"
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"display_name": "H"}
-    )
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"]["genus"] == "Hydrangea"
-
-
-async def test_not_sure_goes_to_manual(hass: HomeAssistant) -> None:
-    """The 'I am not sure' option routes into manual add."""
-    entry = await _entry_with(
-        hass,
-        [
-            _row("Hydrangea", [_SPRING], species="paniculata"),
-            _row("Hydrangea", [_APRIL], species="macrophylla"),
-        ],
-    )
-    result = await _start(hass, entry)
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"query": "hydrangea"}
-    )
-    assert result["step_id"] == "disambiguate"
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"choice": "unsure"}
-    )
-    assert result["step_id"] == "manual"
-
-
-async def test_shared_timing_does_not_ask(hass: HomeAssistant) -> None:
-    """Rows with the same timing (laurier) advance straight to naming."""
-    entry = await _entry_with(
-        hass,
-        [
-            _row(
-                "Prunus",
-                [_SUMMER],
-                species="laurocerasus",
-                names={"nl": ["Laurier"], "en": ["Cherry laurel"]},
-            ),
-            _row(
-                "Laurus",
-                [_SUMMER],
-                species="nobilis",
-                names={"nl": ["Laurier"], "en": ["Bay laurel"]},
-            ),
-        ],
-    )
-    result = await _start(hass, entry)
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"query": "laurier"}
-    )
-    assert result["step_id"] == "name"
-
-
-async def test_no_match_goes_to_manual(hass: HomeAssistant) -> None:
-    """A name not in the dataset routes into manual add."""
-    entry = await _entry_with(
-        hass, [_row("Hydrangea", [_SPRING], species="paniculata")]
-    )
-    result = await _start(hass, entry)
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"query": "quercus robur"}
-    )
-    assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "manual"
-
-
-async def test_manual_borrow_creates_a_plant(hass: HomeAssistant) -> None:
-    """Manual add with borrow stores windows_like and marks the plant not-in-dataset."""
-    entry = await _entry_with(
-        hass,
-        [
-            _row(
-                "Wisteria",
-                [_SUMMER],
-                names={"nl": ["Blauwe regen"], "en": ["Wisteria"]},
-            )
-        ],
-    )
-    result = await _start(hass, entry)
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"query": "Quercus robur"}
-    )
-    assert result["step_id"] == "manual"
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"botanical": "Quercus robur", "display_name": "The oak"}
-    )
-    assert result["type"] is FlowResultType.MENU
-    assert result["step_id"] == "timing"
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"next_step_id": "borrow"}
-    )
-    assert result["step_id"] == "borrow"
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"borrowed": "0"}
-    )
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["title"] == "The oak"
-    data = result["data"]
-    assert data["genus"] == "Quercus"
-    assert data["species"] == "robur"
-    assert data["matched_on"] == "manual"
-    assert data["in_dataset"] is False
-    assert data["windows_like"] == {
-        "genus": "Wisteria",
-        "species": None,
-    }
-
-
-async def _reach_author(hass: HomeAssistant) -> dict[str, Any]:
-    """Drive the flow to the first authored-window form."""
-    entry = await _entry_with(hass, [_row("Wisteria", [_SUMMER])])
-    result = await _start(hass, entry)
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"query": "Quercus"}
-    )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"botanical": "Quercus robur", "display_name": "Oak"}
-    )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"next_step_id": "author"}
-    )
-    assert result["step_id"] == "window"
-    return result
-
-
-async def test_author_two_windows_creates_a_plant(hass: HomeAssistant) -> None:
-    """Authoring two windows stores them with matched_on manual and no windows_like."""
-    result = await _reach_author(hass)
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"],
-        {
-            "start_month": "7",
-            "start_day": 15,
-            "end_month": "8",
-            "end_day": 31,
-            "description": "Shorten side shoots",
-        },
-    )
-    assert result["type"] is FlowResultType.MENU
-    assert result["step_id"] == "window_menu"
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"next_step_id": "window"}
-    )
-    assert result["step_id"] == "window"
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"],
-        {
-            "start_month": "1",
-            "start_day": 15,
-            "end_month": "2",
-            "end_day": 15,
-            "description": "Cut back to spurs",
-        },
-    )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"next_step_id": "details"}
-    )
-    assert result["step_id"] == "details"
-    result = await hass.config_entries.subentries.async_configure(result["flow_id"], {})
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    data = result["data"]
-    assert data["matched_on"] == "manual"
-    assert data["in_dataset"] is False
-    assert data["windows_like"] is None
-    assert [w["when"] for w in data["windows"]] == [
-        {"start": "07-15", "end": "08-31"},
-        {"start": "01-15", "end": "02-15"},
-    ]
-    assert data["source"] is None
-
-
-async def test_author_rejects_an_impossible_date(hass: HomeAssistant) -> None:
-    """31 February is refused with an error, staying on the window form."""
-    result = await _reach_author(hass)
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"],
-        {
-            "start_month": "2",
-            "start_day": 31,
-            "end_month": "3",
-            "end_day": 1,
-            "description": "x",
-        },
-    )
-    assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "window"
-    assert result["errors"] == {"base": "invalid_date"}
-
-
-async def _add_plant(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-    query: str,
-    choice: str | None = None,
-    display: str = "Plant",
-) -> str:
-    """Add a plant through the flow and return its new subentry id."""
-    result = await _start(hass, entry)
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"query": query}
-    )
-    if choice is not None:
-        result = await hass.config_entries.subentries.async_configure(
-            result["flow_id"], {"choice": choice}
-        )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {"display_name": display}
-    )
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    await hass.async_block_till_done()
-    return next(iter(entry.subentries))
-
-
-async def test_reconfigure_repicks_the_species(hass: HomeAssistant) -> None:
-    """Reconfigure re-maps a dataset plant to a different species, keeping its name."""
-    entry = await _entry_with(
-        hass,
-        [
-            _row("Hydrangea", [_SPRING], species="paniculata"),
-            _row("Hydrangea", [_APRIL], species="macrophylla"),
-        ],
-    )
-    subentry_id = await _add_plant(hass, entry, "hydrangea", choice="0", display="Mine")
-    assert entry.subentries[subentry_id].data["species"] == "paniculata"
-
-    # The entry's runtime data holds the packaged dataset; inject the ambiguous
-    # one so re-picking has more than one species to choose between.
-    species, _ = build_dataset(
-        [
-            _row("Hydrangea", [_SPRING], species="paniculata"),
-            _row("Hydrangea", [_APRIL], species="macrophylla"),
-        ]
-    )
-    entry.runtime_data = GardenJournalData(species=species)
-
-    result = await hass.config_entries.subentries.async_init(
         (entry.entry_id, "plant"),
         context={"source": "reconfigure", "subentry_id": subentry_id},
     )
+
+
+async def test_the_add_step_points_at_the_panel(hass: HomeAssistant) -> None:
+    """The Add plant button aborts with a pointer to the panel rather than a form."""
+    entry = await _entry_with(
+        hass, [_row("Hydrangea", [_SPRING], species="paniculata")]
+    )
+
+    result = await hass.config_entries.subentries.async_init(
+        (entry.entry_id, "plant"), context={"source": "user"}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "add_from_panel"
+
+
+async def test_the_plant_subentry_type_stays_declared(hass: HomeAssistant) -> None:
+    """Reconfigure only exists while the subentry type is declared, so assert it is.
+
+    Home Assistant refuses any subentry flow whose type an integration does not
+    declare, so dropping the declaration to hide the Add plant button would take
+    reconfigure with it.
+    """
+    entry = await _entry_with(
+        hass, [_row("Hydrangea", [_SPRING], species="paniculata")]
+    )
+
+    assert "plant" in entry.supported_subentry_types
+    assert entry.supported_subentry_types["plant"]["supports_reconfigure"] is True
+
+
+async def test_reconfigure_repicks_the_species(hass: HomeAssistant) -> None:
+    """Reconfigure re-maps a plant to a different species, keeping its name."""
+    rows = [
+        _row("Hydrangea", [_SPRING], species="paniculata"),
+        _row("Hydrangea", [_APRIL], species="macrophylla"),
+    ]
+    entry = await _entry_with(
+        hass, rows, plants=[_plant("Hydrangea", "paniculata", "Mine")]
+    )
+    subentry_id = next(iter(entry.subentries))
+
+    result = await _reconfigure(hass, entry, subentry_id)
     assert result["step_id"] == "reconfigure"
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"query": "hydrangea"}
@@ -428,6 +161,7 @@ async def test_reconfigure_repicks_the_species(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reconfigure_successful"
     await hass.async_block_till_done()
+
     data = entry.subentries[subentry_id].data
     assert data["species"] == "macrophylla"
     assert data["matched_on"] == "species"
@@ -435,19 +169,114 @@ async def test_reconfigure_repicks_the_species(hass: HomeAssistant) -> None:
     assert data["display_name"] == "Mine"
 
 
+async def test_reconfigure_offers_no_way_out_to_manual(hass: HomeAssistant) -> None:
+    """Every disambiguation option is a dataset row, since the plant already exists."""
+    rows = [
+        _row("Hydrangea", [_SPRING], species="paniculata"),
+        _row("Hydrangea", [_APRIL], species="macrophylla"),
+    ]
+    entry = await _entry_with(hass, rows, plants=[_plant("Hydrangea", None, "Mine")])
+    subentry_id = next(iter(entry.subentries))
+
+    result = await _reconfigure(hass, entry, subentry_id)
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"query": "hydrangea"}
+    )
+    assert result["step_id"] == "disambiguate"
+
+    options = result["data_schema"].schema["choice"].config["options"]
+    values = [option["value"] for option in options]
+    assert values == ["0", "1"]
+
+
+async def test_reconfigure_one_match_applies_without_asking(
+    hass: HomeAssistant,
+) -> None:
+    """A search resolving to one timing re-points the plant with no further step."""
+    rows = [
+        _row("Hydrangea", [_SPRING], species="paniculata"),
+        _row("Wisteria", [_APRIL]),
+    ]
+    entry = await _entry_with(
+        hass, rows, plants=[_plant("Hydrangea", "paniculata", "Mine")]
+    )
+    subentry_id = next(iter(entry.subentries))
+
+    result = await _reconfigure(hass, entry, subentry_id)
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"query": "wisteria"}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    await hass.async_block_till_done()
+
+    data = entry.subentries[subentry_id].data
+    assert data["genus"] == "Wisteria"
+    assert data["species"] is None
+    assert data["matched_on"] == "genus"
+
+
+async def test_reconfigure_clears_manual_timing(hass: HomeAssistant) -> None:
+    """Re-pointing a manual plant at a dataset row drops its own authored timing."""
+    manual = {
+        "genus": "Quercus",
+        "species": "robur",
+        "display_name": "The oak",
+        "matched_on": "manual",
+        "in_dataset": False,
+        "windows_like": None,
+        "windows": [_window("05-01", "05-31")],
+        "source": "https://example.org/oak",
+        "image_url": None,
+    }
+    entry = await _entry_with(
+        hass, [_row("Hydrangea", [_SPRING], species="paniculata")], plants=[manual]
+    )
+    subentry_id = next(iter(entry.subentries))
+
+    result = await _reconfigure(hass, entry, subentry_id)
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {"query": "hydrangea"}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    await hass.async_block_till_done()
+
+    data = entry.subentries[subentry_id].data
+    assert data["in_dataset"] is True
+    assert data["windows"] is None
+    assert data["windows_like"] is None
+    assert data["genus"] == "Hydrangea"
+
+
 async def test_reconfigure_no_match_shows_error(hass: HomeAssistant) -> None:
     """Reconfigure with a name not in the dataset re-shows the step with an error."""
     entry = await _entry_with(
-        hass, [_row("Hydrangea", [_SPRING], species="paniculata")]
+        hass,
+        [_row("Hydrangea", [_SPRING], species="paniculata")],
+        plants=[_plant("Hydrangea", "paniculata", "Mine")],
     )
-    subentry_id = await _add_plant(hass, entry, "hydrangea")
-    result = await hass.config_entries.subentries.async_init(
-        (entry.entry_id, "plant"),
-        context={"source": "reconfigure", "subentry_id": subentry_id},
-    )
+    subentry_id = next(iter(entry.subentries))
+
+    result = await _reconfigure(hass, entry, subentry_id)
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {"query": "quercus"}
     )
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "reconfigure"
     assert result["errors"] == {"base": "not_found"}
+
+
+async def test_reconfigure_defaults_to_the_current_botanical_name(
+    hass: HomeAssistant,
+) -> None:
+    """The search field opens prefilled with the plant's current botanical name."""
+    entry = await _entry_with(
+        hass,
+        [_row("Hydrangea", [_SPRING], species="paniculata")],
+        plants=[_plant("Hydrangea", "paniculata", "Mine")],
+    )
+    subentry_id = next(iter(entry.subentries))
+
+    result = await _reconfigure(hass, entry, subentry_id)
+    field = next(f for f in result["data_schema"].schema if f == "query")
+    assert field.default() == "Hydrangea paniculata"
