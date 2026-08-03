@@ -54,13 +54,6 @@
       },
       "entry_type": "Plant",
       "step": {
-        "user": {
-          "title": "Plant toevoegen",
-          "description": "Kies een plant uit de lijst, of typ een naam om te zoeken. Tijdens typen wordt de lijst gefilterd, en zowel botanische als Nederlandse namen werken.",
-          "data": {
-            "query": "Plant"
-          }
-        },
         "reconfigure": {
           "title": "Plant opnieuw kiezen",
           "description": "Zoek opnieuw om te wijzigen naar welke plant in de dataset dit verwijst.",
@@ -74,70 +67,14 @@
           "data": {
             "choice": "Plant"
           }
-        },
-        "name": {
-          "title": "Geef de plant een naam",
-          "description": "Deze naam komt op het apparaat en de entiteiten van de plant. Je kunt hem later aanpassen.",
-          "data": {
-            "display_name": "Weergavenaam"
-          }
-        },
-        "manual": {
-          "title": "Plant handmatig toevoegen",
-          "description": "Deze plant staat nog niet in de dataset. Geef de botanische naam en een naam om weer te geven.",
-          "data": {
-            "botanical": "Botanische naam",
-            "display_name": "Weergavenaam"
-          }
-        },
-        "timing": {
-          "title": "Hoe moet de snoei getimed worden?",
-          "description": "Neem de timing over van een plant die net zo gesnoeid wordt, of vul je eigen timing in.",
-          "menu_options": {
-            "borrow": "Timing van een andere plant overnemen",
-            "author": "Eigen timing invullen"
-          }
-        },
-        "borrow": {
-          "title": "Timing overnemen van",
-          "description": "Kies een plant die net zo gesnoeid wordt als die van jou.",
-          "data": {
-            "borrowed": "Plant"
-          }
-        },
-        "window": {
-          "title": "Snoeiperiode toevoegen",
-          "description": "Geef aan wanneer je snoeit en wat je dan doet. Laat het jaar weg; een einddatum voor de startdatum loopt door over de jaarwisseling.",
-          "data": {
-            "start_month": "Startmaand",
-            "start_day": "Startdag",
-            "end_month": "Eindmaand",
-            "end_day": "Einddag",
-            "description": "Wat te doen"
-          }
-        },
-        "window_menu": {
-          "title": "Nog een periode toevoegen?",
-          "menu_options": {
-            "window": "Nog een periode toevoegen",
-            "details": "Klaar"
-          }
-        },
-        "details": {
-          "title": "Bron en foto (optioneel)",
-          "description": "Waar de timing vandaan komt, en een link naar een foto. Beide optioneel.",
-          "data": {
-            "source": "Bron-URL",
-            "image_url": "Foto-URL"
-          }
         }
       },
       "error": {
-        "invalid_date": "Dat is geen bestaande datum. Controleer de dag bij de maand; 31 februari en 29 februari bestaan niet.",
         "not_found": "Geen plant gevonden met die naam."
       },
       "abort": {
-        "reconfigure_successful": "Plant bijgewerkt."
+        "reconfigure_successful": "Plant bijgewerkt.",
+        "add_from_panel": "Planten voeg je toe in Garden Journal, in het menu aan de linkerkant."
       }
     }
   },
