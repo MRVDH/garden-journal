@@ -511,3 +511,467 @@
           Deadhead spent flowers as they go over, cutting back to the first leaf
           with five leaflets rather than three: that is where the next bud comes
           from. It keeps a repeat-flowering rose going all season.
+
+# ---------------------------------------------------------------- Climbers ---
+# Clematis is the second genus whose species disagree, and the disagreement is
+# the point: viticella flowers on new wood and goes to the ground in late winter,
+# montana flowers on old wood and is only tidied once it has finished. So typing
+# "clematis" asks which one you have, the same way "hortensia" does.
+
+- genus: Clematis
+  species: viticella
+  names:
+    nl: [Italiaanse clematis, Clematis]
+    en: [Italian clematis, Viticella clematis]
+  source: https://groei.nl/artikel/clematis-snoeien
+  windows:
+    - when: { start: "02-20", end: "03-31" }
+      description:
+        nl: >-
+          Knip alles terug tot twintig à veertig centimeter boven de grond, tot
+          net boven een gezonde knop. Wacht een vorstvrije periode af. Hij bloeit
+          op hout van dit jaar, dus deze harde snoei kost geen bloei.
+        en: >-
+          Cut everything back to twenty or forty centimetres above the ground, to
+          just above a healthy bud. Wait for a frost-free spell. It flowers on
+          this year's wood, so cutting this hard costs no flowers.
+
+- genus: Clematis
+  species: montana
+  names:
+    nl: [Bergbosrank, Bergclematis]
+    en: [Mountain clematis]
+  source: https://groei.nl/artikel/clematis-snoeien
+  windows:
+    - when: { start: "05-01", end: "06-30" }
+      description:
+        nl: >-
+          Snoei direct na de bloei en haal dood en zwak hout weg. Bij een sterke
+          groeier als deze haal je elke twee jaar ongeveer een kwart van de
+          scheuten weg, anders wordt hij onderaan kaal. Snoei hem niet in het
+          voorjaar: de bloemen zitten op hout van vorig jaar.
+        en: >-
+          Prune straight after flowering and take out dead and weak wood. On a
+          vigorous grower like this one, remove about a quarter of the shoots
+          every two years or it goes bare at the base. Do not prune it in spring:
+          the flowers sit on last year's wood.
+
+- genus: Hedera
+  species: colchica
+  names:
+    nl: [Kaukasische klimop, Klimop]
+    en: [Persian ivy]
+  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/klimop-snoeien/
+  windows:
+    - when: { start: "03-01", end: "04-30" }
+      description:
+        nl: >-
+          Knip doorschietende scheuten terug, of pak de hoofdtakken aan en haal
+          de zijscheuten weg. Kijk eerst of er geen vogelnest bezet is: klimop is
+          een veelgebruikte nestplek, dus stel de snoei uit als er een in zit.
+        en: >-
+          Cut back wayward shoots, or work on the main branches and take out the
+          side shoots. Check first for an occupied bird nest: ivy is a favourite
+          nesting place, so put the job off if there is one.
+    - when: { start: "08-01", end: "09-10" }
+      description:
+        nl: >-
+          De tweede snoei, tot begin september. Daarna niet meer: klimop bloeit
+          in het najaar en die bloemen zijn voedsel voor bestuivers als de rest
+          van de tuin al klaar is, en de bessen zijn winterkost voor vogels.
+        en: >-
+          The second cut, up to early September. Not after that: ivy flowers in
+          autumn and those flowers feed pollinators once the rest of the garden
+          has finished, and the berries feed birds through winter.
+
+# -------------------------------------------------------- More perennials ---
+
+- genus: Iberis
+  species: sempervirens
+  names:
+    nl: [Scheefkelk, Scheefbloem]
+    en: [Evergreen candytuft]
+  source: https://plantnu.nl/iberis-sempervirens/
+  windows:
+    - when: { start: "06-15", end: "07-15" }
+      description:
+        nl: >-
+          Knip hem na de bloei tot ongeveer de helft terug. Dat houdt de vorm
+          compact en levert soms een tweede bloei in augustus. Snoei niet in het
+          kale, verhoute deel: daar loopt hij niet meer uit.
+        en: >-
+          Cut it back by about half once it has flowered. That keeps the shape
+          compact and sometimes buys a second flush in August. Do not cut into
+          the bare, woody part: it does not reshoot from there.
+
+- genus: Echinacea
+  species: purpurea
+  names:
+    nl: [Rode zonnehoed, Zonnehoed]
+    en: [Purple coneflower]
+  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/zonnehoed-snoeien/
+  windows:
+    - when: { start: "04-01", end: "04-30" }
+      description:
+        nl: >-
+          Knip de dode stengels tot vijf à tien centimeter boven de grond weg,
+          rond half april, zodra de plant weer uitloopt. Laat ze de winter staan:
+          ze beschermen de plant tegen vorst en de zaadhoofden zijn vogelvoer.
+        en: >-
+          Cut the dead stems back to five or ten centimetres above the ground,
+          around mid-April, as soon as the plant starts into growth. Leave them
+          through winter: they protect the plant from frost and the seed heads
+          feed birds.
+
+- genus: Scabiosa
+  species: lucida
+  names:
+    nl: [Glanzend duifkruid, Duifkruid]
+    en: [Shining scabious]
+  source: https://www.gardenersworldmagazine.nl/planten/scabiosa-duifkruid/
+  windows:
+    - when: { start: "02-01", end: "03-15" }
+      description:
+        nl: >-
+          Knip de plant eind winter terug. Laat de zaadhoofden tot dan staan voor
+          de vogels. Wil je zaad oogsten, dan knip je hem in het najaar terug
+          zodra het zaad rijp is.
+        en: >-
+          Cut the plant back in late winter. Leave the seed heads standing until
+          then for the birds. If you want to collect seed, cut it back in autumn
+          once the seed is ripe instead.
+  care:
+    - when: { start: "07-01", end: "09-30" }
+      description:
+        nl: >-
+          Knip uitgebloeide bloemen er regelmatig af. Dan blijft hij nieuwe
+          knoppen maken en bloeit hij een stuk langer door.
+        en: >-
+          Take the spent flowers off regularly. It keeps setting new buds and
+          carries on flowering considerably longer.
+
+- genus: Achillea
+  species: filipendulina
+  names:
+    nl: [Geel duizendblad, Duizendblad]
+    en: [Fernleaf yarrow]
+  source: https://www.hovenier.nl/planten/asteraceae/achillea
+  windows:
+    - when: { start: "03-01", end: "03-31" }
+      description:
+        nl: >-
+          Knip dood blad en bladeren die er slordig uitzien helemaal tot aan de
+          grond af, zodat de nieuwe groei ruimte krijgt.
+        en: >-
+          Cut dead foliage and any leaves that look untidy right back to the
+          ground, so the new growth has room.
+    - when: { start: "08-01", end: "09-30" }
+      description:
+        nl: >-
+          Knip de uitgebloeide bloemstelen tot aan de grond af. Daarna loopt hij
+          opnieuw uit en bloeit in het najaar nog een keer. De zaadhoofden zijn
+          ook na de bloei mooi, dus laten staan mag ook.
+        en: >-
+          Cut the spent flower stems back to the ground. It then puts out fresh
+          growth and flowers again in autumn. The seed heads look good after
+          flowering too, so leaving them is also fine.
+
+- genus: Astilbe
+  species: japonica
+  names:
+    nl: [Pluimspirea, Prachtspirea]
+    en: [Japanese astilbe]
+  source: https://tuiniertijd.nl/astilbe-snoeien/
+  windows:
+    - when: { start: "03-01", end: "04-30" }
+      description:
+        nl: >-
+          Knip al het dode blad en de overgebleven stelen tot net boven de grond
+          weg, vlak voordat het nieuwe blad komt. Laat de pluimen tot dan staan:
+          ze geven de winter een mooi silhouet en beschermen het groeipunt tegen
+          kou. Wil je ze eerder weg, dan kan dat in september.
+        en: >-
+          Cut all the dead foliage and the leftover stems back to just above the
+          ground, right before the new leaves come. Leave the plumes until then:
+          they give the winter a good silhouette and protect the crown from cold.
+          If you want them gone sooner, September works.
+
+- genus: Heuchera
+  species: micrantha
+  names:
+    nl: [Klein purperklokje, Purperklokje]
+    en: [Small-flowered alumroot]
+  source: https://tuiniertijd.nl/heuchera-snoeien/
+  windows:
+    - when: { start: "02-01", end: "03-31" }
+      description:
+        nl: >-
+          Haal bruine, gescheurde en vlekkerige bladeren zo laag mogelijk weg,
+          tot net boven de kroon. Wacht niet te lang: zodra het nieuwe blad komt,
+          knip je dat er makkelijk mee af. In een milde winter blijft hij half
+          wintergroen, dus snoei hem niet kaal.
+        en: >-
+          Take the brown, torn and blotchy leaves off as low as you can, to just
+          above the crown. Do not leave it too late: once the new leaves are up
+          you will trim those off with them. In a mild winter it stays
+          semi-evergreen, so do not cut it bare.
+  care:
+    - when: { start: "06-01", end: "08-31" }
+      description:
+        nl: >-
+          Knip uitgebloeide bloemstelen met een nette snede zo laag mogelijk weg.
+          Dat houdt de plant compact.
+        en: >-
+          Cut spent flower stems off as low as you can with a clean cut. It keeps
+          the plant compact.
+
+# ------------------------------------------------------------ More shrubs ---
+# Rhododendron is the third genus that has to ask, and for a blunter reason than
+# Clematis: maximum is a garden shrub and simsii is the indoor azalea, which is
+# not hardy at all and keeps its own calendar.
+
+- genus: Rhododendron
+  species: maximum
+  names:
+    nl: [Reuze rhododendron, Rhododendron]
+    en: [Great rhododendron, Rosebay]
+  source: https://groei.nl/artikel/rododendron-en-azalea-snoeien-en-verzorgen
+  windows:
+    - when: { start: "05-25", end: "07-05" }
+      description:
+        nl: >-
+          Snoei direct na de bloei, terug tot net boven een paar jonge zijtakjes.
+          Voor de meeste rhododendrons is dat juni; deze bloeit laat, dus wacht
+          tot zijn eigen bloemen voorbij zijn. Later in het seizoen zitten de
+          knoppen voor volgend jaar er al. Uitgebloeide bloemen mag je laten
+          zitten, dat hoeft niet.
+        en: >-
+          Prune straight after flowering, back to just above a pair of young side
+          shoots. For most rhododendrons that is June; this one is late, so wait
+          until its own flowers are over. Later in the season next year's buds are
+          already set. Spent flowers can stay, there is no need to pick them off.
+
+- genus: Skimmia
+  species: japonica
+  names:
+    nl: [Skimmia]
+    en: [Japanese skimmia]
+  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/skimmia-snoeien/
+  windows:
+    - when: { start: "04-01", end: "06-30" }
+      description:
+        nl: >-
+          Regelmatig snoeien is niet nodig: hij groeit langzaam en blijft
+          compact. Wil je toch, dan direct na de bloei. Haal dood of beschadigd
+          hout weg, eventueel een kwart van de oudste dikke takken tot bij de
+          voet, en de uitgebloeide bloemen. Niet in het najaar snoeien.
+        en: >-
+          Regular pruning is not needed: it grows slowly and stays compact. If
+          you do, go straight after flowering. Take out dead or damaged wood,
+          optionally a quarter of the oldest thick branches down to the base, and
+          the spent flowers. Do not prune in autumn.
+
+- genus: Euonymus
+  species: fortunei
+  names:
+    nl: [Kardinaalsmuts]
+    en: [Wintercreeper]
+  source: https://tuiniertijd.nl/kardinaalsmuts-snoeien/
+  windows:
+    - when: { start: "03-01", end: "04-30" }
+      description:
+        nl: >-
+          Snoei in het vroege voorjaar. Haal dood hout, beschadigde takken en
+          kruisende twijgen weg en kort de nieuwe groei ongeveer een derde in voor
+          de vorm. Snoei niet in strenge vorst of in de volle middagzon: verse
+          snijvlakken drogen dan uit.
+        en: >-
+          Prune in early spring. Take out dead wood, damaged branches and
+          crossing twigs, and shorten the new growth by about a third for shape.
+          Do not prune in hard frost or full midday sun: fresh cuts dry out.
+
+- genus: Calycanthus
+  species: floridus
+  names:
+    nl: [Specerijstruik]
+    en: [Carolina allspice, Sweetshrub]
+  source: https://yarinde.nl/products/specerijstruik-calycanthus-floridus
+  windows:
+    - when: { start: "07-15", end: "08-15" }
+      description:
+        nl: >-
+          Snoei alleen als het niet anders kan, en dan direct na de bloei, rond
+          eind juli. Later snoeien kost de bloemen van volgend jaar. Moet hij
+          echt terug, pas dan verjongingssnoei toe.
+        en: >-
+          Prune only if you have to, and then straight after flowering, around
+          the end of July. Pruning later costs next year's flowers. If it really
+          has to come back, use renewal pruning.
+
+- genus: Vitex
+  species: agnus-castus
+  names:
+    nl: [Kuisheidsstruik, Monnikspeper]
+    en: [Chaste tree]
+  source: https://plantnu.nl/vitex-agnus-castus/
+  windows:
+    - when: { start: "03-15", end: "04-15" }
+      description:
+        nl: >-
+          Snoei ingevroren takken terug en kort de andere takken licht in. Hij
+          bloeit op hout van dit jaar, dus een voorjaarssnoei kost geen bloei.
+          Wil je hem op ongeveer anderhalve meter houden, dan kun je hem elk
+          voorjaar tot een stuk lager terugzetten.
+        en: >-
+          Cut frost-damaged branches back and shorten the others lightly. It
+          flowers on this year's wood, so pruning in spring costs no flowers. To
+          hold it at about a metre and a half, you can take it down much further
+          every spring.
+
+# ------------------------------------------------------------------- Trees ---
+# Dutch pages disagree about robinia: one gives December to February, another May
+# to June, and a third late summer. They agree on the reason, which is that it
+# bleeds once the sap is up, so the late-summer window is the one that follows
+# from the shared reasoning rather than the one that reads best.
+
+- genus: Robinia
+  species: pseudoacacia
+  names:
+    nl: [Gewone robinia, Valse acacia, Acacia]
+    en: [Black locust, False acacia]
+  source: https://floraweb.nl/hoe-houd-je-robinia-compact-in-een-kleine-tuin-tips-en-trucs/
+  windows:
+    - when: { start: "08-01", end: "09-15" }
+      description:
+        nl: >-
+          Snoei in de late zomer. Wees niet bang om fors terug te snoeien: hij
+          loopt krachtig weer uit. Snoei niet in het voorjaar als de sapstroom op
+          gang is, want dan bloedt hij flink. Vroeg in het voorjaar kan wel, maar
+          dan vóór de bladuitloop in april.
+        en: >-
+          Prune in late summer. Do not be afraid to take it back hard: it comes
+          away strongly. Do not prune in spring once the sap is up, because it
+          bleeds heavily. Early spring does work, but before the leaves break in
+          April.
+  care:
+    - when: { start: "04-01", end: "09-30" }
+      description:
+        nl: >-
+          Robinia maakt wortelopslag: nieuwe loten die uit de wortels omhoog
+          komen. Haal die er direct en volledig uit. Hak ze niet af, maar steek ze
+          zo diep mogelijk uit, anders komen ze harder terug.
+        en: >-
+          Robinia throws root suckers, shoots coming up from the roots. Take them
+          out promptly and completely. Do not chop them off; dig them out as deep
+          as you can, or they come back harder.
+
+# ------------------------------------------------------------------ Bamboo ---
+
+- genus: Fargesia
+  species: murielae
+  names:
+    nl: [Bamboe, Schermbamboe]
+    en: [Umbrella bamboo]
+  source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/bamboe-snoeien/
+  windows:
+    - when: { start: "03-01", end: "04-15" }
+      description:
+        nl: >-
+          Dun uit aan het einde van de winter: haal de oudste en dunste halmen zo
+          laag mogelijk weg, en de halmen die de winter niet gehaald hebben. Deze
+          soort woekert niet. Moet hij flink terug, verdeel dat dan over twee
+          jaar; na een harde snoei herstelt hij langzaam. Augustus en september
+          kan ook.
+        en: >-
+          Thin it at the end of winter: take the oldest and thinnest canes out as
+          low as you can, along with any the winter killed. This species does not
+          run. If it needs taking back hard, spread that over two years; after a
+          hard cut it recovers slowly. August and September also work.
+
+# ------------------------------------------------------- Not hardy outdoors ---
+# These three overwinter under cover, so their calendar follows when you bring
+# them in and out rather than the Dutch outdoor year. The pruning months are a
+# reading of what the sources say, not a citation: none of them names a month.
+
+- genus: Pelargonium
+  species: peltatum
+  names:
+    nl: [Hanggeranium, Geranium]
+    en: [Ivy-leaved geranium]
+  source: https://www.directplant.nl/tuintips/geranium-verzorging/
+  windows:
+    - when: { start: "03-01", end: "04-15" }
+      description:
+        nl: >-
+          Niet winterhard: hij overwintert vorstvrij en licht, met weinig water.
+          Knip hem terug voordat hij naar binnen gaat of in het voorjaar bij het
+          verpotten, en laat altijd wat groen staan, want daaruit komen de nieuwe
+          scheuten. Veel snoei is niet nodig; lange uitlopers mogen eraf.
+        en: >-
+          Not hardy: it overwinters frost-free and bright, with little water. Cut
+          it back before it comes indoors or in spring when you repot it, and
+          always leave some green, because that is where the new shoots come
+          from. It needs little pruning; long trailers can come off.
+  care:
+    - when: { start: "05-01", end: "09-30" }
+      description:
+        nl: >-
+          Breek uitgebloeide bloemen uit de plant, met het steeltje eronder mee.
+          Dan blijft hij nieuwe knoppen maken.
+        en: >-
+          Pull the spent flowers out of the plant, taking the little stalk under
+          them with it. That keeps it setting new buds.
+
+- genus: Anisodontea
+  species: capensis
+  names:
+    nl: [Kamermalva, Kaapse malva]
+    en: [Cape mallow]
+  source: https://www.tuinadvies.nl/plantengids/1444/anisodontea-capensis
+  windows:
+    - when: { start: "03-01", end: "04-15" }
+      description:
+        nl: >-
+          Niet winterhard: haal hem binnen zodra het onder de vijf graden zakt en
+          overwinter hem licht bij vijf à tien graden, met zeer matig water en
+          geen mest. Hij kan veel snoei verdragen en laat zich in vorm houden,
+          ook op stam, dus snoei hem in het voorjaar terug in de vorm die je wil.
+        en: >-
+          Not hardy: bring it in as soon as it drops below five degrees and
+          overwinter it bright at five to ten degrees, watered very sparingly and
+          not fed. It takes a lot of pruning and holds a shape, including as a
+          standard, so cut it back to the shape you want in spring.
+  care:
+    - when: { start: "04-01", end: "10-31" }
+      description:
+        nl: >-
+          Knip zaaddozen weg, dan gaat de energie naar nieuwe bloemen. Zitten er
+          veel aan, dan mag je de takken diep terugknippen; daarna bloeit hij
+          snel weer rijk.
+        en: >-
+          Cut the seed pods off so the energy goes into new flowers. If there are
+          a lot of them, the branches can be cut back deeply; it soon flowers
+          freely again.
+
+- genus: Rhododendron
+  species: simsii
+  names:
+    nl: [Gentse azalea, Kamerazalea, Azalea]
+    en: [Indian azalea, Florist's azalea]
+  source: https://www.tuinadvies.nl/plantengids/20941/rhododendron-simsii-sachsenstern
+  windows:
+    - when: { start: "03-15", end: "04-30" }
+      description:
+        nl: >-
+          Dit is een kamerplant, niet de tuinrhododendron: niet winterhard, binnen
+          bij vijftien à tweeëntwintig graden, en de kluit moet altijd vochtig
+          zijn, het liefst met regenwater. Hij bloeit van januari tot maart. Haal
+          de uitgebloeide bloemen weg en knip hem daarna licht in model zodra de
+          bloei voorbij is; wanneer dat is hangt af van wanneer hij in bloei
+          gezet is.
+        en: >-
+          This is a house plant, not the garden rhododendron: not hardy, indoors
+          at fifteen to twenty-two degrees, and the root ball has to stay moist,
+          rainwater for preference. It flowers from January to March. Take the
+          spent flowers off and then trim it lightly to shape once flowering is
+          over; when that falls depends on when it was brought into flower.
