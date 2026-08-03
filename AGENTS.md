@@ -62,6 +62,20 @@ ordering rules, each of which fails in a way that does not point at the cause:
 `manifest.json` declares `http`, `panel_custom` and `websocket_api` as
 dependencies. Without them `hass.http` is absent under test.
 
+## How changes land
+
+**Nothing goes straight onto `main`.** Every change, however small, starts on a
+branch and lands through a pull request. A one-line fix is not an exception: the
+point is that CI has run and someone has read the diff before it becomes the
+default branch.
+
+- Branch names say what kind of change it is: `feat/care-seasons`, `fix/stale-panel-cache`,
+  `docs/branch-and-pr-workflow`, `refactor/drop-variant`.
+- Run the four commands above before opening the PR. CI runs them too, so a red PR
+  is a round trip you did not need.
+- A tag is cut on `main` after the PR merges, never on a branch. `manifest.json`'s
+  version and the tag have to agree, and CI fails a tag where they do not.
+
 ## Conventions
 
 - **Comments describe what the code does now.** No ticket references, and nothing
