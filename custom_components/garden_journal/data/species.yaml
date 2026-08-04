@@ -601,6 +601,9 @@
 
 # -------------------------------------------------------- More perennials ---
 
+# Iberis is cut back "na de bloei" and flowers April to June, so the fortnight is a
+# reading of when that finishes rather than a date the source gives.
+
 - genus: Iberis
   species: sempervirens
   names:
@@ -647,6 +650,9 @@
           around mid-April, as soon as the plant starts into growth. Leave them
           through winter: they protect the plant from frost and the seed heads
           feed birds.
+
+# Scabiosa's window is a reading: the source says to cut it back "eind winter" and
+# names no month. The care season is cited, from the flowering months it gives.
 
 - genus: Scabiosa
   species: lucida
@@ -916,30 +922,41 @@
           the end of July. Pruning later costs next year's flowers. If it really
           has to come back, use renewal pruning.
 
+# Vitex is pruned in early spring, which three Dutch pages agree on and none of
+# them dates, so the fortnight is a reading. The height is cited; sources differ on
+# it, offering twenty, ten to twenty and thirty to fifty centimetres, and the one
+# quoted here is the middle of that. No page recommends deadheading it: it flowers
+# in one late flush on this year's wood, so there is no second flush to buy, and
+# the spring cut is what drives the bloom.
+
 - genus: Vitex
   species: agnus-castus
   names:
     nl: [Kuisheidsstruik, Monnikspeper]
     en: [Chaste tree]
-  source: https://plantnu.nl/vitex-agnus-castus/
+  source: https://groeneparadijs.nl/vitex-agnus-castus.html
   image:
     url: https://commons.wikimedia.org/wiki/Special:FilePath/Vitex%20agnus-castus%20Niepokalanek%20pieprzowy%202020-07-31%2004.jpg?width=600
     author: Agnieszka Kwiecień, Nova
     licence: CC BY-SA 4.0
     page: https://commons.wikimedia.org/wiki/File:Vitex_agnus-castus_Niepokalanek_pieprzowy_2020-07-31_04.jpg
   windows:
-    - when: { start: "03-15", end: "04-15" }
+    - when: { start: "03-01", end: "04-15" }
       description:
         nl: >-
-          Snoei ingevroren takken terug en kort de andere takken licht in. Hij
-          bloeit op hout van dit jaar, dus een voorjaarssnoei kost geen bloei.
-          Wil je hem op ongeveer anderhalve meter houden, dan kun je hem elk
-          voorjaar tot een stuk lager terugzetten.
+          Snoei hem in het vroege voorjaar terug tot circa twintig centimeter
+          boven de grond, net voordat de nieuwe groei begint; dat bevordert de
+          bloei. Haal ingevroren takken helemaal weg. Hij bloeit op hout van dit
+          jaar, dus deze harde snoei kost geen bloei. De uitgebloeide pluimen
+          mag je laten staan: hij bloeit in één late golf, dus wegknippen levert
+          geen tweede bloei op zoals bij een roos.
         en: >-
-          Cut frost-damaged branches back and shorten the others lightly. It
-          flowers on this year's wood, so pruning in spring costs no flowers. To
-          hold it at about a metre and a half, you can take it down much further
-          every spring.
+          Cut it back in early spring to about twenty centimetres above the
+          ground, just before new growth starts; that encourages flowering. Take
+          frost-damaged branches right out. It flowers on this year's wood, so
+          cutting this hard costs no bloom. The spent flower spikes can stay: it
+          flowers in one late flush, so taking them off buys no second flush the
+          way it does on a rose.
 
 # ------------------------------------------------------------------- Trees ---
 # Dutch pages disagree about robinia: one gives December to February, another May
@@ -984,6 +1001,11 @@
           as you can, or they come back harder.
 
 # ------------------------------------------------------------------ Bamboo ---
+
+# Fargesia's window is a reading in a different way from the others: the source
+# offers three periods, end of winter, August to September, and autumn into early
+# winter. This row presents the first, which is when winter-killed canes can come
+# out, and the description says the late-summer option also works.
 
 - genus: Fargesia
   species: murielae
