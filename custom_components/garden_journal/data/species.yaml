@@ -770,6 +770,49 @@
           Cut spent flower stems off as low as you can with a clean cut. It keeps
           the plant compact.
 
+# Platycodon's cut-back month is a reading: Dutch pages cover deadheading, staking
+# and marking the spot, and none of them names a month for taking last year's stems
+# off. The window sits before it breaks, which cannot cost anything, since the
+# stems it removes are already dead. That it shows new shoots only in May comes
+# from a second page, platycodon.net/nl, rather than from the source cited here.
+
+- genus: Platycodon
+  species: grandiflorus
+  names:
+    nl: [Ballonklokje, Ballonbloem]
+    en: [Balloon flower]
+  source: https://www.tuindingen.nl/blog/vaste-planten/platycodon-grandiflorus-ballonklokje
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Platycodon%20grandiflorus%20Mariesii%200zz.jpg?width=600
+    author: David J. Stang
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Platycodon_grandiflorus_Mariesii_0zz.jpg
+  windows:
+    - when: { start: "03-01", end: "04-15" }
+      description:
+        nl: >-
+          Knip de dode stelen van vorig jaar weg voordat het nieuwe komt. Hij
+          loopt laat uit en laat pas in mei nieuwe scheuten zien, dus zet er in
+          het najaar een stokje bij: anders lijkt hij dood en spit je hem in het
+          voorjaar per ongeluk om. Strooi na het terugknippen compost rond de
+          plant.
+        en: >-
+          Cut last year's dead stems away before the new growth comes. It breaks
+          late, showing new shoots only in May, so mark the spot in autumn:
+          otherwise it looks dead and you dig it up in spring by mistake. Spread
+          compost around the plant once you have cut it back.
+  care:
+    - when: { start: "06-01", end: "08-31" }
+      description:
+        nl: >-
+          Haal uitgebloeide bloemen eruit, dan blijft hij tot laat in de zomer
+          doorbloeien. De lange stelen met hun zware bloemen knikken of breken
+          soms; zet ze dan vast.
+        en: >-
+          Take the spent flowers out and it carries on flowering into late
+          summer. The long stems with their heavy flowers sometimes bend or
+          snap; stake them if they do.
+
 # ------------------------------------------------------------ More shrubs ---
 # Rhododendron is the third genus that has to ask, and for a blunter reason than
 # Clematis: maximum is a garden shrub and simsii is the indoor azalea, which is
