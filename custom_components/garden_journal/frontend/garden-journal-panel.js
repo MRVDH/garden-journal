@@ -855,6 +855,10 @@ class GardenJournalPanel extends HTMLElement {
     const thumb = document.createElement("img");
     thumb.className = "thumb";
     thumb.alt = "";
+    // Lazy so opening a garden of many plants does not fire every photo request
+    // at once; the rows below the fold load as they are scrolled to.
+    thumb.loading = "lazy";
+    thumb.decoding = "async";
     if (picture) thumb.src = picture;
     row.appendChild(thumb);
 
