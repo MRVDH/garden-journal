@@ -1,7 +1,7 @@
 # Garden Journal
 
 A Home Assistant integration that tells you when to prune the plants in your
-garden, with timing tuned to the Dutch climate.
+garden.
 
 You enter your plants once. Each one gets a device with the date it should next
 be pruned, a sensor that turns on while a pruning window is open, a photo, and a
@@ -15,8 +15,11 @@ on for the season instead of a calendar entry that would sit on top of the pruni
 dates all summer.
 
 Timing comes from a dataset that ships with the integration. Every plant's
-windows are taken from a cited Dutch horticultural source, because pruning advice
-that is confidently wrong is worse than no advice.
+windows are taken from a cited Dutch horticultural source.
+
+> The timing is based on the Netherlands for now. "Prune after flowering" is
+> universal, the month it lands in is not, so other regions are planned rather
+> than assumed to work.
 
 ## What you get per plant
 
@@ -50,30 +53,18 @@ directory and restart.
 
 ## Adding plants
 
-Two ways, whichever suits you.
-
-**Browse the Garden Journal panel** in the sidebar. It shows every plant in the
+Open the **Garden Journal panel** in the sidebar. It shows every plant in the
 dataset as a card with its photo, common name, botanical name and pruning dates,
-with a search box over the top. Click a plant, give it a name, and it is added.
+with a search box over the top. Search by botanical or common name, in Dutch or
+English: `Hydrangea`, `blauwe regen` and `rose` all work, and a partial name like
+`hortensia` finds every hydrangea. Click a plant, give it a name, and it is added.
 Cards for plants you already have say so. Photos are fetched by Home Assistant
 rather than by your browser, so looking at the panel does not tell Wikimedia
 anything about you.
 
-**Or add from the integration page**, which is the same flow Home Assistant uses
-for everything else. Pick a plant from the list, or type a botanical or common
-name, in Dutch or English: `Hydrangea`, `blauwe regen` and `rose` all work, and a
-partial name like `hortensia` finds every hydrangea. This is also the route for a
-plant that is not in the dataset.
-
-Some names cannot be answered on their own. Hydrangeas are the clear case: a
-panicle hydrangea is cut hard in spring and a velvet hydrangea must not be cut
-back at all, so typing `hortensia` asks which one you have. Names that resolve to
-the same timing never ask: `laurier` matches both cherry laurel and bay, and they
-are pruned alike. Nor does a rose, whether you grow it as a shrub or up a wall,
-because habit changes what you cut rather than when: the advice covers both.
-
-If a plant is not in the dataset yet, you can still add it: either borrow the
-timing of a plant that is pruned the same way, or enter your own windows.
+**Not in the dataset?** Next to the search box, add the plant by hand. Give its
+botanical name, then either borrow the timing of a plant that is pruned the same
+way, or enter your own pruning windows.
 
 ## The dataset
 
@@ -83,9 +74,7 @@ timing is looked up fresh on every restart, so a fixed month reaches plants you
 already added without any migration.
 
 Adding or correcting a plant is a pull request against that file. `scripts/validate.py`
-checks it against the schema and runs in CI. It has two report modes,
-`--duplicates` and `--uncredited`, that are informational rather than pass or
-fail.
+checks it against the schema and runs in CI.
 
 ## Licence
 
