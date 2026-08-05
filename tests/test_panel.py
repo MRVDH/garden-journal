@@ -626,6 +626,56 @@ async def test_photo_proxy_serves_the_image(
 
 
 @respx.mock
+async def test_photo_proxy_lets_the_browser_cache(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
+) -> None:
+    """The response carries cache headers, so the browser holds the photo itself.
+
+    Without these the browser refetches every photo through the proxy on each
+    visit to the grid, which is slow and reads as the photos not caching.
+    """
+    respx.get(url__startswith="https://commons.wikimedia.org").mock(
+        return_value=httpx.Response(
+            200, content=_JPEG, headers={"content-type": "image/jpeg"}
+        )
+    )
+    await _setup(hass)
+    client = await hass_client()
+
+    response = await client.get(f"/api/{DOMAIN}/photo/{_HYDRANGEA}")
+    assert response.status == 200
+    cache_control = response.headers["Cache-Control"]
+    assert "immutable" in cache_control
+    assert "max-age=" in cache_control
+    assert response.headers["ETag"]
+
+
+@respx.mock
+async def test_photo_proxy_answers_a_conditional_request_with_304(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
+) -> None:
+    """A browser holding the photo revalidates for free: matching ETag gets a 304."""
+    route = respx.get(url__startswith="https://commons.wikimedia.org").mock(
+        return_value=httpx.Response(
+            200, content=_JPEG, headers={"content-type": "image/jpeg"}
+        )
+    )
+    await _setup(hass)
+    client = await hass_client()
+
+    first = await client.get(f"/api/{DOMAIN}/photo/{_HYDRANGEA}")
+    etag = first.headers["ETag"]
+
+    again = await client.get(
+        f"/api/{DOMAIN}/photo/{_HYDRANGEA}", headers={"If-None-Match": etag}
+    )
+    assert again.status == 304
+    assert await again.read() == b""
+    # The conditional request is answered from the key alone, without a fetch.
+    assert route.call_count == 1
+
+
+@respx.mock
 async def test_photo_proxy_caches(
     hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
