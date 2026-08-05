@@ -609,7 +609,7 @@
   names:
     nl: [Scheefkelk, Scheefbloem]
     en: [Evergreen candytuft]
-  source: https://plantnu.nl/iberis-sempervirens/
+  source: https://www.baldur-nederland.nl/onion/content/plant--und-verzorgingstips/vaste-planten/iberis
   image:
     url: https://commons.wikimedia.org/wiki/Special:FilePath/Trauttmansdorff%20gardens%20-%20Iberis%20sempervirens%2001.jpg?width=600
     author: Syrio
@@ -619,13 +619,13 @@
     - when: { start: "06-15", end: "07-15" }
       description:
         nl: >-
-          Knip hem na de bloei tot ongeveer de helft terug. Dat houdt de vorm
-          compact en levert soms een tweede bloei in augustus. Snoei niet in het
-          kale, verhoute deel: daar loopt hij niet meer uit.
+          Kort hem na de bloei met een heggenschaar met een derde in. Dat houdt
+          de vorm compact. Snoei niet in de herfst en in geen geval in het oude,
+          verhoute hout: daar loopt hij niet meer uit.
         en: >-
-          Cut it back by about half once it has flowered. That keeps the shape
-          compact and sometimes buys a second flush in August. Do not cut into
-          the bare, woody part: it does not reshoot from there.
+          Trim it back by a third with hedge shears once it has flowered. That
+          keeps the shape compact. Do not prune in autumn, and never into the
+          old, woody growth: it does not reshoot from there.
 
 - genus: Echinacea
   species: purpurea
@@ -820,9 +820,10 @@
           snap; stake them if they do.
 
 # ------------------------------------------------------------ More shrubs ---
-# Rhododendron is the third genus that has to ask, and for a blunter reason than
-# Clematis: maximum is a garden shrub and simsii is the indoor azalea, which is
-# not hardy at all and keeps its own calendar.
+# Rhododendron is the third genus that has to ask. Both are hardy garden plants
+# that differ in when they are cut: maximum is a large evergreen shrub pruned late,
+# after its own summer flowers, while simsii is the low evergreen garden azalea
+# pruned right after its May bloom.
 
 - genus: Rhododendron
   species: maximum
@@ -849,6 +850,31 @@
           shoots. For most rhododendrons that is June; this one is late, so wait
           until its own flowers are over. Later in the season next year's buds are
           already set. Spent flowers can stay, there is no need to pick them off.
+
+- genus: Rhododendron
+  species: simsii
+  names:
+    nl: [Gentse azalea, Japanse azalea, Azalea]
+    en: [Japanese azalea, Evergreen azalea]
+  source: https://groenvanbijons.be/plantengids/japanse-azalea
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Rhododendron%20simsii%20%27Sachsenstern%27%20kz01.jpg?width=600
+    author: Krzysztof Ziarnek, Kenraiz
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Rhododendron_simsii_'Sachsenstern'_kz01.jpg
+  windows:
+    - when: { start: "05-15", end: "06-30" }
+      description:
+        nl: >-
+          De winterharde, groenblijvende tuinazalea, niet de geforceerde
+          kamerplant met dezelfde naam. Snoeien hoeft nauwelijks: hij groeit
+          langzaam en blijft laag. Wil je, snoei dan spaarzaam direct na de bloei,
+          die rond mei valt. Haal de uitgebloeide bloemen weg.
+        en: >-
+          The hardy, evergreen garden azalea, not the forced house plant that
+          shares the name. It barely needs pruning: it grows slowly and stays low.
+          If you do, prune sparingly right after the bloom, which falls around May.
+          Take the spent flowers off.
 
 - genus: Skimmia
   species: japonica
@@ -1022,21 +1048,23 @@
     - when: { start: "03-01", end: "04-15" }
       description:
         nl: >-
-          Dun uit aan het einde van de winter: haal de oudste en dunste halmen zo
-          laag mogelijk weg, en de halmen die de winter niet gehaald hebben. Deze
-          soort woekert niet. Moet hij flink terug, verdeel dat dan over twee
+          Snoeien hoeft eigenlijk niet: deze bamboe woekert niet en houdt zichzelf
+          netjes. Wil je toch, dun dan aan het einde van de winter uit: haal de
+          oudste en dunste halmen zo laag mogelijk weg, en de halmen die de winter
+          niet gehaald hebben. Moet hij flink terug, verdeel dat dan over twee
           jaar; na een harde snoei herstelt hij langzaam. Augustus en september
           kan ook.
         en: >-
-          Thin it at the end of winter: take the oldest and thinnest canes out as
-          low as you can, along with any the winter killed. This species does not
-          run. If it needs taking back hard, spread that over two years; after a
-          hard cut it recovers slowly. August and September also work.
+          It does not really need pruning: this bamboo does not run and keeps
+          itself tidy. If you want to, thin it at the end of winter: take the
+          oldest and thinnest canes out as low as you can, along with any the
+          winter killed. If it needs taking back hard, spread that over two years;
+          after a hard cut it recovers slowly. August and September also work.
 
 # ------------------------------------------------------- Not hardy outdoors ---
-# These three overwinter under cover, so their calendar follows when you bring
-# them in and out rather than the Dutch outdoor year. The pruning months are a
-# reading of what the sources say, not a citation: none of them names a month.
+# These two overwinter under cover, so their calendar follows when you bring them
+# in and out rather than the Dutch outdoor year. The pruning months are a reading
+# of what the sources say, not a citation: neither names a month.
 
 - genus: Pelargonium
   species: peltatum
@@ -1107,31 +1135,3 @@
           Cut the seed pods off so the energy goes into new flowers. If there are
           a lot of them, the branches can be cut back deeply; it soon flowers
           freely again.
-
-- genus: Rhododendron
-  species: simsii
-  names:
-    nl: [Gentse azalea, Kamerazalea, Azalea]
-    en: [Indian azalea, Florist's azalea]
-  source: https://www.tuinadvies.nl/plantengids/20941/rhododendron-simsii-sachsenstern
-  image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Rhododendron%20simsii%20%27Sachsenstern%27%20kz01.jpg?width=600
-    author: Krzysztof Ziarnek, Kenraiz
-    licence: CC BY-SA 4.0
-    page: https://commons.wikimedia.org/wiki/File:Rhododendron_simsii_'Sachsenstern'_kz01.jpg
-  windows:
-    - when: { start: "03-15", end: "04-30" }
-      description:
-        nl: >-
-          Dit is een kamerplant, niet de tuinrhododendron: niet winterhard, binnen
-          bij vijftien à tweeëntwintig graden, en de kluit moet altijd vochtig
-          zijn, het liefst met regenwater. Hij bloeit van januari tot maart. Haal
-          de uitgebloeide bloemen weg en knip hem daarna licht in model zodra de
-          bloei voorbij is; wanneer dat is hangt af van wanneer hij in bloei
-          gezet is.
-        en: >-
-          This is a house plant, not the garden rhododendron: not hardy, indoors
-          at fifteen to twenty-two degrees, and the root ball has to stay moist,
-          rainwater for preference. It flowers from January to March. Take the
-          spent flowers off and then trim it lightly to shape once flowering is
-          over; when that falls depends on when it was brought into flower.
