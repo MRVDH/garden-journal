@@ -88,6 +88,12 @@ _THUMB_WIDTH = "320"
 _MAX_CONCURRENT_FETCHES = 4
 _THROTTLED_WAIT = 2.0
 
+# A dataset photo URL is stable: change the photo and the URL changes with it, so
+# the browser is told to hold each one for a year and not revalidate. Without this
+# the response carries no cache headers, so the browser refetches every photo
+# through the proxy on each visit to the grid, which reads as photos not caching.
+_PHOTO_MAX_AGE = 31_536_000
+
 
 def _thumbnail(url: str) -> str:
     """Return the photo URL asking for a grid-sized thumbnail where it can.
@@ -547,7 +553,7 @@ class GardenJournalPhotoView(HomeAssistantView):
         self._dir = Path(hass.config.cache_path(DOMAIN))
 
     async def get(self, request: web.Request, key: str) -> web.Response:
-        """Return the photo bytes for one dataset row."""
+        """Return the photo bytes for one dataset row, with headers to cache it."""
         entry = _entry(self._hass)
         if entry is None:
             return web.Response(status=503)
@@ -555,25 +561,44 @@ class GardenJournalPhotoView(HomeAssistantView):
         if row is None or row.image is None:
             return web.Response(status=404)
         url = _thumbnail(row.image.url)
+        headers = self._cache_headers(url)
+
+        # The browser already holds this exact photo; skip the body.
+        if request.headers.get("If-None-Match") == headers["ETag"]:
+            return web.Response(status=304, headers=headers)
 
         if (cached := self._memory.get(url)) is not None:
-            return web.Response(body=cached[1], content_type=cached[0])
+            return self._photo(cached, headers)
         if (
             stored := await self._hass.async_add_executor_job(self._read, url)
         ) is not None:
             self._remember(url, stored)
-            return web.Response(body=stored[1], content_type=stored[0])
+            return self._photo(stored, headers)
 
         async with self._limit:
             # Another request may have filled the cache while this one queued.
             if (cached := self._memory.get(url)) is not None:
-                return web.Response(body=cached[1], content_type=cached[0])
+                return self._photo(cached, headers)
             fetched = await self._fetch(url)
         if fetched is None:
             return web.Response(status=502)
         self._remember(url, fetched)
         await self._hass.async_add_executor_job(self._write, url, fetched)
-        return web.Response(body=fetched[1], content_type=fetched[0])
+        return self._photo(fetched, headers)
+
+    @staticmethod
+    def _photo(photo: tuple[str, bytes], headers: dict[str, str]) -> web.Response:
+        """Build a photo response with the caching headers attached."""
+        return web.Response(body=photo[1], content_type=photo[0], headers=headers)
+
+    @staticmethod
+    def _cache_headers(url: str) -> dict[str, str]:
+        """Return the caching headers for a photo, keyed on its stable URL."""
+        etag = f'"{hashlib.sha256(url.encode("utf-8")).hexdigest()[:32]}"'
+        return {
+            "Cache-Control": f"public, max-age={_PHOTO_MAX_AGE}, immutable",
+            "ETag": etag,
+        }
 
     def _remember(self, url: str, photo: tuple[str, bytes]) -> None:
         """Hold a photo in memory, dropping the oldest when full."""
@@ -636,7 +661,6 @@ class GardenJournalPhotoView(HomeAssistantView):
                 _LOGGER.debug("Photo at %s is not an image: %s", url, content_type)
                 return None
             return content_type, response.content
-        return None
         return None
 
 
