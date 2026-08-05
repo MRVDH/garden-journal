@@ -4,6 +4,11 @@ Notes for anyone working on this repo, human or agent. Everything here is
 something you cannot work out by reading the code, so it is worth the two minutes.
 `CLAUDE.md` is a symlink to this file, so Claude Code reads it as well.
 
+Two skills in `.claude/skills` write down the fiddly workflows: `add-a-plant`
+(sourcing, the schema, photos, verification) and `create-release` (the version
+bump, tag and GitHub release). Claude Code loads them on its own; they are worth a
+read by hand too.
+
 ## Getting set up
 
 `scripts/setup` creates `.venv` from the pins in `requirements-dev.txt`. Run
