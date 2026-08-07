@@ -22,7 +22,7 @@ from custom_components.garden_journal.const import DOMAIN
 
 _HYDRANGEA_PHOTO = (
     "https://commons.wikimedia.org/wiki/Special:FilePath/"
-    "Hydrangea%20paniculata%20IMG%206629.JPG?width=600"
+    "Hydrangea%20paniculata%2003%20ies.jpg?width=600"
 )
 _MANUAL_PHOTO = "https://example.test/my-shrub.jpg"
 _JPEG = b"\xff\xd8\xff\xe0garden"
@@ -90,7 +90,7 @@ async def test_dataset_plant_photo_carries_credit(hass: HomeAssistant) -> None:
 
     state = hass.states.get("image.my_hydrangea_photo")
     assert state is not None
-    assert state.attributes["attribution"] == "Photo by Hedwig Storch (CC BY-SA 3.0)"
+    assert state.attributes["attribution"] == "Photo by Frank Vincentz (CC BY-SA 3.0)"
     assert _image_entity(hass, "image.my_hydrangea_photo").image_url == _HYDRANGEA_PHOTO
 
 

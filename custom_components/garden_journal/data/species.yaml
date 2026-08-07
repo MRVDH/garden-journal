@@ -69,10 +69,10 @@
     en: [Panicle hydrangea]
   source: https://groei.nl/tuin/tuinonderhoud/snoeien/pluimhortensia-snoeien-stekken
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Hydrangea%20paniculata%20IMG%206629.JPG?width=600
-    author: Hedwig Storch
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Hydrangea%20paniculata%2003%20ies.jpg?width=600
+    author: Frank Vincentz
     licence: CC BY-SA 3.0
-    page: https://commons.wikimedia.org/wiki/File:Hydrangea_paniculata_IMG_6629.JPG
+    page: https://commons.wikimedia.org/wiki/File:Hydrangea_paniculata_03_ies.jpg
   windows:
     - when: { start: "03-01", end: "04-15" }
       description:
@@ -321,10 +321,10 @@
     en: [Delavay privet]
   source: https://www.directplant.nl/bolliguster-ligustrum-delavayanum.html
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Ligustrum%20delavayanum%2001.jpg?width=600
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Ligustrum%20delavayanum%2002.jpg?width=600
     author: FreCha
     licence: CC BY-SA 4.0
-    page: https://commons.wikimedia.org/wiki/File:Ligustrum_delavayanum_01.jpg
+    page: https://commons.wikimedia.org/wiki/File:Ligustrum_delavayanum_02.jpg
   windows:
     - when: { start: "04-01", end: "05-15" }
       description:
@@ -615,10 +615,10 @@
     en: [Persian ivy]
   source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/klimop-snoeien/
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Hedera%20colchica%20%27Dendroides%27%20Bluszcz%20kolchidzki%202019-04-28%2002.jpg?width=600
-    author: Agnieszka Kwiecień, Nova
-    licence: CC BY-SA 4.0
-    page: https://commons.wikimedia.org/wiki/File:Hedera_colchica_'Dendroides'_Bluszcz_kolchidzki_2019-04-28_02.jpg
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Hedera%20colchica%201.jpg?width=600
+    author: Franz Xaver
+    licence: CC BY-SA 3.0
+    page: https://commons.wikimedia.org/wiki/File:Hedera_colchica_1.jpg
   windows:
     - when: { start: "03-01", end: "04-30" }
       description:
@@ -680,10 +680,10 @@
     en: [Purple coneflower]
   source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/zonnehoed-snoeien/
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Echinacea%20purpurea%20Feldanbau.jpg?width=600
-    author: Burkhard Mücke
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Three%20Creeks%20-%20Papilio%20glaucus%20(female)%20on%20Echinacea%20purpurea%201.jpg?width=600
+    author: Sixflashphoto
     licence: CC BY-SA 4.0
-    page: https://commons.wikimedia.org/wiki/File:Echinacea_purpurea_Feldanbau.jpg
+    page: https://commons.wikimedia.org/wiki/File:Three_Creeks_-_Papilio_glaucus_(female)_on_Echinacea_purpurea_1.jpg
   windows:
     - when: { start: "04-01", end: "04-30" }
       description:
@@ -781,10 +781,10 @@
     en: [Japanese astilbe]
   source: https://tuiniertijd.nl/astilbe-snoeien/
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/%E8%90%BD%E6%96%B0%E5%A9%A6%E5%B1%AC%20Astilbe%20japonica%20-%E6%B7%B1%E5%9C%B3%E8%8A%B1%E5%B1%95%20Shenzhen%20Flower%20Show%2C%20China-%20(39386513705).jpg?width=600
-    author: 阿橋 HQ
-    licence: CC BY-SA 2.0
-    page: https://commons.wikimedia.org/wiki/File:%E8%90%BD%E6%96%B0%E5%A9%A6%E5%B1%AC_Astilbe_japonica_-%E6%B7%B1%E5%9C%B3%E8%8A%B1%E5%B1%95_Shenzhen_Flower_Show%2C_China-_(39386513705).jpg
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Astilbe%20japonica%20Rheinland%203zz.jpg?width=600
+    author: David J. Stang
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Astilbe_japonica_Rheinland_3zz.jpg
   windows:
     - when: { start: "03-01", end: "04-30" }
       description:
@@ -848,10 +848,10 @@
     en: [Balloon flower]
   source: https://www.tuindingen.nl/blog/vaste-planten/platycodon-grandiflorus-ballonklokje
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Platycodon%20grandiflorus%20Mariesii%200zz.jpg?width=600
-    author: David J. Stang
-    licence: CC BY-SA 4.0
-    page: https://commons.wikimedia.org/wiki/File:Platycodon_grandiflorus_Mariesii_0zz.jpg
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Ballonblume%20platycodon%20grandiflorus%20(2013-07-12%20Sp).jpg?width=600
+    author: Lothar Spurzem
+    licence: CC BY-SA 2.0 de
+    page: https://commons.wikimedia.org/wiki/File:Ballonblume_platycodon_grandiflorus_(2013-07-12_Sp).jpg
   windows:
     - when: { start: "03-01", end: "04-15" }
       description:
@@ -1067,10 +1067,10 @@
     en: [Chaste tree]
   source: https://groeneparadijs.nl/vitex-agnus-castus.html
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Vitex%20agnus-castus%20Niepokalanek%20pieprzowy%202020-07-31%2004.jpg?width=600
-    author: Agnieszka Kwiecień, Nova
-    licence: CC BY-SA 4.0
-    page: https://commons.wikimedia.org/wiki/File:Vitex_agnus-castus_Niepokalanek_pieprzowy_2020-07-31_04.jpg
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Vitex-agnus-castus-foliage.JPG?width=600
+    author: Sten Porse
+    licence: CC BY-SA 3.0
+    page: https://commons.wikimedia.org/wiki/File:Vitex-agnus-castus-foliage.JPG
   windows:
     - when: { start: "03-01", end: "04-15" }
       description:
@@ -1102,10 +1102,10 @@
     en: [Black locust, False acacia]
   source: https://floraweb.nl/hoe-houd-je-robinia-compact-in-een-kleine-tuin-tips-en-trucs/
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/20170515Robinia%20pseudoacacia6.jpg?width=600
-    author: AnRo0002
-    licence: CC0
-    page: https://commons.wikimedia.org/wiki/File:20170515Robinia_pseudoacacia6.jpg
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Korina%202011-05-20%20Robinia%20pseudoacacia%203.jpg?width=600
+    author: Annabell Hormann / korina.info
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Korina_2011-05-20_Robinia_pseudoacacia_3.jpg
   windows:
     - when: { start: "08-01", end: "09-15" }
       description:
@@ -1147,10 +1147,10 @@
     en: [Umbrella bamboo]
   source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/bamboe-snoeien/
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/2009-07-31%20(35)%20Bamboo%2C%20Bambus%2C%20Fargesia%20murielae.JPG?width=600
-    author: Vera Buhl
-    licence: CC BY-SA 3.0
-    page: https://commons.wikimedia.org/wiki/File:2009-07-31_(35)_Bamboo%2C_Bambus%2C_Fargesia_murielae.JPG
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Fargesiamurieliae.jpg?width=600
+    author: Stickpen
+    licence: Public domain
+    page: https://commons.wikimedia.org/wiki/File:Fargesiamurieliae.jpg
   windows:
     - when: { start: "03-01", end: "04-15" }
       description:
