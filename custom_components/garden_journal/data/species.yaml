@@ -56,6 +56,12 @@
 # genus resolves as ambiguous and the add flow asks which one you have. Nothing
 # declares that; it falls out of the data.
 
+# Two groei.nl pages disagree on how low a pluimhortensia goes: the one cited here
+# says about ten centimetres above the base of the shrub, and the general hortensia
+# page, groei.nl/artikel/hortensia-snoeien, says thirty to fifty. The taller
+# framework is the lower-risk error: it flowers on this year's wood either way, so
+# neither costs bloom, but the harder the cut the thinner the new stems that have to
+# carry the heads.
 - genus: Hydrangea
   species: paniculata
   names:
@@ -71,13 +77,16 @@
     - when: { start: "03-01", end: "04-15" }
       description:
         nl: >-
-          Snoei stevig terug tot een laag raamwerk voordat de groei begint. Hij
-          bloeit op scheuten van dit jaar, dus een stevige voorjaarssnoei kost
-          geen bloei en geeft grotere pluimen.
+          Snoei stevig terug tot een laag raamwerk van dertig à vijftig centimeter
+          voordat de groei begint. Hij bloeit op scheuten van dit jaar, dus een
+          stevige voorjaarssnoei kost geen bloei en geeft grotere pluimen. Hoe
+          harder je snoeit, hoe groter de pluimen, maar ook hoe slapper de takken
+          die ze moeten dragen.
         en: >-
-          Cut back hard to a low framework before growth starts. It flowers on
-          this year's shoots, so a hard spring prune costs no bloom and gives
-          larger heads.
+          Cut back hard to a low framework of thirty to fifty centimetres before
+          growth starts. It flowers on this year's shoots, so a hard spring prune
+          costs no bloom and gives larger heads. The harder you cut, the bigger the
+          heads, but also the floppier the stems that have to carry them.
 
 - genus: Hydrangea
   species: arborescens
@@ -96,11 +105,13 @@
         nl: >-
           Knip de takken terug tot even onder de uitgebloeide bloemen voordat de
           plant uitloopt. Hij bloeit op nieuw hout; laat een stevig raamwerk
-          staan, want te dunne takken kunnen de zware bollen niet dragen.
+          staan, want te dunne takken kunnen de zware bollen niet dragen. Ga eens
+          in de twee of drie jaar dieper terug om dat raamwerk laag te houden.
         en: >-
           Cut the stems back to just below the spent flower heads before growth
           starts. It flowers on new wood; leave a sturdy framework, because thin
-          stems cannot hold the heavy heads up.
+          stems cannot hold the heavy heads up. Every two or three years, go back
+          deeper to keep that framework low.
 
 - genus: Hydrangea
   species: macrophylla
@@ -220,10 +231,19 @@
           or five weeks for a second flowering.
 
 # ------------------------------------------------------- Evergreen hedging ---
-# These four share one window block, copied verbatim, so a later deduplication
-# stays mechanical. They are all broadleaf evergreens sheared twice in the
-# growing season, which is why "laurier" (Prunus laurocerasus and Laurus
-# nobilis) does not have to be disambiguated: both answers are the same.
+# All four share the late-summer window verbatim, and the spring window is shared
+# within each pair: Ilex and Ligustrum are sheared, Prunus and Laurus are cut with
+# secateurs so the leaves are not sliced. A later deduplication stays mechanical
+# either way. They are all broadleaf evergreens cut twice in the growing season,
+# which is why "laurier" (Prunus laurocerasus and Laurus nobilis) does not have to
+# be disambiguated: both answers are the same.
+#
+# None of the four sources gives a number for how much comes off, so the shape is
+# the answer to how far back you go. Topping the ends level and taking out what
+# stands outside the shape is the Ilex page's wording, applied to the sheared pair.
+# The base being about ten centimetres wider than the top is the laurier page's,
+# and it is a hedge rule rather than a laurier one: it is what keeps light on the
+# lower branches, so the bottom does not go bare.
 
 - genus: Ilex
   species: crenata
@@ -240,19 +260,23 @@
     - when: { start: "05-15", end: "06-15" }
       description:
         nl: >-
-          Scheer voor het eerst als de nieuwe groei op gang is. Doe het op een
-          bewolkte dag, anders verbranden de gesneden bladranden in de zon.
+          Scheer voor het eerst als de nieuwe groei op gang is: top de uiteinden
+          op dezelfde hoogte af en haal weg wat buiten de vorm uitsteekt. Doe het
+          op een bewolkte dag, anders verbranden de gesneden bladranden in de zon.
         en: >-
-          Shear for the first time once the new growth is running. Pick an
-          overcast day, or the cut leaf edges scorch in the sun.
+          Shear for the first time once the new growth is running: top the ends
+          off level with one another and take out what stands outside the shape.
+          Pick an overcast day, or the cut leaf edges scorch in the sun.
     - when: { start: "08-15", end: "09-15" }
       description:
         nl: >-
-          Scheer een tweede keer in de nazomer, zodat de wonden dichten voor de
-          winter. Snoei niet later: jonge scheuten bevriezen dan.
+          Scheer een tweede keer in de nazomer terug tot dezelfde vorm, zodat de
+          wonden dichten voor de winter. Snoei niet later: jonge scheuten
+          bevriezen dan.
         en: >-
-          Shear a second time in late summer so the cuts close before winter. Do
-          not trim later than this; soft new shoots would freeze.
+          Shear a second time in late summer, back to the same shape, so the cuts
+          close before winter. Do not trim later than this; soft new shoots would
+          freeze.
 
 - genus: Ligustrum
   names:
@@ -268,19 +292,23 @@
     - when: { start: "05-15", end: "06-15" }
       description:
         nl: >-
-          Scheer voor het eerst als de nieuwe groei op gang is. Doe het op een
-          bewolkte dag, anders verbranden de gesneden bladranden in de zon.
+          Scheer voor het eerst als de nieuwe groei op gang is: top de uiteinden
+          op dezelfde hoogte af en haal weg wat buiten de vorm uitsteekt. Doe het
+          op een bewolkte dag, anders verbranden de gesneden bladranden in de zon.
         en: >-
-          Shear for the first time once the new growth is running. Pick an
-          overcast day, or the cut leaf edges scorch in the sun.
+          Shear for the first time once the new growth is running: top the ends
+          off level with one another and take out what stands outside the shape.
+          Pick an overcast day, or the cut leaf edges scorch in the sun.
     - when: { start: "08-15", end: "09-15" }
       description:
         nl: >-
-          Scheer een tweede keer in de nazomer, zodat de wonden dichten voor de
-          winter. Snoei niet later: jonge scheuten bevriezen dan.
+          Scheer een tweede keer in de nazomer terug tot dezelfde vorm, zodat de
+          wonden dichten voor de winter. Snoei niet later: jonge scheuten
+          bevriezen dan.
         en: >-
-          Shear a second time in late summer so the cuts close before winter. Do
-          not trim later than this; soft new shoots would freeze.
+          Shear a second time in late summer, back to the same shape, so the cuts
+          close before winter. Do not trim later than this; soft new shoots would
+          freeze.
 
 # A clipped ball rather than a hedge, and cut back harder in spring than the
 # hedge is, which is why it is its own row. The bare Ligustrum row above still
@@ -335,20 +363,27 @@
         nl: >-
           Beste snoeien met een snoeischaar. Zo worden de bladeren niet
           beschadigd en blijft de hele haag er fraai uitzien. Net voor de takken
-          uit gaan lopen. Verwijder in het voorjaar ook dode takken en takken
-          met bruine bladeren.
+          uit gaan lopen. Snoei terug tot in de vorm die je wil en houd de haag
+          onderaan ongeveer tien centimeter breder dan bovenaan, dan valt er
+          genoeg licht op de onderste takken. Verwijder in het voorjaar ook dode
+          takken en takken met bruine bladeren.
         en: >-
           Best cut with secateurs. That leaves the leaves undamaged and keeps the
-          whole hedge looking good. Do it just before the shoots break. In spring,
-          take out dead stems and stems with brown leaves as well.
+          whole hedge looking good. Do it just before the shoots break. Cut back
+          into the shape you want and keep the hedge about ten centimetres wider
+          at the bottom than at the top, so enough light falls on the lower
+          branches. In spring, take out dead stems and stems with brown leaves as
+          well.
     - when: { start: "08-15", end: "09-15" }
       description:
         nl: >-
-          Scheer een tweede keer in de nazomer, zodat de wonden dichten voor de
-          winter. Snoei niet later: jonge scheuten bevriezen dan.
+          Scheer een tweede keer in de nazomer terug tot dezelfde vorm, zodat de
+          wonden dichten voor de winter. Snoei niet later: jonge scheuten
+          bevriezen dan.
         en: >-
-          Shear a second time in late summer so the cuts close before winter. Do
-          not trim later than this; soft new shoots would freeze.
+          Shear a second time in late summer, back to the same shape, so the cuts
+          close before winter. Do not trim later than this; soft new shoots would
+          freeze.
 
 - genus: Laurus
   species: nobilis
@@ -367,20 +402,27 @@
         nl: >-
           Beste snoeien met een snoeischaar. Zo worden de bladeren niet
           beschadigd en blijft de hele haag er fraai uitzien. Net voor de takken
-          uit gaan lopen. Verwijder in het voorjaar ook dode takken en takken
-          met bruine bladeren.
+          uit gaan lopen. Snoei terug tot in de vorm die je wil en houd de haag
+          onderaan ongeveer tien centimeter breder dan bovenaan, dan valt er
+          genoeg licht op de onderste takken. Verwijder in het voorjaar ook dode
+          takken en takken met bruine bladeren.
         en: >-
           Best cut with secateurs. That leaves the leaves undamaged and keeps the
-          whole hedge looking good. Do it just before the shoots break. In spring,
-          take out dead stems and stems with brown leaves as well.
+          whole hedge looking good. Do it just before the shoots break. Cut back
+          into the shape you want and keep the hedge about ten centimetres wider
+          at the bottom than at the top, so enough light falls on the lower
+          branches. In spring, take out dead stems and stems with brown leaves as
+          well.
     - when: { start: "08-15", end: "09-15" }
       description:
         nl: >-
-          Scheer een tweede keer in de nazomer, zodat de wonden dichten voor de
-          winter. Snoei niet later: jonge scheuten bevriezen dan.
+          Scheer een tweede keer in de nazomer terug tot dezelfde vorm, zodat de
+          wonden dichten voor de winter. Snoei niet later: jonge scheuten
+          bevriezen dan.
         en: >-
-          Shear a second time in late summer so the cuts close before winter. Do
-          not trim later than this; soft new shoots would freeze.
+          Shear a second time in late summer, back to the same shape, so the cuts
+          close before winter. Do not trim later than this; soft new shoots would
+          freeze.
 
 # ------------------------------------------------------------------ Others ---
 
@@ -409,11 +451,11 @@
       description:
         nl: >-
           Dit is de hoofdsnoei, direct na de bloei. Knip de uitgebloeide stelen
-          eraf met een paar centimeter van de bebladerde scheuten eronder. Zo
+          eraf met twee à vijf centimeter van de bebladerde scheuten eronder. Zo
           blijft de plant compact in plaats van open te vallen.
         en: >-
           This is the main prune, straight after flowering. Take off the spent
-          flower stems with a couple of centimetres of the leafy growth below
+          flower stems with two to five centimetres of the leafy growth below
           them. That keeps the plant compact instead of letting it fall open.
 
 - genus: Verbena
@@ -582,12 +624,16 @@
       description:
         nl: >-
           Knip doorschietende scheuten terug, of pak de hoofdtakken aan en haal
-          de zijscheuten weg. Kijk eerst of er geen vogelnest bezet is: klimop is
-          een veelgebruikte nestplek, dus stel de snoei uit als er een in zit.
+          de zijscheuten weg. Je mag hem gerust kort snoeien, tot je alleen het
+          takkengestel nog ziet; hij kan veel hebben. Kijk eerst of er geen
+          vogelnest bezet is: klimop is een veelgebruikte nestplek, dus stel de
+          snoei uit als er een in zit.
         en: >-
           Cut back wayward shoots, or work on the main branches and take out the
-          side shoots. Check first for an occupied bird nest: ivy is a favourite
-          nesting place, so put the job off if there is one.
+          side shoots. You can take it back hard, until only the framework of
+          branches is left; it stands a lot. Check first for an occupied bird
+          nest: ivy is a favourite nesting place, so put the job off if there is
+          one.
     - when: { start: "08-01", end: "09-10" }
       description:
         nl: >-
@@ -653,6 +699,11 @@
 
 # Scabiosa's window is a reading: the source says to cut it back "eind winter" and
 # names no month. The care season is cited, from the flowering months it gives.
+# How low it is cut comes from two other pages, because the source cited here gives
+# no height: hovenier.nl/planten/duifkruid takes the flower stems back to just above
+# the base of the plant and deadheads just above a leaf, and tuindingen.nl puts the
+# cut-back at a hand's breadth above the ground. It holds a basal leaf rosette
+# through the winter, so it is cut to just above that rather than to the ground.
 
 - genus: Scabiosa
   species: lucida
@@ -669,22 +720,28 @@
     - when: { start: "02-01", end: "03-15" }
       description:
         nl: >-
-          Knip de plant eind winter terug. Laat de zaadhoofden tot dan staan voor
-          de vogels. Wil je zaad oogsten, dan knip je hem in het najaar terug
-          zodra het zaad rijp is.
+          Knip de plant eind winter terug tot net boven de bladrozet, ongeveer een
+          handbreedte boven de grond. De rozet blijft de winter groen, dus knip
+          hem niet tot op de grond. Laat de zaadhoofden tot dan staan voor de
+          vogels. Wil je zaad oogsten, dan knip je hem in het najaar terug zodra
+          het zaad rijp is.
         en: >-
-          Cut the plant back in late winter. Leave the seed heads standing until
-          then for the birds. If you want to collect seed, cut it back in autumn
-          once the seed is ripe instead.
+          Cut the plant back in late winter to just above the leaf rosette, about a
+          hand's breadth above the ground. The rosette stays green over winter, so
+          do not cut it to the ground. Leave the seed heads standing until then for
+          the birds. If you want to collect seed, cut it back in autumn once the
+          seed is ripe instead.
   care:
     - when: { start: "07-01", end: "09-30" }
       description:
         nl: >-
-          Knip uitgebloeide bloemen er regelmatig af. Dan blijft hij nieuwe
-          knoppen maken en bloeit hij een stuk langer door.
+          Knip uitgebloeide bloemen er regelmatig af, net boven het eerste blad
+          onder de bloem. Dan blijft hij nieuwe knoppen maken en bloeit hij een
+          stuk langer door.
         en: >-
-          Take the spent flowers off regularly. It keeps setting new buds and
-          carries on flowering considerably longer.
+          Take the spent flowers off regularly, cutting just above the first leaf
+          below the flower. It keeps setting new buds and carries on flowering
+          considerably longer.
 
 - genus: Achillea
   species: filipendulina
@@ -781,6 +838,8 @@
 # off. The window sits before it breaks, which cannot cost anything, since the
 # stems it removes are already dead. That it shows new shoots only in May comes
 # from a second page, platycodon.net/nl, rather than from the source cited here.
+# The height is a reading for the same reason and carries the same risk, which is
+# none: no Dutch page gives one, and the stems being cut are dead either way.
 
 - genus: Platycodon
   species: grandiflorus
@@ -797,16 +856,16 @@
     - when: { start: "03-01", end: "04-15" }
       description:
         nl: >-
-          Knip de dode stelen van vorig jaar weg voordat het nieuwe komt. Hij
-          loopt laat uit en laat pas in mei nieuwe scheuten zien, dus zet er in
-          het najaar een stokje bij: anders lijkt hij dood en spit je hem in het
-          voorjaar per ongeluk om. Strooi na het terugknippen compost rond de
-          plant.
+          Knip de dode stelen van vorig jaar tot vlak boven de grond weg voordat
+          het nieuwe komt. Hij loopt laat uit en laat pas in mei nieuwe scheuten
+          zien, dus zet er in het najaar een stokje bij: anders lijkt hij dood en
+          spit je hem in het voorjaar per ongeluk om. Strooi na het terugknippen
+          compost rond de plant.
         en: >-
-          Cut last year's dead stems away before the new growth comes. It breaks
-          late, showing new shoots only in May, so mark the spot in autumn:
-          otherwise it looks dead and you dig it up in spring by mistake. Spread
-          compost around the plant once you have cut it back.
+          Cut last year's dead stems away to just above the ground before the new
+          growth comes. It breaks late, showing new shoots only in May, so mark
+          the spot in autumn: otherwise it looks dead and you dig it up in spring
+          by mistake. Spread compost around the plant once you have cut it back.
   care:
     - when: { start: "06-01", end: "08-31" }
       description:
@@ -925,6 +984,12 @@
           crossing twigs, and shorten the new growth by about a third for shape.
           Do not prune in hard frost or full midday sun: fresh cuts dry out.
 
+# The source says to apply renewal pruning without saying what that is, so the
+# method comes from a second page, wanneer-snoeien.nl/blog/struik-snoeien: a third
+# of the oldest, thickest branches out at the base each year, which renews the shrub
+# over three years. That phased form is the one described here rather than cutting
+# the whole shrub down in one go, which the same page keeps for buddleja, forsythia
+# and elder.
 - genus: Calycanthus
   species: floridus
   names:
@@ -942,11 +1007,51 @@
         nl: >-
           Snoei alleen als het niet anders kan, en dan direct na de bloei, rond
           eind juli. Later snoeien kost de bloemen van volgend jaar. Moet hij
-          echt terug, pas dan verjongingssnoei toe.
+          echt terug, pas dan verjongingssnoei toe: haal elk jaar een derde van de
+          oudste, dikste takken tot aan de basis weg. Na drie jaar is hij
+          vernieuwd zonder ooit kaal te hebben gestaan.
         en: >-
           Prune only if you have to, and then straight after flowering, around
           the end of July. Pruning later costs next year's flowers. If it really
-          has to come back, use renewal pruning.
+          has to come back, use renewal pruning: take a third of the oldest,
+          thickest branches out at the base each year. After three years it has
+          renewed itself without ever having stood bare.
+
+# Exochorda's window is a reading: the source dates the flowering to April and May
+# and says to prune "na de bloei" without naming a month, so the window opens as the
+# bloom ends. It closes at the end of June because the buds for next spring are set
+# over the summer, which makes a late cut the error that costs a season. How far
+# back is cited. That an old branch comes out down to the lowest strong young shoot,
+# or to the base when there is none, comes from a second page,
+# hovenier.nl/planten/rosaceae/exochorda.
+
+- genus: Exochorda
+  names:
+    nl: [Parelstruik]
+    en: [Pearlbush]
+  source: https://tuinadvies.nl/plantengids/1366/exochorda
+  image:
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Exochorda%20%C3%97%20macrantha%20%27The%20Bride%27%20kz03.jpg?width=600
+    author: Krzysztof Ziarnek, Kenraiz
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Exochorda_%C3%97_macrantha_'The_Bride'_kz03.jpg
+  windows:
+    - when: { start: "05-15", end: "06-30" }
+      description:
+        nl: >-
+          Snoei licht direct na de bloei: haal de uitgebloeide takken weg en zet
+          de struik weer in vorm. Neem om de twee à drie jaar de oudste takken,
+          ouder dan drie jaar, met een derde terug, tot op de laagste sterke jonge
+          scheut of tot de voet als die er niet is. Zo blijft hij onderaan bezet.
+          Hij bloeit op hout van vorig jaar en zet de knoppen in de zomer aan, dus
+          later snoeien kost de bloei van volgend voorjaar.
+        en: >-
+          Prune lightly straight after flowering: take out the spent branches and
+          bring the shrub back into shape. Every two or three years, cut the
+          oldest branches, the ones over three years old, back by a third, to the
+          lowest strong young shoot or to the base if there is none. That keeps it
+          furnished at the bottom. It flowers on last year's wood and sets its
+          buds over the summer, so pruning later costs next spring's flowers.
 
 # Vitex is pruned in early spring, which three Dutch pages agree on and none of
 # them dates, so the fortnight is a reading. The height is cited; sources differ on
@@ -1006,14 +1111,16 @@
       description:
         nl: >-
           Snoei in de late zomer. Wees niet bang om fors terug te snoeien: hij
-          loopt krachtig weer uit. Snoei niet in het voorjaar als de sapstroom op
-          gang is, want dan bloedt hij flink. Vroeg in het voorjaar kan wel, maar
-          dan vóór de bladuitloop in april.
+          loopt krachtig weer uit. Wil je hem klein houden, snoei de kroon dan
+          elk jaar strak terug tot op de hoofdtakken. Snoei niet in het voorjaar
+          als de sapstroom op gang is, want dan bloedt hij flink. Vroeg in het
+          voorjaar kan wel, maar dan vóór de bladuitloop in april.
         en: >-
           Prune in late summer. Do not be afraid to take it back hard: it comes
-          away strongly. Do not prune in spring once the sap is up, because it
-          bleeds heavily. Early spring does work, but before the leaves break in
-          April.
+          away strongly. To keep it small, cut the crown back tight to the main
+          branches every year. Do not prune in spring once the sap is up, because
+          it bleeds heavily. Early spring does work, but before the leaves break
+          in April.
   care:
     - when: { start: "04-01", end: "09-30" }
       description:
@@ -1065,6 +1172,13 @@
 # These two overwinter under cover, so their calendar follows when you bring them
 # in and out rather than the Dutch outdoor year. The pruning months are a reading
 # of what the sources say, not a citation: neither names a month.
+#
+# How far back the pelargonium goes is cited, but to a second page,
+# gardenersworldmagazine.nl/groene-school/kweken/geraniums-overwinteren, which takes
+# it back by about a third. The source cited on the row only says to leave green
+# with good eyes on it. Anisodontea keeps no number because none of its sources
+# gives one: it is cut to the shape you want, which is the answer for a plant grown
+# as a standard.
 
 - genus: Pelargonium
   species: peltatum
@@ -1082,14 +1196,16 @@
       description:
         nl: >-
           Niet winterhard: hij overwintert vorstvrij en licht, met weinig water.
-          Knip hem terug voordat hij naar binnen gaat of in het voorjaar bij het
-          verpotten, en laat altijd wat groen staan, want daaruit komen de nieuwe
-          scheuten. Veel snoei is niet nodig; lange uitlopers mogen eraf.
+          Knip hem met ongeveer een derde terug voordat hij naar binnen gaat of in
+          het voorjaar bij het verpotten, dus twee derde van elke steel blijft
+          staan. Laat altijd wat groen met goede ogen staan, want daaruit komen de
+          nieuwe scheuten. Veel snoei is niet nodig; lange uitlopers mogen eraf.
         en: >-
           Not hardy: it overwinters frost-free and bright, with little water. Cut
-          it back before it comes indoors or in spring when you repot it, and
-          always leave some green, because that is where the new shoots come
-          from. It needs little pruning; long trailers can come off.
+          it back by about a third before it comes indoors or in spring when you
+          repot it, so two thirds of each stem stays. Always leave some green with
+          good eyes on it, because that is where the new shoots come from. It
+          needs little pruning; long trailers can come off.
   care:
     - when: { start: "05-01", end: "09-30" }
       description:
