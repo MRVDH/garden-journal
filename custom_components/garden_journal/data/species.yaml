@@ -321,10 +321,10 @@
     en: [Delavay privet]
   source: https://www.directplant.nl/bolliguster-ligustrum-delavayanum.html
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Ligustrum%20delavayanum%2001.jpg?width=600
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Ligustrum%20delavayanum%2002.jpg?width=600
     author: FreCha
     licence: CC BY-SA 4.0
-    page: https://commons.wikimedia.org/wiki/File:Ligustrum_delavayanum_01.jpg
+    page: https://commons.wikimedia.org/wiki/File:Ligustrum_delavayanum_02.jpg
   windows:
     - when: { start: "04-01", end: "05-15" }
       description:
@@ -615,10 +615,10 @@
     en: [Persian ivy]
   source: https://www.gardenersworldmagazine.nl/groene-school/snoeien/klimop-snoeien/
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/Hedera%20colchica%20%27Dendroides%27%20Bluszcz%20kolchidzki%202019-04-28%2002.jpg?width=600
-    author: Agnieszka Kwiecień, Nova
-    licence: CC BY-SA 4.0
-    page: https://commons.wikimedia.org/wiki/File:Hedera_colchica_'Dendroides'_Bluszcz_kolchidzki_2019-04-28_02.jpg
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Hedera%20colchica%201.jpg?width=600
+    author: Franz Xaver
+    licence: CC BY-SA 3.0
+    page: https://commons.wikimedia.org/wiki/File:Hedera_colchica_1.jpg
   windows:
     - when: { start: "03-01", end: "04-30" }
       description:
@@ -1102,10 +1102,10 @@
     en: [Black locust, False acacia]
   source: https://floraweb.nl/hoe-houd-je-robinia-compact-in-een-kleine-tuin-tips-en-trucs/
   image:
-    url: https://commons.wikimedia.org/wiki/Special:FilePath/20170515Robinia%20pseudoacacia6.jpg?width=600
-    author: AnRo0002
-    licence: CC0
-    page: https://commons.wikimedia.org/wiki/File:20170515Robinia_pseudoacacia6.jpg
+    url: https://commons.wikimedia.org/wiki/Special:FilePath/Korina%202011-05-20%20Robinia%20pseudoacacia%203.jpg?width=600
+    author: Annabell Hormann / korina.info
+    licence: CC BY-SA 4.0
+    page: https://commons.wikimedia.org/wiki/File:Korina_2011-05-20_Robinia_pseudoacacia_3.jpg
   windows:
     - when: { start: "08-01", end: "09-15" }
       description:
