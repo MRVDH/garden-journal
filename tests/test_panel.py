@@ -576,6 +576,28 @@ async def test_add_plant_creates_the_plant_and_its_entities(
     assert hass.states.get("image.by_the_shed_photo") is not None
 
 
+async def test_a_regular_user_can_add_a_plant(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
+) -> None:
+    """A non-admin can manage the garden, not only view it.
+
+    The panel and its commands were admin-only; managing the plant list is a
+    shared household task, so a regular user drives it too. This connects as a
+    read-only user and adds a plant.
+    """
+    entry = await _setup(hass)
+    client = await hass_ws_client(access_token=hass_read_only_access_token)
+    await client.send_json_auto_id(
+        {"type": f"{DOMAIN}/add_plant", "key": _HYDRANGEA, "name": "Hers"}
+    )
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+
+    assert [s.title for s in entry.get_subentries_of_type("plant")] == ["Hers"]
+
+
 async def test_add_plant_defaults_the_name(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
