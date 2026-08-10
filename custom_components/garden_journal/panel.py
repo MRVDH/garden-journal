@@ -321,7 +321,6 @@ def _ws_garden(
     connection.send_result(msg["id"], {"plants": plants})
 
 
-@websocket_api.require_admin
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/add_plant",
@@ -381,7 +380,6 @@ def _bad_window(window: dict[str, Any]) -> str | None:
     return None
 
 
-@websocket_api.require_admin
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/add_manual_plant",
@@ -478,7 +476,6 @@ def _find_subentry(
     return None
 
 
-@websocket_api.require_admin
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/rename_plant",
@@ -514,7 +511,6 @@ def _ws_rename_plant(
     connection.send_result(msg["id"], {"name": name})
 
 
-@websocket_api.require_admin
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/remove_plant",
@@ -687,5 +683,4 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         sidebar_title="Garden Journal",
         sidebar_icon="mdi:content-cut",
         module_url=f"{_MODULE_URL}?v={_MODULE_VERSION}",
-        require_admin=True,
     )
