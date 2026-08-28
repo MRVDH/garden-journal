@@ -51,7 +51,7 @@ from .const import _LOGGER, DOMAIN
 from .dataset import GardenJournalConfigEntry
 from .models import Care, Species, Window
 from .resolver import Resolver, repair_reason, resolve_care, resolve_windows
-from .windows import in_season, next_pruning, occurrence_end
+from .windows import contains, in_season, next_pruning, next_start, occurrence_end
 
 _PANEL_URL = f"/{DOMAIN}_panel"
 _MODULE_URL = f"{_PANEL_URL}/garden-journal-panel.js"
@@ -59,7 +59,7 @@ _COMPONENT = "garden-journal-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "21"
+_MODULE_VERSION = "24"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 
 # Set once the panel, views and commands are registered, so a config entry
@@ -259,6 +259,15 @@ def _garden_plant(
     care = resolve_care(data, resolver)
     today = dt_util.now().date()
 
+    # The end of the care season open today, so the row can show "until <date>"
+    # the way pruning does. Care never overlaps itself in practice, but if two
+    # seasons are open the soonest end is the one that frees the plant.
+    open_care = [season for season in care if contains(season, today)]
+    care_end = min(
+        (occurrence_end(season, next_start(season, today)) for season in open_care),
+        default=None,
+    )
+
     entry_json: dict[str, Any] = {
         "subentry_id": subentry.subentry_id,
         "name": subentry.title,
@@ -275,6 +284,7 @@ def _garden_plant(
         "windows": _spans(windows or (), language),
         "care": _spans(care, language),
         "care_now": bool(care) and in_season(care, today),
+        "care_end": care_end.isoformat() if care_end else None,
         "source": data.get("source"),
         "credit": None,
     }

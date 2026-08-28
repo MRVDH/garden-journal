@@ -194,6 +194,8 @@ async def test_garden_carries_continuous_care_and_whether_it_is_open(
     assert plant["care"][0]["start"] == "06-01"
     assert plant["care"][0]["description"]
     assert plant["care_now"] is True
+    # The end of the open season, so the row can show "until <date>" like pruning.
+    assert plant["care_end"] == "2026-10-15"
     # The pruning window is closed in August, so care is the only job open.
     assert plant["prune_now"] is False
 

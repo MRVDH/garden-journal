@@ -58,6 +58,14 @@ const STRINGS = {
     nextPruning: "Next pruning",
     until: (date) => `until ${date}`,
     unknownTiming: "Timing unknown, needs attention",
+    secComingSoon: "Coming up soon",
+    secAttention: "Needs attention",
+    secOther: "Everything else",
+    nothingToPrune: "Nothing needs pruning today",
+    noCareOpen: "No care jobs open right now",
+    inDays: (n) => `in ${n} days`,
+    today: "today",
+    tomorrow: "tomorrow",
     openDevice: "Open in Home Assistant",
     save: "Save",
     remove: "Remove",
@@ -131,6 +139,14 @@ const STRINGS = {
     nextPruning: "Volgende snoei",
     until: (date) => `tot ${date}`,
     unknownTiming: "Timing onbekend, vraagt aandacht",
+    secComingSoon: "Binnenkort",
+    secAttention: "Vraagt aandacht",
+    secOther: "Overige planten",
+    nothingToPrune: "Vandaag hoeft er niets gesnoeid te worden",
+    noCareOpen: "Geen doorlopend onderhoud op dit moment",
+    inDays: (n) => `over ${n} dagen`,
+    today: "vandaag",
+    tomorrow: "morgen",
     openDevice: "Openen in Home Assistant",
     save: "Opslaan",
     remove: "Verwijderen",
@@ -270,8 +286,42 @@ class GardenJournalPanel extends HTMLElement {
         }
         header .primary-action:hover { background: rgba(255,255,255,.3); }
 
-        /* My garden: one row per plant, the urgent ones first. */
-        .garden-list { display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 32px; }
+        /* My garden: a dashboard of task sections, the urgent ones on top. */
+        .garden-list { display: flex; flex-direction: column; gap: 26px; padding: 16px 20px 32px; }
+        .section { display: flex; flex-direction: column; gap: 10px; }
+        /* One column on a phone (the list that reads well there), flowing into
+           more columns as the panel widens on desktop so the space is used
+           without losing anything. auto-fill keeps it responsive to the panel
+           width, sidebar included, with no hard breakpoint. */
+        .section .rows {
+          display: grid;
+          gap: 10px;
+          grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        }
+        .section-title { display: flex; align-items: baseline; gap: 8px; }
+        .section-title .label {
+          font-size: 13px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: .04em;
+          color: var(--secondary-text-color, #727272);
+        }
+        .section-title .count {
+          font-size: 12px;
+          font-weight: 600;
+          line-height: 1;
+          padding: 2px 8px;
+          border-radius: 999px;
+          color: var(--secondary-text-color, #727272);
+          background: var(--secondary-background-color, #e8e8e8);
+        }
+        .section-empty { margin: 0; color: var(--secondary-text-color, #727272); font-size: 14px; }
+        /* Prune-now is the loudest header; care echoes the outlined-green flag;
+           attention carries the warning tone. The rest stay neutral. */
+        .section-prune .section-title .label { color: var(--success-color, #0b8043); }
+        .section-prune .section-title .count { color: #fff; background: var(--success-color, #0b8043); }
+        .section-care .section-title .label { color: var(--success-color, #43a047); }
+        .section-attention .section-title .label { color: var(--warning-color, #b26a00); }
         .plant {
           display: flex;
           align-items: center;
@@ -293,6 +343,8 @@ class GardenJournalPanel extends HTMLElement {
         .plant .name { font-size: 16px; font-weight: 500; }
         .plant .latin { font-size: 12px; font-style: italic; color: var(--secondary-text-color, #727272); }
         .plant .when { font-size: 13px; color: var(--secondary-text-color, #727272); }
+        /* Care advice can run long; keep it to one line so rows stay even. */
+        .plant .when.care { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .plant .flag {
           align-self: flex-start;
           margin-top: 2px;
@@ -824,6 +876,14 @@ class GardenJournalPanel extends HTMLElement {
     else this._renderGarden();
   }
 
+  /*
+   * The garden is a dashboard, not one list: plants are sorted into task
+   * sections so the page answers "what do I prune now", "what care is open", and
+   * "what is coming up" at a glance rather than making you scan a flat column.
+   * Server sort (urgent first) is preserved within each section. A plant that is
+   * both pruning-now and care-open is listed in both, because each section is a
+   * complete answer to its own question.
+   */
   _renderGarden() {
     const list = this.shadowRoot.querySelector(".garden-list");
     const empty = this.shadowRoot.querySelector(".empty");
@@ -831,10 +891,95 @@ class GardenJournalPanel extends HTMLElement {
     const nothing = this._gardenLoaded && this._garden.length === 0;
     empty.hidden = !nothing;
     empty.textContent = nothing ? this._t("emptyGarden") : "";
-    for (const plant of this._garden) list.appendChild(this._plantRow(plant));
+    if (!this._gardenLoaded || nothing) return;
+
+    const SOON_DAYS = 30;
+    const pruneNow = [];
+    const careNow = [];
+    const soon = [];
+    const attention = [];
+    const other = [];
+    for (const plant of this._garden) {
+      // Unresolved timing has no date to bucket on, so it stands on its own.
+      if (plant.needs_attention || !plant.next) {
+        attention.push(plant);
+        continue;
+      }
+      const isSoon = !plant.prune_now && this._daysUntil(plant.next) <= SOON_DAYS;
+      if (plant.prune_now) pruneNow.push(plant);
+      if (plant.care_now) careNow.push(plant);
+      if (isSoon) soon.push(plant);
+      // "Everything else" is only the idle plants: nothing open, nothing soon.
+      if (!plant.prune_now && !plant.care_now && !isSoon) other.push(plant);
+    }
+
+    // The two "now" sections always show, with a reassuring line when empty, so
+    // an on-top-of-it garden reads as done rather than looking broken.
+    list.appendChild(
+      this._section(this._t("pruneNow"), pruneNow, "prune", this._t("nothingToPrune")),
+    );
+    list.appendChild(
+      this._section(this._t("careNow"), careNow, "care", this._t("noCareOpen")),
+    );
+    // The rest only appear when they hold something.
+    if (soon.length) list.appendChild(this._section(this._t("secComingSoon"), soon, "soon"));
+    if (attention.length) {
+      list.appendChild(this._section(this._t("secAttention"), attention, "attention"));
+    }
+    if (other.length) list.appendChild(this._section(this._t("secOther"), other, "other"));
   }
 
-  _plantRow(plant) {
+  /* A titled section: a header with a count, then its rows or an empty line. */
+  _section(title, plants, kind, emptyText) {
+    const section = document.createElement("section");
+    section.className = `section section-${kind}`;
+
+    const head = document.createElement("div");
+    head.className = "section-title";
+    const label = document.createElement("span");
+    label.className = "label";
+    label.textContent = title;
+    const count = document.createElement("span");
+    count.className = "count";
+    count.textContent = String(plants.length);
+    head.append(label, count);
+    section.appendChild(head);
+
+    if (plants.length === 0) {
+      const note = document.createElement("p");
+      note.className = "section-empty";
+      note.textContent = emptyText || "";
+      section.appendChild(note);
+      return section;
+    }
+
+    const rows = document.createElement("div");
+    rows.className = "rows";
+    for (const plant of plants) rows.appendChild(this._plantRow(plant, kind));
+    section.appendChild(rows);
+    return section;
+  }
+
+  /* Whole days from today to an ISO date; negative if already past. */
+  _daysUntil(iso) {
+    if (!iso) return null;
+    const [year, month, day] = iso.split("-").map(Number);
+    const then = new Date(year, month - 1, day);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((then - today) / 86400000);
+  }
+
+  /* A relative label for an upcoming date: today, tomorrow, or in N days. */
+  _relative(iso) {
+    const days = this._daysUntil(iso);
+    if (days === null) return "";
+    if (days <= 0) return this._t("today");
+    if (days === 1) return this._t("tomorrow");
+    return this._t("inDays")(days);
+  }
+
+  _plantRow(plant, context) {
     const row = document.createElement("div");
     row.className = "plant";
     row.tabIndex = 0;
@@ -871,13 +1016,31 @@ class GardenJournalPanel extends HTMLElement {
     latin.className = "latin";
     latin.textContent = plant.botanical;
     about.append(name, latin);
+    this._statusLine(about, plant, context);
+    row.appendChild(about);
 
-    if (plant.needs_attention || !plant.next) {
+    const chevron = document.createElement("div");
+    chevron.className = "chevron";
+    chevron.innerHTML =
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
+    row.appendChild(chevron);
+    return row;
+  }
+
+  /*
+   * The one status line a row shows depends on the section it sits in, so each
+   * row speaks to that section's question instead of stacking every flag. The
+   * full advice rides along in the title tooltip.
+   */
+  _statusLine(about, plant, context) {
+    if (context === "attention") {
       const flag = document.createElement("span");
       flag.className = "flag attention";
       flag.textContent = this._t("unknownTiming");
       about.appendChild(flag);
-    } else if (plant.prune_now) {
+      return;
+    }
+    if (context === "prune") {
       const flag = document.createElement("span");
       flag.className = "flag";
       flag.textContent = this._t("pruneNow");
@@ -887,31 +1050,39 @@ class GardenJournalPanel extends HTMLElement {
       when.textContent = this._t("until")(this._date(plant.end));
       when.title = plant.advice || "";
       about.appendChild(when);
-    } else {
+      return;
+    }
+    if (context === "care") {
+      // The end of the open season, shown like pruning's "until <date>" so both
+      // sections read the same way.
+      if (plant.care_end) {
+        const until = document.createElement("div");
+        until.className = "when";
+        until.textContent = this._t("until")(this._date(plant.care_end));
+        about.appendChild(until);
+      }
+      const text = plant.care.map((season) => season.description).join(" ");
+      const advice = document.createElement("div");
+      advice.className = "when care";
+      advice.textContent = text;
+      advice.title = text;
+      about.appendChild(advice);
+      return;
+    }
+    if (context === "soon") {
       const when = document.createElement("div");
       when.className = "when";
-      when.textContent = `${this._t("nextPruning")}: ${this._date(plant.next)}`;
+      when.textContent = `${this._relative(plant.next)}, ${this._date(plant.next)}`;
       when.title = plant.advice || "";
       about.appendChild(when);
+      return;
     }
-
-    // An open care season is a job for today even when the next pruning is months
-    // off, which is the whole reason it is not buried in a window description.
-    if (plant.care_now) {
-      const flag = document.createElement("span");
-      flag.className = "flag care";
-      flag.textContent = this._t("careNow");
-      flag.title = plant.care.map((season) => season.description).join(" ");
-      about.appendChild(flag);
-    }
-    row.appendChild(about);
-
-    const chevron = document.createElement("div");
-    chevron.className = "chevron";
-    chevron.innerHTML =
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
-    row.appendChild(chevron);
-    return row;
+    // "other": idle plants, shown with their next pruning date.
+    const when = document.createElement("div");
+    when.className = "when";
+    when.textContent = `${this._t("nextPruning")}: ${this._date(plant.next)}`;
+    when.title = plant.advice || "";
+    about.appendChild(when);
   }
 
   _date(iso) {
