@@ -993,18 +993,20 @@ class GardenJournalPanel extends HTMLElement {
       }
     });
 
-    const picture =
-      plant.image_entity &&
-      this._hass.states[plant.image_entity] &&
-      this._hass.states[plant.image_entity].attributes.entity_picture;
     const thumb = document.createElement("img");
     thumb.className = "thumb";
     thumb.alt = "";
-    // Lazy so opening a garden of many plants does not fire every photo request
-    // at once; the rows below the fold load as they are scrolled to.
     thumb.loading = "lazy";
     thumb.decoding = "async";
-    if (picture) thumb.src = picture;
+    // Through the cached photo proxy (immutable + ETag), not the image entity's
+    // rotating token, so a reload serves thumbnails from the browser cache
+    // instead of refetching every one. Loaded when the row scrolls into view.
+    if (plant.photo) {
+      thumb.dataset.src = plant.photo;
+      const cached = this._photos.get(plant.photo);
+      if (cached) thumb.src = cached;
+      else this._photoWatcher.observe(thumb);
+    }
     row.appendChild(thumb);
 
     const about = document.createElement("div");
@@ -1395,7 +1397,7 @@ class GardenJournalPanel extends HTMLElement {
       title: plant.name,
       botanical: plant.botanical,
       hint: plant.in_dataset ? null : this._t("manualPlant"),
-      photoEntity: plant.image_entity,
+      photoSrc: plant.photo,
       credit: plant.credit,
       windows: plant.windows,
       care: plant.care,

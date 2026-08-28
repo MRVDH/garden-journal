@@ -107,7 +107,7 @@ async def test_garden_lists_your_plants_urgent_first(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
     """The garden view puts an open window first, then the soonest date."""
-    await _setup(
+    entry = await _setup(
         hass,
         [
             ("By the shed", _plant("Hydrangea", "paniculata")),
@@ -129,6 +129,14 @@ async def test_garden_lists_your_plants_urgent_first(
     assert wisteria["botanical"] == "Wisteria"
     assert wisteria["advice"]
     assert wisteria["image_entity"] == "image.the_wisteria_photo"
+    # The thumbnail goes through the cached photo proxy, keyed by subentry.
+    wisteria_subentry = next(
+        s for s in entry.get_subentries_of_type("plant") if s.title == "The wisteria"
+    )
+    assert (
+        wisteria["photo"]
+        == f"/api/{DOMAIN}/plant_photo/{wisteria_subentry.subentry_id}"
+    )
     assert wisteria["needs_attention"] is False
     assert hydrangea["prune_now"] is False
     assert hydrangea["next"] == "2027-03-01"
@@ -647,6 +655,47 @@ async def test_photo_proxy_serves_the_image(
     assert response.content_type == "image/jpeg"
     assert await response.read() == _JPEG
     assert route.called
+
+
+@respx.mock
+async def test_plant_photo_proxy_serves_a_garden_plant(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
+) -> None:
+    """A garden plant's photo is served, and cached, by its subentry.
+
+    The garden thumbnail uses this route rather than the image entity's
+    rotating-token URL, which carries no cache headers and refetches on every
+    reload. Same cache and immutable headers as the dataset route.
+    """
+    route = respx.get(url__startswith="https://commons.wikimedia.org").mock(
+        return_value=httpx.Response(
+            200, content=_JPEG, headers={"content-type": "image/jpeg"}
+        )
+    )
+    entry = await _setup(hass, [("The wisteria", _plant("Wisteria", None))])
+    subentry_id = next(iter(entry.get_subentries_of_type("plant"))).subentry_id
+    client = await hass_client()
+
+    response = await client.get(f"/api/{DOMAIN}/plant_photo/{subentry_id}")
+    assert response.status == 200
+    assert response.content_type == "image/jpeg"
+    assert await response.read() == _JPEG
+    cache_control = response.headers["Cache-Control"]
+    assert "immutable" in cache_control
+    assert "max-age=" in cache_control
+    assert response.headers["ETag"]
+    assert route.called
+
+
+async def test_plant_photo_proxy_unknown_plant_is_not_found(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
+) -> None:
+    """A subentry that is not in the garden is a 404, not a crash."""
+    await _setup(hass)
+    client = await hass_client()
+
+    response = await client.get(f"/api/{DOMAIN}/plant_photo/nope")
+    assert response.status == 404
 
 
 @respx.mock
