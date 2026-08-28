@@ -23,7 +23,7 @@ from collections import Counter
 from collections.abc import Iterable
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import httpx
@@ -50,7 +50,13 @@ from .config_flow import (
 from .const import _LOGGER, DOMAIN
 from .dataset import GardenJournalConfigEntry
 from .models import Care, Species, Window
-from .resolver import Resolver, repair_reason, resolve_care, resolve_windows
+from .resolver import (
+    Resolver,
+    repair_reason,
+    resolve_care,
+    resolve_photo,
+    resolve_windows,
+)
 from .windows import contains, in_season, next_pruning, next_start, occurrence_end
 
 _PANEL_URL = f"/{DOMAIN}_panel"
@@ -59,8 +65,11 @@ _COMPONENT = "garden-journal-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "24"
+_MODULE_VERSION = "25"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
+# The garden serves a plant's photo by its subentry, which covers a hand-added
+# plant with its own image_url as well as a dataset one. Same cache as _PHOTO_URL.
+_PLANT_PHOTO_URL = f"/api/{DOMAIN}/plant_photo"
 
 # Set once the panel, views and commands are registered, so a config entry
 # reload does not register them a second time.
@@ -257,6 +266,7 @@ def _garden_plant(
     language = hass.config.language
     windows = resolve_windows(data, resolver)
     care = resolve_care(data, resolver)
+    photo = resolve_photo(data, resolver)
     today = dt_util.now().date()
 
     # The end of the care season open today, so the row can show "until <date>"
@@ -275,6 +285,9 @@ def _garden_plant(
             part for part in (data["genus"], data.get("species")) if part
         ),
         "image_entity": _image_entity(hass, entry.entry_id, subentry.subentry_id),
+        # Served through the cached, immutable photo proxy (not the image entity's
+        # rotating token) so the browser can hold each thumbnail across reloads.
+        "photo": f"{_PLANT_PHOTO_URL}/{subentry.subentry_id}" if photo else None,
         "needs_attention": repair_reason(data, resolver) is not None,
         "in_dataset": bool(data.get("in_dataset", True)),
         "next": None,
@@ -550,6 +563,7 @@ class GardenJournalPhotoView(HomeAssistantView):
 
     url = f"{_PHOTO_URL}/{{key}}"
     name = f"api:{DOMAIN}:photo"
+    extra_urls: ClassVar[list[str]] = [f"{_PLANT_PHOTO_URL}/{{subentry_id}}"]
 
     def __init__(self, hass: HomeAssistant) -> None:
         """Keep the caches and the semaphore that bounds outbound fetching."""
@@ -558,15 +572,39 @@ class GardenJournalPhotoView(HomeAssistantView):
         self._limit = asyncio.Semaphore(_MAX_CONCURRENT_FETCHES)
         self._dir = Path(hass.config.cache_path(DOMAIN))
 
-    async def get(self, request: web.Request, key: str) -> web.Response:
-        """Return the photo bytes for one dataset row, with headers to cache it."""
+    async def get(
+        self,
+        request: web.Request,
+        key: str | None = None,
+        subentry_id: str | None = None,
+    ) -> web.Response:
+        """Serve a photo, addressed by dataset key or by garden subentry.
+
+        Both routes resolve to a remote photo URL and share one cache keyed on
+        that URL, so a photo the catalogue and a garden plant have in common is
+        fetched and held once.
+        """
         entry = _entry(self._hass)
         if entry is None:
             return web.Response(status=503)
-        row = picked_row(key, Resolver(entry.runtime_data.species))
-        if row is None or row.image is None:
-            return web.Response(status=404)
-        url = _thumbnail(row.image.url)
+        resolver = Resolver(entry.runtime_data.species)
+        if subentry_id is not None:
+            subentry = _find_subentry(entry, subentry_id)
+            if subentry is None:
+                return web.Response(status=404)
+            photo = resolve_photo(dict(subentry.data), resolver)
+            if photo is None:
+                return web.Response(status=404)
+            url = _thumbnail(photo.url)
+        else:
+            row = picked_row(key, resolver)
+            if row is None or row.image is None:
+                return web.Response(status=404)
+            url = _thumbnail(row.image.url)
+        return await self._serve(request, url)
+
+    async def _serve(self, request: web.Request, url: str) -> web.Response:
+        """Serve one photo URL from cache, fetching and storing it on a miss."""
         headers = self._cache_headers(url)
 
         # The browser already holds this exact photo; skip the body.
