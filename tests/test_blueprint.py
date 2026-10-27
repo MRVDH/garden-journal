@@ -3,21 +3,26 @@
 The blueprint ships in the repo rather than inside the integration, so these load
 it from there and run it as a real automation against the real calendar: the
 reminder arrives at the chosen time on the day a window opens, and an excluded
-plant stays quiet. Only the phone is patched out, at the mobile_app action.
+plant stays quiet. Only the phone is a stand-in: a mocked mobile_app device action
+platform with the real one's notify schema. The real platform imports camera and
+its image libraries, which the test venv does not install.
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import voluptuous as vol
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.components.blueprint.models import Blueprint, DomainBlueprints
 from homeassistant.config_entries import ConfigSubentryData
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import template
 from homeassistant.setup import async_setup_component
@@ -26,6 +31,7 @@ from homeassistant.util import yaml as yaml_util
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
     async_fire_time_changed,
+    mock_platform,
 )
 
 from custom_components.garden_journal.const import DOMAIN
@@ -89,6 +95,23 @@ async def test_reminder_at_chosen_time_skipping_excluded(
     """Every plant gets a reminder at 09:00 on its opening day, bar the excluded."""
     freezer.move_to(_local(_OPENS - timedelta(hours=12)))
 
+    notify = AsyncMock()
+    mock_platform(
+        hass,
+        "mobile_app.device_action",
+        SimpleNamespace(
+            ACTION_SCHEMA=cv.DEVICE_ACTION_BASE_SCHEMA.extend(
+                {
+                    vol.Required("type"): "notify",
+                    vol.Required("message"): cv.template,
+                    vol.Optional("title"): cv.template,
+                    vol.Optional("data"): cv.template_complex,
+                }
+            ),
+            async_call_action_from_config=notify,
+        ),
+    )
+
     phone_entry = MockConfigEntry(domain="mobile_app")
     phone_entry.add_to_hass(hass)
     devices = dr.async_get(hass)
@@ -116,14 +139,7 @@ async def test_reminder_at_chosen_time_skipping_excluded(
     back = devices.async_get_device(identifiers={(DOMAIN, back_id)})
     assert back is not None
 
-    notify = AsyncMock()
-    with (
-        patch.object(DomainBlueprints, "_load_blueprint", _load_from_repo),
-        patch(
-            "homeassistant.components.mobile_app.device_action.async_call_action_from_config",
-            notify,
-        ),
-    ):
+    with patch.object(DomainBlueprints, "_load_blueprint", _load_from_repo):
         assert await async_setup_component(
             hass,
             "automation",
