@@ -16,6 +16,7 @@ from unittest.mock import patch
 import httpx
 import respx
 from freezegun import freeze_time
+from homeassistant.components.frontend import DATA_EXTRA_MODULE_URL
 from homeassistant.config_entries import ConfigSubentryData
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -888,3 +889,22 @@ async def test_photo_proxy_reports_a_failed_fetch(
 
     response = await client.get(f"/api/{DOMAIN}/photo/{_HYDRANGEA}")
     assert response.status == 502
+
+
+async def test_dashboard_card_is_loaded_on_every_page(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
+) -> None:
+    """The card's module is registered with the frontend and served from disk."""
+    await _setup(hass)
+
+    urls = [
+        url
+        for url in hass.data[DATA_EXTRA_MODULE_URL].urls
+        if url.startswith(f"/{DOMAIN}_panel/garden-journal-card.js")
+    ]
+    assert len(urls) == 1
+
+    client = await hass_client()
+    response = await client.get(urls[0])
+    assert response.status == 200
+    assert 'customElements.define("garden-journal-card"' in await response.text()

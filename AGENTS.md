@@ -37,9 +37,10 @@ the user account, so prefer removing plants to wiping it.
   for a running `hass` before concluding that a change had no effect.
 - **There is no hot reload.** Any Python change needs a restart. Reloading the
   config entry re-reads `species.yaml` but does not re-import modules.
-- **Bump `_MODULE_VERSION` in `panel.py` whenever the panel's JavaScript changes.**
-  It is the cache-buster on the module URL. Skip it and the browser serves the old
-  module, which looks exactly like your change not working.
+- **Bump `_MODULE_VERSION` in `panel.py` whenever the panel's or the dashboard
+  card's JavaScript changes.** It is the cache-buster on both module URLs. Skip it
+  and the browser serves the old module, which looks exactly like your change not
+  working.
 - **A panel URL opened directly returns 403.** The panel needs the Home Assistant
   frontend shell to authenticate, so open `/` and use the sidebar. Each 403 also
   raises a "Login attempt failed" notification, which is yours, not a bug.
@@ -64,8 +65,9 @@ ordering rules, each of which fails in a way that does not point at the cause:
 - `tests/conftest.py` unloads any loaded entry at teardown, because entities
   register a midnight timer and the event loop is checked for stragglers.
 
-`manifest.json` declares `http`, `panel_custom` and `websocket_api` as
-dependencies. Without them `hass.http` is absent under test.
+`manifest.json` declares `frontend`, `http`, `panel_custom` and `websocket_api` as
+dependencies. Without them `hass.http` is absent under test, and the dashboard
+card has nowhere to register its module.
 
 ## How changes land
 

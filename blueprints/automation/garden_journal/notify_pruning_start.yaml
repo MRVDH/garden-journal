@@ -1,0 +1,81 @@
+blueprint:
+  name: Garden Journal pruning reminder
+  description: >-
+    Sends a notification to your phone when a plant's pruning period starts,
+    with what to do as the message. Every plant is included unless you exclude
+    it. Pruning periods start at midnight, so the notification waits until the
+    time of day you pick.
+  domain: automation
+  source_url: https://github.com/MRVDH/garden-journal/blob/main/blueprints/automation/garden_journal/notify_pruning_start.yaml
+  author: Garden Journal
+  homeassistant:
+    min_version: 2026.7.0
+  input:
+    notify_device:
+      name: Phone to notify
+      description: The phone needs the official Home Assistant app to receive notifications.
+      selector:
+        device:
+          filter:
+            integration: mobile_app
+    notify_time:
+      name: Time of day
+      description: How long after midnight to send the notification on the day a period starts.
+      default:
+        hours: 9
+        minutes: 0
+        seconds: 0
+      selector:
+        duration: {}
+    exclude_plants:
+      name: Exclude plants
+      description: Plants you do not want a notification for. Leave empty to include every plant.
+      default: []
+      selector:
+        device:
+          multiple: true
+          filter:
+            integration: garden_journal
+    calendar:
+      name: Garden Journal calendar
+      description: Only needs changing if you renamed the calendar entity.
+      default: calendar.garden_journal
+      selector:
+        entity:
+          filter:
+            integration: garden_journal
+            domain: calendar
+
+triggers:
+  - trigger: calendar
+    event: start
+    entity_id: !input calendar
+    offset: !input notify_time
+
+variables:
+  exclude_plants: !input exclude_plants
+  # A plant's device is identified by its subentry id, and every calendar event's
+  # uid starts with that id, so excluding compares ids rather than translated names.
+  excluded: >-
+    {% set ns = namespace(ids=[]) %}
+    {% for device in exclude_plants %}
+      {% for identifier in device_attr(device, 'identifiers') or [] %}
+        {% if identifier[0] == 'garden_journal' %}
+          {% set ns.ids = ns.ids + [identifier[1]] %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+    {{ ns.ids }}
+  plant_id: "{{ (trigger.calendar_event.uid or '').split('-')[0] }}"
+
+conditions:
+  - condition: template
+    value_template: "{{ plant_id not in excluded }}"
+
+actions:
+  - alias: Notify that a pruning period has started
+    domain: mobile_app
+    type: notify
+    device_id: !input notify_device
+    title: "{{ trigger.calendar_event.summary }}"
+    message: "{{ trigger.calendar_event.description }}"

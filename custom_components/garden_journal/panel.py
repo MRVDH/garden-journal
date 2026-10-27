@@ -30,6 +30,7 @@ import httpx
 import voluptuous as vol
 from aiohttp import web
 from homeassistant.components import panel_custom, websocket_api
+from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.config_entries import ConfigEntryState, ConfigSubentry
 from homeassistant.const import Platform
@@ -62,10 +63,13 @@ from .windows import contains, in_season, next_pruning, next_start, occurrence_e
 _PANEL_URL = f"/{DOMAIN}_panel"
 _MODULE_URL = f"{_PANEL_URL}/garden-journal-panel.js"
 _COMPONENT = "garden-journal-panel"
+# The dashboard card, loaded on every frontend page so it is in the card picker
+# without anyone adding a resource by hand.
+_CARD_URL = f"{_PANEL_URL}/garden-journal-card.js"
 
-# Appended to the module URL so a browser picks up a new build instead of a
-# cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "25"
+# Appended to the panel and card module URLs so a browser picks up a new build
+# instead of a cached one. Bump it when either file's JavaScript changes.
+_MODULE_VERSION = "30"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 # The garden serves a plant's photo by its subentry, which covers a hand-added
 # plant with its own image_url as well as a dataset one. Same cache as _PHOTO_URL.
@@ -732,3 +736,4 @@ async def async_setup_panel(hass: HomeAssistant) -> None:
         sidebar_icon="mdi:content-cut",
         module_url=f"{_MODULE_URL}?v={_MODULE_VERSION}",
     )
+    add_extra_js_url(hass, f"{_CARD_URL}?v={_MODULE_VERSION}")

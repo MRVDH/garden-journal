@@ -66,6 +66,40 @@ anything about you.
 botanical name, then either borrow the timing of a plant that is pruned the same
 way, or enter your own pruning windows.
 
+## The garden at a glance
+
+The panel opens on your garden: a timeline of every plant's pruning periods, then
+what to prune now, which care jobs are running and what comes up soon. The
+timeline starts with today in the middle; slide it sideways to look back or
+ahead. Grey periods are over, green ones are open and blue ones are still to come.
+In a large garden it shows about twelve plants and scrolls for the rest; drag the
+grip in its bottom-right corner to make it taller or shorter.
+
+For a dashboard there is a card. Add **Garden Journal** from the card picker, or
+in YAML:
+
+```yaml
+type: custom:garden-journal-card
+days: 30        # how far ahead "Coming up" looks
+title: Garden   # optional
+```
+
+It lists what to prune or care for now and which pruning periods open in the
+next `days` days, five per list with a count of the rest. Tapping it opens the
+panel. The integration loads the card itself, so there is no resource to add.
+
+## Reminders on your phone
+
+Notifications are an ordinary automation off `calendar.garden_journal`, so the
+integration does not need to know about your phones. A blueprint sets one up:
+
+[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2FMRVDH%2Fgarden-journal%2Fmain%2Fblueprints%2Fautomation%2Fgarden_journal%2Fnotify_pruning_start.yaml)
+
+Pick the phone to notify (it needs the Home Assistant app) and the time of day to
+be told, 09:00 by default. The notification names the plant and says what to do.
+Every plant is included, including ones you add later; list any you would rather
+not hear about under **Exclude plants**.
+
 ## The dataset
 
 `custom_components/garden_journal/data/species.yaml` holds one record per

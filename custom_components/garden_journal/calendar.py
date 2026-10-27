@@ -14,7 +14,7 @@ translation files, since Dutch puts the verb last.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from typing import Any
 
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
@@ -135,9 +135,18 @@ class PruningCalendar(CalendarEntity):
     async def async_get_events(
         self, hass: HomeAssistant, start_date: datetime, end_date: datetime
     ) -> list[CalendarEvent]:
-        """Return every window occurrence overlapping the requested range."""
+        """Return every window occurrence overlapping the requested range.
+
+        The range is in datetimes and the events are whole days, so a day counts
+        when any part of it falls inside the range. A calendar trigger asks for a
+        fifteen-minute slice at a time, so a range that ends partway through a day
+        has to include that day, or an event starting that day is never seen.
+        """
         range_start = dt_util.as_local(start_date).date()
-        range_end = dt_util.as_local(end_date).date()
+        local_end = dt_util.as_local(end_date)
+        range_end = local_end.date()
+        if local_end.time() != time.min:
+            range_end += timedelta(days=1)
         events: list[CalendarEvent] = []
         for subentry_id, title, windows in self._plant_windows():
             for index, window in enumerate(windows):
