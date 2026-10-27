@@ -40,6 +40,8 @@ const STRINGS = {
     notLoaded: "Garden Journal is not loaded",
     loadFailed: "Could not load the garden",
     open: "Open Garden Journal",
+    daysAhead: "Coming up: days ahead",
+    daysUnit: "days",
   },
   nl: {
     title: "Garden Journal",
@@ -57,8 +59,16 @@ const STRINGS = {
     notLoaded: "Garden Journal is niet geladen",
     loadFailed: "Kon de tuin niet laden",
     open: "Garden Journal openen",
+    daysAhead: "Binnenkort: dagen vooruit",
+    daysUnit: "dagen",
   },
 };
+
+/* Look a string up in a language, falling back to English. */
+function lookup(language, key) {
+  const table = STRINGS[language] || STRINGS[language.split("-")[0]];
+  return (table && table[key]) || STRINGS.en[key];
+}
 
 class GardenJournalCard extends HTMLElement {
   constructor() {
@@ -77,19 +87,26 @@ class GardenJournalCard extends HTMLElement {
     return { days: DEFAULT_DAYS };
   }
 
-  /* The visual editor: Home Assistant builds the form from this schema. */
+  /*
+   * The visual editor: Home Assistant builds the form from this schema. It gets
+   * no hass here, so the language comes from the frontend's root element. The
+   * title label is left to Home Assistant, which translates "title" itself.
+   */
   static getConfigForm() {
+    const root = document.querySelector("home-assistant");
+    const t = (key) => lookup((root && root.hass && root.hass.language) || "en", key);
     return {
       schema: [
         { name: "title", selector: { text: {} } },
         {
           name: "days",
           default: DEFAULT_DAYS,
-          selector: { number: { min: 1, max: 365, mode: "box", unit_of_measurement: "days" } },
+          selector: {
+            number: { min: 1, max: 365, mode: "box", unit_of_measurement: t("daysUnit") },
+          },
         },
       ],
-      computeLabel: (schema) =>
-        ({ title: "Title", days: "Coming up: days ahead" })[schema.name] || schema.name,
+      computeLabel: (schema) => (schema.name === "days" ? t("daysAhead") : undefined),
     };
   }
 
@@ -126,9 +143,7 @@ class GardenJournalCard extends HTMLElement {
   }
 
   _t(key) {
-    const language = (this._hass && this._hass.language) || "en";
-    const table = STRINGS[language] || STRINGS[language.split("-")[0]];
-    return (table && table[key]) || STRINGS.en[key];
+    return lookup((this._hass && this._hass.language) || "en", key);
   }
 
   _dayKey() {
