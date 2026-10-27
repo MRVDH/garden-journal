@@ -17,6 +17,9 @@
 
 const PANEL_PATH = "/garden_journal";
 const DEFAULT_DAYS = 30;
+// In spring most of a large garden opens at once, which would make the card
+// longer than the dashboard around it. The panel has the full list.
+const MAX_ROWS = 5;
 // The list changes when a plant is added or removed and when the day rolls over.
 // A day change is caught as soon as Home Assistant updates the card; this covers
 // plants changed elsewhere while the dashboard stays open.
@@ -36,6 +39,7 @@ const STRINGS = {
     inDays: (n) => `in ${n} days`,
     nothingNow: "Nothing to prune or care for today",
     nothingSoon: (n) => `Nothing opens in the next ${n} days`,
+    more: (n) => `and ${n} more`,
     loading: "Loading",
     notLoaded: "Garden Journal is not loaded",
     loadFailed: "Could not load the garden",
@@ -55,6 +59,7 @@ const STRINGS = {
     inDays: (n) => `over ${n} dagen`,
     nothingNow: "Vandaag hoeft er niets gesnoeid of onderhouden te worden",
     nothingSoon: (n) => `De komende ${n} dagen begint er niets`,
+    more: (n) => `en nog ${n}`,
     loading: "Laden",
     notLoaded: "Garden Journal is niet geladen",
     loadFailed: "Kon de tuin niet laden",
@@ -136,10 +141,11 @@ class GardenJournalCard extends HTMLElement {
     this._timer = null;
   }
 
-  /* Roughly one row per job plus the headers, for the masonry layout. */
+  /* Roughly one row per line shown plus the headers, for the masonry layout. */
   getCardSize() {
     const { now, soon } = this._lists();
-    return 2 + Math.max(now.length, 1) + Math.max(soon.length, 1);
+    const lines = (jobs) => Math.max(Math.min(jobs.length, MAX_ROWS + 1), 1);
+    return 2 + lines(now) + lines(soon);
   }
 
   _t(key) {
@@ -270,6 +276,7 @@ class GardenJournalCard extends HTMLElement {
           .name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
           .detail { font-size: 12px; color: var(--secondary-text-color, #727272); }
           .empty, .status { padding: 4px 16px 6px; font-size: 13px; color: var(--secondary-text-color, #727272); }
+          .more { padding: 4px 16px 6px 92px; font-size: 13px; color: var(--secondary-text-color, #727272); }
           .status.error { color: var(--error-color, #db4437); }
         </style>
         <ha-card tabindex="0" role="button"><div class="body"></div></ha-card>
@@ -301,15 +308,28 @@ class GardenJournalCard extends HTMLElement {
 
     const { now, soon } = this._lists();
     body.appendChild(this._line(this._t("now"), "head"));
-    if (now.length) for (const job of now) body.appendChild(this._row(job));
+    if (now.length) this._rows(body, now);
     else body.appendChild(this._line(this._t("nothingNow"), "empty"));
 
     body.appendChild(this._line(this._t("comingUp"), "head"));
-    if (soon.length) for (const job of soon) body.appendChild(this._row(job));
+    if (soon.length) this._rows(body, soon);
     else body.appendChild(this._line(this._t("nothingSoon")(this._config.days), "empty"));
 
     // A failed refresh keeps the last good list and says so underneath.
     if (this._error) body.appendChild(this._line(this._error, "status error"));
+  }
+
+  /*
+   * The first rows of a list and a count of the rest. Six rows take the same
+   * space as five and a "1 more" line, so a list is only cut when that saves a
+   * row.
+   */
+  _rows(body, jobs) {
+    const shown = jobs.length > MAX_ROWS + 1 ? jobs.slice(0, MAX_ROWS) : jobs;
+    for (const job of shown) body.appendChild(this._row(job));
+    if (shown.length < jobs.length) {
+      body.appendChild(this._line(this._t("more")(jobs.length - shown.length), "more"));
+    }
   }
 
   _line(text, className) {
