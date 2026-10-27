@@ -69,7 +69,7 @@ _CARD_URL = f"{_PANEL_URL}/garden-journal-card.js"
 
 # Appended to the panel and card module URLs so a browser picks up a new build
 # instead of a cached one. Bump it when either file's JavaScript changes.
-_MODULE_VERSION = "27"
+_MODULE_VERSION = "28"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 # The garden serves a plant's photo by its subentry, which covers a hand-added
 # plant with its own image_url as well as a dataset one. Same cache as _PHOTO_URL.

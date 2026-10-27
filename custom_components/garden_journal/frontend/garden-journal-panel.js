@@ -369,12 +369,29 @@ class GardenJournalPanel extends HTMLElement {
           box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0,0,0,.16));
           overflow: hidden;
         }
-        .tl-scroll { overflow-x: auto; overflow-y: hidden; cursor: grab; user-select: none; }
+        /* A large garden would push the task sections far down the page, so the
+           strip stops at about twelve plants and scrolls inside itself. The half
+           row shows there is more, also where scrollbars stay hidden. */
+        .tl-scroll {
+          max-height: calc(26px + 12.5 * 30px);
+          overflow: auto;
+          cursor: grab;
+          user-select: none;
+        }
         .tl-scroll.dragging { cursor: grabbing; }
         .tl-scroll:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: -2px; }
         .tl-canvas { position: relative; padding-bottom: 6px; }
         .tl-row { display: flex; height: 30px; }
-        .tl-row.tl-axis { height: 26px; border-bottom: 1px solid var(--divider-color, #e0e0e0); }
+        /* The month bar stays on top while the plants scroll under it. It covers
+           the gridlines and the today line, so it draws its own. */
+        .tl-row.tl-axis {
+          position: sticky;
+          top: 0;
+          z-index: 4;
+          height: 26px;
+          background: var(--card-background-color, #fff);
+          border-bottom: 1px solid var(--divider-color, #e0e0e0);
+        }
         .tl-name {
           position: sticky;
           left: 0;
@@ -1136,6 +1153,7 @@ class GardenJournalPanel extends HTMLElement {
     const axis = this._timelineRow(document.createElement("span"), width);
     axis.classList.add("tl-axis");
     canvas.appendChild(axis);
+    const axisTrack = axis.querySelector(".tl-track");
     const language = (this._hass && this._hass.language) || "en";
     let month = new Date(from.getFullYear(), from.getMonth() + 1, 1);
     let first = true;
@@ -1145,6 +1163,9 @@ class GardenJournalPanel extends HTMLElement {
       line.className = january ? "tl-grid year" : "tl-grid";
       line.style.left = canvasLeft(x(month));
       canvas.appendChild(line);
+      const tick = line.cloneNode();
+      tick.style.left = `${x(month)}px`;
+      axisTrack.appendChild(tick);
 
       const tag = document.createElement("div");
       tag.className = january || first ? "tl-month year" : "tl-month";
@@ -1153,7 +1174,7 @@ class GardenJournalPanel extends HTMLElement {
         month: "short",
         ...(january || first ? { year: "numeric" } : {}),
       });
-      axis.querySelector(".tl-track").appendChild(tag);
+      axisTrack.appendChild(tag);
       first = false;
       month = new Date(month.getFullYear(), month.getMonth() + 1, 1);
     }
@@ -1193,6 +1214,9 @@ class GardenJournalPanel extends HTMLElement {
     now.className = "tl-today";
     now.style.left = canvasLeft(x(today) + Math.floor(dayPx / 2));
     canvas.appendChild(now);
+    const nowTick = now.cloneNode();
+    nowTick.style.left = `${x(today) + Math.floor(dayPx / 2)}px`;
+    axisTrack.appendChild(nowTick);
 
     const legend = document.createElement("div");
     legend.className = "tl-legend";
@@ -1222,6 +1246,7 @@ class GardenJournalPanel extends HTMLElement {
     });
     scroller.addEventListener("scroll", () => {
       this._timelineLeft = scroller.scrollLeft;
+      this._timelineTop = scroller.scrollTop;
     });
     parent.appendChild(section);
     // Centring measures the strip's width, so the caller runs this once the page
@@ -1233,6 +1258,7 @@ class GardenJournalPanel extends HTMLElement {
       } else {
         scroller.scrollLeft = this._timelineLeft;
       }
+      if (this._timelineTop) scroller.scrollTop = this._timelineTop;
     };
   }
 
@@ -1292,29 +1318,36 @@ class GardenJournalPanel extends HTMLElement {
 
   /*
    * Touch devices slide the strip natively. A mouse has no sideways swipe, so a
-   * press-and-drag pans it instead. A drag that ends over a bar would otherwise
-   * count as a click and open that plant, so a click after a drag is swallowed.
+   * press-and-drag pans it instead, in both directions. A drag that ends over a
+   * bar would otherwise count as a click and open that plant, so a click after a
+   * drag is swallowed.
    */
   _enableDragPan(scroller) {
     let startX = null;
+    let startY = 0;
     let startLeft = 0;
+    let startTop = 0;
     let dragged = false;
     scroller.addEventListener("pointerdown", (event) => {
       if (event.pointerType !== "mouse" || event.button !== 0) return;
       startX = event.clientX;
+      startY = event.clientY;
       startLeft = scroller.scrollLeft;
+      startTop = scroller.scrollTop;
       dragged = false;
     });
     scroller.addEventListener("pointermove", (event) => {
       if (startX === null) return;
-      const moved = event.clientX - startX;
-      if (!dragged && Math.abs(moved) < 4) return;
+      const movedX = event.clientX - startX;
+      const movedY = event.clientY - startY;
+      if (!dragged && Math.max(Math.abs(movedX), Math.abs(movedY)) < 4) return;
       if (!dragged) {
         dragged = true;
         scroller.setPointerCapture(event.pointerId);
         scroller.classList.add("dragging");
       }
-      scroller.scrollLeft = startLeft - moved;
+      scroller.scrollLeft = startLeft - movedX;
+      scroller.scrollTop = startTop - movedY;
     });
     const stop = () => {
       startX = null;
