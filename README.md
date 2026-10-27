@@ -95,8 +95,8 @@ integration does not need to know about your phones. A blueprint sets one up:
 
 [![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2FMRVDH%2Fgarden-journal%2Fmain%2Fblueprints%2Fautomation%2Fgarden_journal%2Fnotify_pruning_start.yaml)
 
-Pick the phone to notify (it needs the Home Assistant app) and the time of day to
-be told, 09:00 by default. The notification names the plant and says what to do.
+Pick the phones to notify (each needs the Home Assistant app) and the time of day
+to be told, 09:00 by default. The notification names the plant and says what to do.
 Every plant is included, including ones you add later; list any you would rather
 not hear about under **Exclude plants**.
 
