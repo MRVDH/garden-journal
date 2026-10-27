@@ -24,6 +24,10 @@ const DAY_PX = 3;
 const DAY_PX_NARROW = 1.5;
 const NARROW_QUERY = "(max-width: 600px)";
 const DAY_MS = 86400000;
+// The height the timeline was dragged to, kept per browser like a textarea's.
+const TIMELINE_HEIGHT_KEY = "garden-journal-timeline-height";
+// The shortest the timeline can be dragged to: the month bar and three plants.
+const TIMELINE_MIN_HEIGHT = 26 + 3 * 30;
 
 /*
  * The panel's own strings. A custom panel is not covered by the integration's
@@ -118,6 +122,7 @@ const STRINGS = {
     tlPast: "Over",
     tlActive: "Now",
     tlUpcoming: "Coming up",
+    tlResize: "Drag to make the timeline taller or shorter",
   },
   nl: {
     search: "Zoek planten",
@@ -205,6 +210,7 @@ const STRINGS = {
     tlPast: "Voorbij",
     tlActive: "Nu",
     tlUpcoming: "Komt nog",
+    tlResize: "Sleep om de tijdlijn hoger of lager te maken",
   },
 };
 
@@ -364,6 +370,7 @@ class GardenJournalPanel extends HTMLElement {
           cursor: pointer;
         }
         .tl-frame {
+          position: relative;
           background: var(--card-background-color, #fff);
           border-radius: 12px;
           box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0,0,0,.16));
@@ -446,11 +453,29 @@ class GardenJournalPanel extends HTMLElement {
           display: flex;
           flex-wrap: wrap;
           gap: 6px 16px;
-          padding: 8px 14px 10px;
+          padding: 8px 36px 10px 14px;
           border-top: 1px solid var(--divider-color, #e0e0e0);
           font-size: 12px;
           color: var(--secondary-text-color, #727272);
         }
+        /* The resize grip in the corner, drawn with the two diagonal lines a
+           textarea uses. The box is larger than the lines so a finger finds it. */
+        .tl-grip {
+          position: absolute;
+          right: 0;
+          bottom: 0;
+          width: 26px;
+          height: 26px;
+          cursor: ns-resize;
+          touch-action: none;
+          background: linear-gradient(135deg,
+            transparent 0 58%, var(--secondary-text-color, #727272) 58% 62%,
+            transparent 62% 72%, var(--secondary-text-color, #727272) 72% 76%,
+            transparent 76%);
+          opacity: .7;
+        }
+        .tl-grip:hover, .tl-grip.dragging { opacity: 1; }
+        .tl-grip:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: -2px; }
         .tl-legend span { display: inline-flex; align-items: center; gap: 6px; }
         .tl-legend i { display: inline-block; width: 14px; height: 10px; border-radius: 3px; }
         .tl-legend i.care { height: 4px; opacity: .45; background: var(--tl-care); }
@@ -1237,9 +1262,13 @@ class GardenJournalPanel extends HTMLElement {
       legend.appendChild(item);
     }
     frame.appendChild(legend);
+    const grip = document.createElement("div");
+    grip.className = "tl-grip";
+    frame.appendChild(grip);
     section.appendChild(frame);
 
     this._enableDragPan(scroller);
+    this._enableResize(scroller, grip);
     back.addEventListener("click", () => {
       this._timelineLeft = undefined;
       this._centerTimeline(scroller, x(today) + dayPx / 2, "smooth");
@@ -1365,6 +1394,73 @@ class GardenJournalPanel extends HTMLElement {
       },
       true,
     );
+  }
+
+  /*
+   * The grip in the corner drags the timeline taller or shorter, from three
+   * plants up to every plant, and the arrow keys move it a plant at a time. The
+   * height is a maximum, so a garden smaller than it still takes only its own
+   * room. It is kept in this browser, so the timeline opens at that height next
+   * time.
+   */
+  _enableResize(scroller, grip) {
+    grip.tabIndex = 0;
+    grip.setAttribute("role", "separator");
+    grip.setAttribute("aria-orientation", "horizontal");
+    grip.setAttribute("aria-label", this._t("tlResize"));
+    grip.title = this._t("tlResize");
+
+    try {
+      const saved = Number(localStorage.getItem(TIMELINE_HEIGHT_KEY));
+      if (saved) scroller.style.maxHeight = `${saved}px`;
+    } catch {
+      // Storage can be blocked; the timeline then opens at its default height.
+    }
+    const save = (height) => {
+      try {
+        localStorage.setItem(TIMELINE_HEIGHT_KEY, String(height));
+      } catch {
+        // As above: the height then lasts until the page is reloaded.
+      }
+    };
+    // Every row plus the sideways scrollbar, which takes its room from the box.
+    const tallest = () => scroller.scrollHeight + scroller.offsetHeight - scroller.clientHeight;
+    const resize = (height) => {
+      const clamped = Math.round(Math.max(TIMELINE_MIN_HEIGHT, Math.min(height, tallest())));
+      scroller.style.maxHeight = `${clamped}px`;
+      return clamped;
+    };
+
+    let startY = null;
+    let startHeight = 0;
+    let height = null;
+    grip.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      startY = event.clientY;
+      startHeight = scroller.offsetHeight;
+      height = null;
+      grip.setPointerCapture(event.pointerId);
+      grip.classList.add("dragging");
+    });
+    grip.addEventListener("pointermove", (event) => {
+      if (startY === null) return;
+      height = resize(startHeight + event.clientY - startY);
+    });
+    const stop = () => {
+      if (startY === null) return;
+      startY = null;
+      grip.classList.remove("dragging");
+      if (height !== null) save(height);
+    };
+    grip.addEventListener("pointerup", stop);
+    grip.addEventListener("pointercancel", stop);
+    grip.addEventListener("keydown", (event) => {
+      const step = { ArrowUp: -30, ArrowDown: 30 }[event.key];
+      if (!step) return;
+      event.preventDefault();
+      save(resize(scroller.offsetHeight + step));
+    });
   }
 
   /* Today at local midnight, so day arithmetic is not thrown by the time of day. */

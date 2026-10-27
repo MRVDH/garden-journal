@@ -72,6 +72,8 @@ The panel opens on your garden: a timeline of every plant's pruning periods, the
 what to prune now, which care jobs are running and what comes up soon. The
 timeline starts with today in the middle; slide it sideways to look back or
 ahead. Grey periods are over, green ones are open and blue ones are still to come.
+In a large garden it shows about twelve plants and scrolls for the rest; drag the
+grip in its bottom-right corner to make it taller or shorter.
 
 For a dashboard there is a card. Add **Garden Journal** from the card picker, or
 in YAML:
@@ -83,8 +85,8 @@ title: Garden   # optional
 ```
 
 It lists what to prune or care for now and which pruning periods open in the
-next `days` days. Tapping it opens the panel. The integration loads the card
-itself, so there is no resource to add.
+next `days` days, five per list with a count of the rest. Tapping it opens the
+panel. The integration loads the card itself, so there is no resource to add.
 
 ## Reminders on your phone
 
