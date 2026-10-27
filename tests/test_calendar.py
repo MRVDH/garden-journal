@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
+import pytest
 from freezegun import freeze_time
 from homeassistant.components.calendar import CalendarEntity
 from homeassistant.config_entries import ConfigSubentryData
@@ -85,6 +86,31 @@ async def test_events_project_every_plant_across_a_year(hass: HomeAssistant) -> 
         ("Prune My wisteria", date(2026, 7, 15), date(2026, 9, 1)),
     ]
     assert all(e.all_day for e in events)
+
+
+@pytest.mark.parametrize(
+    ("start", "end", "found"),
+    [
+        # The fifteen-minute slice a calendar trigger asks for, at the opening.
+        (datetime(2026, 7, 15, 0, 0), datetime(2026, 7, 15, 0, 15), True),
+        # Partway through the last day still finds it.
+        (datetime(2026, 8, 31, 22, 0), datetime(2026, 8, 31, 22, 15), True),
+        # The evening before ends at midnight, which is exclusive.
+        (datetime(2026, 7, 14, 23, 45), datetime(2026, 7, 15, 0, 0), False),
+        # The day after it closes.
+        (datetime(2026, 9, 1, 0, 0), datetime(2026, 9, 1, 0, 15), False),
+    ],
+)
+async def test_short_ranges_find_the_day_they_fall_in(
+    hass: HomeAssistant, start: datetime, end: datetime, found: bool
+) -> None:
+    """A range shorter than a day finds an all-day event on the day it falls in."""
+    await _setup(hass, [("My wisteria", _plant("Wisteria", None))])
+    zone = dt_util.get_default_time_zone()
+    events = await _calendar(hass).async_get_events(
+        hass, start.replace(tzinfo=zone), end.replace(tzinfo=zone)
+    )
+    assert bool(events) is found
 
 
 async def test_event_is_the_active_or_next_pruning(hass: HomeAssistant) -> None:
