@@ -65,7 +65,7 @@ _COMPONENT = "garden-journal-panel"
 
 # Appended to the module URL so a browser picks up a new build instead of a
 # cached one. Bump it when the panel's JavaScript changes.
-_MODULE_VERSION = "25"
+_MODULE_VERSION = "26"
 _PHOTO_URL = f"/api/{DOMAIN}/photo"
 # The garden serves a plant's photo by its subentry, which covers a hand-added
 # plant with its own image_url as well as a dataset one. Same cache as _PHOTO_URL.

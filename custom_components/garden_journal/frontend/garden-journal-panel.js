@@ -15,6 +15,16 @@
 const DEBOUNCE_MS = 250;
 const PAGE_SIZE = 24;
 
+// The garden timeline reaches a year either side of today, at this many pixels
+// per day: wide enough to tell a week apart, narrow enough that a desktop holds
+// most of a year. A phone gets half the scale, so it still shows about five
+// months instead of two.
+const TIMELINE_DAYS = 365;
+const DAY_PX = 3;
+const DAY_PX_NARROW = 1.5;
+const NARROW_QUERY = "(max-width: 600px)";
+const DAY_MS = 86400000;
+
 /*
  * The panel's own strings. A custom panel is not covered by the integration's
  * translation files, which Home Assistant loads for config flows and entities,
@@ -102,6 +112,12 @@ const STRINGS = {
     needBotanical: "Give a botanical name",
     needWindow: "Give at least one pruning period, with what to do",
     badDate: "That is not a real date. There is no 31 February, and 29 February cannot be used.",
+    timeline: "Timeline",
+    timelineLabel: "Pruning timeline. Scroll sideways to see earlier and later months.",
+    backToToday: "Today",
+    tlPast: "Over",
+    tlActive: "Now",
+    tlUpcoming: "Coming up",
   },
   nl: {
     search: "Zoek planten",
@@ -183,6 +199,12 @@ const STRINGS = {
     needBotanical: "Geef een botanische naam",
     needWindow: "Geef minstens één snoeiperiode, met wat je doet",
     badDate: "Dat is geen bestaande datum. 31 februari bestaat niet, en 29 februari kan niet worden gebruikt.",
+    timeline: "Tijdlijn",
+    timelineLabel: "Snoeitijdlijn. Scroll opzij voor eerdere en latere maanden.",
+    backToToday: "Vandaag",
+    tlPast: "Voorbij",
+    tlActive: "Nu",
+    tlUpcoming: "Komt nog",
   },
 };
 
@@ -322,6 +344,101 @@ class GardenJournalPanel extends HTMLElement {
         .section-prune .section-title .count { color: #fff; background: var(--success-color, #0b8043); }
         .section-care .section-title .label { color: var(--success-color, #43a047); }
         .section-attention .section-title .label { color: var(--warning-color, #b26a00); }
+
+        /* The timeline: plant names stay pinned on the left while the months
+           scroll under them. Every position is an offset from the name column,
+           so the gridlines and the today line line up with the bars. */
+        .section-timeline { --tl-name: 150px; --tl-past: var(--disabled-text-color, #bdbdbd);
+          --tl-active: var(--success-color, #0b8043); --tl-upcoming: var(--primary-color, #03a9f4);
+          --tl-care: var(--success-color, #43a047); --tl-today: var(--error-color, #db4437); }
+        @media (max-width: 600px) { .section-timeline { --tl-name: 104px; } }
+        .section-timeline .section-title { justify-content: space-between; align-items: center; }
+        .tl-today-button {
+          font: inherit;
+          font-size: 13px;
+          padding: 4px 12px;
+          border-radius: 999px;
+          border: 1px solid var(--divider-color, #bdbdbd);
+          background: var(--card-background-color, #fff);
+          color: var(--primary-color, #03a9f4);
+          cursor: pointer;
+        }
+        .tl-frame {
+          background: var(--card-background-color, #fff);
+          border-radius: 12px;
+          box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0,0,0,.16));
+          overflow: hidden;
+        }
+        .tl-scroll { overflow-x: auto; overflow-y: hidden; cursor: grab; user-select: none; }
+        .tl-scroll.dragging { cursor: grabbing; }
+        .tl-scroll:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: -2px; }
+        .tl-canvas { position: relative; padding-bottom: 6px; }
+        .tl-row { display: flex; height: 30px; }
+        .tl-row.tl-axis { height: 26px; border-bottom: 1px solid var(--divider-color, #e0e0e0); }
+        .tl-name {
+          position: sticky;
+          left: 0;
+          z-index: 3;
+          flex: 0 0 var(--tl-name);
+          width: var(--tl-name);
+          box-sizing: border-box;
+          padding: 0 10px 0 14px;
+          display: flex;
+          align-items: center;
+          font-size: 13px;
+          background: var(--card-background-color, #fff);
+          border-right: 1px solid var(--divider-color, #e0e0e0);
+          cursor: pointer;
+        }
+        .tl-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tl-axis .tl-name { cursor: default; }
+        .tl-track { position: relative; flex: 0 0 auto; }
+        .tl-month {
+          position: absolute;
+          top: 6px;
+          padding-left: 4px;
+          font-size: 11px;
+          white-space: nowrap;
+          color: var(--secondary-text-color, #727272);
+        }
+        .tl-month.year { font-weight: 600; color: var(--primary-text-color, #212121); }
+        .tl-grid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--divider-color, #e0e0e0); opacity: .6; }
+        .tl-grid.year { opacity: 1; }
+        .tl-today { position: absolute; top: 0; bottom: 0; width: 2px; z-index: 2; background: var(--tl-today); pointer-events: none; }
+        .tl-bar {
+          position: absolute;
+          top: 6px;
+          height: 14px;
+          min-width: 4px;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+        .tl-bar.past { background: var(--tl-past); }
+        .tl-bar.active { background: var(--tl-active); }
+        .tl-bar.upcoming { background: var(--tl-upcoming); }
+        .tl-care {
+          position: absolute;
+          top: 22px;
+          height: 4px;
+          border-radius: 2px;
+          background: var(--tl-care);
+          opacity: .45;
+          pointer-events: none;
+        }
+        .tl-legend {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px 16px;
+          padding: 8px 14px 10px;
+          border-top: 1px solid var(--divider-color, #e0e0e0);
+          font-size: 12px;
+          color: var(--secondary-text-color, #727272);
+        }
+        .tl-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .tl-legend i { display: inline-block; width: 14px; height: 10px; border-radius: 3px; }
+        .tl-legend i.care { height: 4px; opacity: .45; background: var(--tl-care); }
+        .tl-legend i.today { width: 2px; height: 12px; border-radius: 0; background: var(--tl-today); }
+
         .plant {
           display: flex;
           align-items: center;
@@ -913,6 +1030,10 @@ class GardenJournalPanel extends HTMLElement {
       if (!plant.prune_now && !plant.care_now && !isSoon) other.push(plant);
     }
 
+    // The timeline goes first: the overview of the year, then the task lists.
+    const timed = this._garden.filter((plant) => plant.windows.length || plant.care.length);
+    const placeTimeline = timed.length ? this._timeline(list, timed) : null;
+
     // The two "now" sections always show, with a reassuring line when empty, so
     // an on-top-of-it garden reads as done rather than looking broken.
     list.appendChild(
@@ -927,6 +1048,9 @@ class GardenJournalPanel extends HTMLElement {
       list.appendChild(this._section(this._t("secAttention"), attention, "attention"));
     }
     if (other.length) list.appendChild(this._section(this._t("secOther"), other, "other"));
+    // Last, once the page is its final height and any scrollbar has taken its
+    // share of the width the timeline centres in.
+    if (placeTimeline) placeTimeline();
   }
 
   /* A titled section: a header with a count, then its rows or an empty line. */
@@ -958,6 +1082,272 @@ class GardenJournalPanel extends HTMLElement {
     for (const plant of plants) rows.appendChild(this._plantRow(plant, kind));
     section.appendChild(rows);
     return section;
+  }
+
+  /*
+   * Every plant's pruning windows on one strip, a year either side of today. It
+   * opens with today in the middle and slides sideways: a swipe on touch, a drag
+   * or a sideways scroll with a mouse, and a button to come back to today. Each
+   * bar is coloured by whether that occurrence is over, open now or still to
+   * come, so the strip shows what has passed, what is on and what is next in one
+   * look. Care seasons run under the bars as a faint band, since they are a
+   * standing job rather than a date to act on.
+   */
+  _timeline(parent, plants) {
+    const today = this._today();
+    const from = this._addDays(today, -TIMELINE_DAYS);
+    const to = this._addDays(today, TIMELINE_DAYS);
+    const dayPx = window.matchMedia(NARROW_QUERY).matches ? DAY_PX_NARROW : DAY_PX;
+    const width = (TIMELINE_DAYS * 2 + 1) * dayPx;
+    // Horizontal position inside the track, and the same position measured from
+    // the canvas edge for the lines that span every row.
+    const x = (date) => Math.round((date - from) / DAY_MS) * dayPx;
+    const canvasLeft = (px) => `calc(var(--tl-name) + ${px}px)`;
+
+    const section = document.createElement("section");
+    section.className = "section section-timeline";
+
+    const head = document.createElement("div");
+    head.className = "section-title";
+    const label = document.createElement("span");
+    label.className = "label";
+    label.textContent = this._t("timeline");
+    const back = document.createElement("button");
+    back.className = "tl-today-button";
+    back.textContent = this._t("backToToday");
+    head.append(label, back);
+    section.appendChild(head);
+
+    const frame = document.createElement("div");
+    frame.className = "tl-frame";
+    const scroller = document.createElement("div");
+    scroller.className = "tl-scroll";
+    scroller.tabIndex = 0;
+    scroller.setAttribute("role", "region");
+    scroller.setAttribute("aria-label", this._t("timelineLabel"));
+    const canvas = document.createElement("div");
+    canvas.className = "tl-canvas";
+    canvas.style.width = canvasLeft(width);
+    scroller.appendChild(canvas);
+    frame.appendChild(scroller);
+
+    // Month gridlines and labels, with the year named on each January and on
+    // the first month shown, so a label never leaves you guessing the year.
+    const axis = this._timelineRow(document.createElement("span"), width);
+    axis.classList.add("tl-axis");
+    canvas.appendChild(axis);
+    const language = (this._hass && this._hass.language) || "en";
+    let month = new Date(from.getFullYear(), from.getMonth() + 1, 1);
+    let first = true;
+    while (month <= to) {
+      const january = month.getMonth() === 0;
+      const line = document.createElement("div");
+      line.className = january ? "tl-grid year" : "tl-grid";
+      line.style.left = canvasLeft(x(month));
+      canvas.appendChild(line);
+
+      const tag = document.createElement("div");
+      tag.className = january || first ? "tl-month year" : "tl-month";
+      tag.style.left = `${x(month)}px`;
+      tag.textContent = month.toLocaleDateString(language, {
+        month: "short",
+        ...(january || first ? { year: "numeric" } : {}),
+      });
+      axis.querySelector(".tl-track").appendChild(tag);
+      first = false;
+      month = new Date(month.getFullYear(), month.getMonth() + 1, 1);
+    }
+
+    for (const plant of plants) {
+      const name = document.createElement("span");
+      name.textContent = plant.name;
+      const row = this._timelineRow(name, width);
+      row.querySelector(".tl-name").title = `${plant.name} (${plant.botanical})`;
+      row.querySelector(".tl-name").addEventListener("click", () => this._openGardenDialog(plant));
+      const track = row.querySelector(".tl-track");
+
+      for (const season of plant.care) {
+        for (const { start, end } of this._occurrences(season, from, to)) {
+          const band = document.createElement("div");
+          band.className = "tl-care";
+          this._placeBar(band, start, end, from, to, x);
+          track.appendChild(band);
+        }
+      }
+      for (const window of plant.windows) {
+        for (const { start, end } of this._occurrences(window, from, to)) {
+          const state = end < today ? "past" : start > today ? "upcoming" : "active";
+          const bar = document.createElement("div");
+          bar.className = `tl-bar ${state}`;
+          this._placeBar(bar, start, end, from, to, x);
+          const range = this._t("range")(this._date(this._iso(start)), this._date(this._iso(end)));
+          bar.title = `${plant.name}: ${range}\n${window.description}`;
+          bar.addEventListener("click", () => this._openGardenDialog(plant));
+          track.appendChild(bar);
+        }
+      }
+      canvas.appendChild(row);
+    }
+
+    const now = document.createElement("div");
+    now.className = "tl-today";
+    now.style.left = canvasLeft(x(today) + Math.floor(dayPx / 2));
+    canvas.appendChild(now);
+
+    const legend = document.createElement("div");
+    legend.className = "tl-legend";
+    for (const [swatch, text] of [
+      ["past", this._t("tlPast")],
+      ["active", this._t("tlActive")],
+      ["upcoming", this._t("tlUpcoming")],
+      ["care", this._t("care")],
+      ["today", this._t("backToToday")],
+    ]) {
+      const item = document.createElement("span");
+      const mark = document.createElement("i");
+      mark.className = swatch;
+      if (["past", "active", "upcoming"].includes(swatch)) {
+        mark.style.background = `var(--tl-${swatch})`;
+      }
+      item.append(mark, document.createTextNode(text));
+      legend.appendChild(item);
+    }
+    frame.appendChild(legend);
+    section.appendChild(frame);
+
+    this._enableDragPan(scroller);
+    back.addEventListener("click", () => {
+      this._timelineLeft = undefined;
+      this._centerTimeline(scroller, x(today) + dayPx / 2, "smooth");
+    });
+    scroller.addEventListener("scroll", () => {
+      this._timelineLeft = scroller.scrollLeft;
+    });
+    parent.appendChild(section);
+    // Centring measures the strip's width, so the caller runs this once the page
+    // is laid out. The garden re-renders after a rename or a removal, and the
+    // strip keeps the place the user slid to rather than jumping back to today.
+    return () => {
+      if (this._timelineLeft === undefined) {
+        this._centerTimeline(scroller, x(today) + dayPx / 2, "auto");
+      } else {
+        scroller.scrollLeft = this._timelineLeft;
+      }
+    };
+  }
+
+  /* One timeline row: a pinned name cell and a track the bars sit in. */
+  _timelineRow(nameContent, width) {
+    const row = document.createElement("div");
+    row.className = "tl-row";
+    const name = document.createElement("div");
+    name.className = "tl-name";
+    name.appendChild(nameContent);
+    const track = document.createElement("div");
+    track.className = "tl-track";
+    track.style.width = `${width}px`;
+    row.append(name, track);
+    return row;
+  }
+
+  /* Position a bar over its dates, clipped to the visible range. */
+  _placeBar(element, start, end, from, to, x) {
+    const left = x(start < from ? from : start);
+    // The end day is inclusive, so the bar runs to the start of the day after.
+    const right = x(this._addDays(end > to ? to : end, 1));
+    element.style.left = `${left}px`;
+    element.style.width = `${right - left}px`;
+  }
+
+  /*
+   * Each yearly occurrence of an MM-DD span that overlaps the range. A span
+   * whose end comes before its start in the year wraps into the next year, as
+   * the server's windows.py does, so December to February is one bar.
+   */
+  _occurrences(span, from, to) {
+    const [startMonth, startDay] = span.start.split("-").map(Number);
+    const [endMonth, endDay] = span.end.split("-").map(Number);
+    const wraps = endMonth < startMonth || (endMonth === startMonth && endDay < startDay);
+    const found = [];
+    for (let year = from.getFullYear() - 1; year <= to.getFullYear(); year++) {
+      const start = new Date(year, startMonth - 1, startDay);
+      const end = new Date(wraps ? year + 1 : year, endMonth - 1, endDay);
+      if (start <= to && end >= from) found.push({ start, end });
+    }
+    return found;
+  }
+
+  /*
+   * Scroll so a track position sits in the middle of the part not under the
+   * names. While the garden view is hidden the strip has no width to centre in,
+   * so it is left for the next render, which showing the view triggers.
+   */
+  _centerTimeline(scroller, trackX, behavior) {
+    if (!scroller.clientWidth) return;
+    const name = scroller.querySelector(".tl-name");
+    const nameWidth = name ? name.offsetWidth : 0;
+    const visible = scroller.clientWidth - nameWidth;
+    scroller.scrollTo({ left: Math.max(0, trackX - visible / 2), behavior });
+  }
+
+  /*
+   * Touch devices slide the strip natively. A mouse has no sideways swipe, so a
+   * press-and-drag pans it instead. A drag that ends over a bar would otherwise
+   * count as a click and open that plant, so a click after a drag is swallowed.
+   */
+  _enableDragPan(scroller) {
+    let startX = null;
+    let startLeft = 0;
+    let dragged = false;
+    scroller.addEventListener("pointerdown", (event) => {
+      if (event.pointerType !== "mouse" || event.button !== 0) return;
+      startX = event.clientX;
+      startLeft = scroller.scrollLeft;
+      dragged = false;
+    });
+    scroller.addEventListener("pointermove", (event) => {
+      if (startX === null) return;
+      const moved = event.clientX - startX;
+      if (!dragged && Math.abs(moved) < 4) return;
+      if (!dragged) {
+        dragged = true;
+        scroller.setPointerCapture(event.pointerId);
+        scroller.classList.add("dragging");
+      }
+      scroller.scrollLeft = startLeft - moved;
+    });
+    const stop = () => {
+      startX = null;
+      scroller.classList.remove("dragging");
+    };
+    scroller.addEventListener("pointerup", stop);
+    scroller.addEventListener("pointercancel", stop);
+    scroller.addEventListener(
+      "click",
+      (event) => {
+        if (!dragged) return;
+        dragged = false;
+        event.stopPropagation();
+        event.preventDefault();
+      },
+      true,
+    );
+  }
+
+  /* Today at local midnight, so day arithmetic is not thrown by the time of day. */
+  _today() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  _addDays(date, days) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+  }
+
+  /* A local date as YYYY-MM-DD, the form _date formats. */
+  _iso(date) {
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   }
 
   /* Whole days from today to an ISO date; negative if already past. */
