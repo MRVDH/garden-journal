@@ -1269,12 +1269,17 @@ class GardenJournalPanel extends HTMLElement {
 
     this._enableDragPan(scroller);
     this._enableResize(scroller, grip);
+    // The place the user slid to is kept as the moment in the middle of the
+    // view rather than as pixels, so it survives a change of scale between a
+    // phone and a wider screen. Until they slide, that is the middle of today.
+    const middleOfToday = () => today.getTime() + DAY_MS / 2;
     back.addEventListener("click", () => {
-      this._timelineLeft = undefined;
+      this._timelineMoment = undefined;
       this._centerTimeline(scroller, x(today) + dayPx / 2, "smooth");
     });
     scroller.addEventListener("scroll", () => {
-      this._timelineLeft = scroller.scrollLeft;
+      const middle = scroller.scrollLeft + this._timelineVisible(scroller) / 2;
+      this._timelineMoment = from.getTime() + (middle / dayPx) * DAY_MS;
       this._timelineTop = scroller.scrollTop;
     });
     parent.appendChild(section);
@@ -1282,11 +1287,8 @@ class GardenJournalPanel extends HTMLElement {
     // is laid out. The garden re-renders after a rename or a removal, and the
     // strip keeps the place the user slid to rather than jumping back to today.
     return () => {
-      if (this._timelineLeft === undefined) {
-        this._centerTimeline(scroller, x(today) + dayPx / 2, "auto");
-      } else {
-        scroller.scrollLeft = this._timelineLeft;
-      }
+      const moment = this._timelineMoment === undefined ? middleOfToday() : this._timelineMoment;
+      this._centerTimeline(scroller, ((moment - from.getTime()) / DAY_MS) * dayPx, "auto");
       if (this._timelineTop) scroller.scrollTop = this._timelineTop;
     };
   }
@@ -1339,10 +1341,14 @@ class GardenJournalPanel extends HTMLElement {
    */
   _centerTimeline(scroller, trackX, behavior) {
     if (!scroller.clientWidth) return;
-    const name = scroller.querySelector(".tl-name");
-    const nameWidth = name ? name.offsetWidth : 0;
-    const visible = scroller.clientWidth - nameWidth;
+    const visible = this._timelineVisible(scroller);
     scroller.scrollTo({ left: Math.max(0, trackX - visible / 2), behavior });
+  }
+
+  /* The width of the strip that shows bars, beside the pinned names. */
+  _timelineVisible(scroller) {
+    const name = scroller.querySelector(".tl-name");
+    return scroller.clientWidth - (name ? name.offsetWidth : 0);
   }
 
   /*
@@ -1359,6 +1365,12 @@ class GardenJournalPanel extends HTMLElement {
     let dragged = false;
     scroller.addEventListener("pointerdown", (event) => {
       if (event.pointerType !== "mouse" || event.button !== 0) return;
+      // A press on a scrollbar is the browser's to handle. The scrollbars sit
+      // outside the client box, along the bottom and the inline end.
+      const box = scroller.getBoundingClientRect();
+      const offsetX = event.clientX - box.left - scroller.clientLeft;
+      const offsetY = event.clientY - box.top - scroller.clientTop;
+      if (offsetX < 0 || offsetX >= scroller.clientWidth || offsetY >= scroller.clientHeight) return;
       startX = event.clientX;
       startY = event.clientY;
       startLeft = scroller.scrollLeft;

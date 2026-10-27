@@ -24,6 +24,9 @@ const MAX_ROWS = 5;
 // A day change is caught as soon as Home Assistant updates the card; this covers
 // plants changed elsewhere while the dashboard stays open.
 const REFRESH_MS = 30 * 60 * 1000;
+// After a failed fetch, how long Home Assistant's updates wait before the next
+// try. They come several times a second, and the integration may stay unloaded.
+const RETRY_MS = 30 * 1000;
 const DAY_MS = 86400000;
 
 const STRINGS = {
@@ -84,6 +87,7 @@ class GardenJournalCard extends HTMLElement {
     this._error = null;
     this._fetchedDay = null;
     this._fetching = false;
+    this._retryAt = 0;
     this._timer = null;
   }
 
@@ -126,14 +130,14 @@ class GardenJournalCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    // Home Assistant sets this on every state change, so only a new day or the
-    // first set fetches; the timer covers the rest.
-    if (this._fetchedDay !== this._dayKey()) this._refresh();
+    // Home Assistant sets this on every state change, so only a new day, the
+    // first set or a due retry fetches; the timer covers the rest.
+    if (this._stale()) this._refresh();
   }
 
   connectedCallback() {
     if (!this._timer) this._timer = setInterval(() => this._refresh(), REFRESH_MS);
-    if (this._hass && this._fetchedDay !== this._dayKey()) this._refresh();
+    if (this._hass && this._stale()) this._refresh();
   }
 
   disconnectedCallback() {
@@ -156,6 +160,11 @@ class GardenJournalCard extends HTMLElement {
     return new Date().toDateString();
   }
 
+  /* Whether the list is not from today, and a failed fetch is not still cooling down. */
+  _stale() {
+    return this._fetchedDay !== this._dayKey() && Date.now() >= this._retryAt;
+  }
+
   async _refresh() {
     if (!this._hass || this._fetching) return;
     this._fetching = true;
@@ -166,9 +175,11 @@ class GardenJournalCard extends HTMLElement {
       this._plants = result.plants;
       this._error = null;
       this._fetchedDay = this._dayKey();
+      this._retryAt = 0;
     } catch (err) {
-      // A reload after a plant change briefly reports not_loaded; the next
-      // update retries, since the day key was not recorded.
+      // A reload after a plant change briefly reports not_loaded; the first
+      // update after RETRY_MS tries again, since the day key was not recorded.
+      this._retryAt = Date.now() + RETRY_MS;
       this._error = err && err.code === "not_loaded" ? this._t("notLoaded") : this._t("loadFailed");
     }
     this._fetching = false;
@@ -181,6 +192,23 @@ class GardenJournalCard extends HTMLElement {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     return Math.round((new Date(year, month - 1, day) - today) / DAY_MS);
+  }
+
+  /*
+   * The next date each pruning window opens, after today, as YYYY-MM-DD. A
+   * window that opens today is already open, so its next opening is a year on;
+   * the same goes for one that started earlier this year, including a window
+   * that wraps past New Year and is still open.
+   */
+  _nextStarts(plant) {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    return (plant.windows || []).map((span) => {
+      const [month, day] = span.start.split("-").map(Number);
+      const thisYear = new Date(now.getFullYear(), month - 1, day);
+      const year = thisYear > now ? now.getFullYear() : now.getFullYear() + 1;
+      return `${year}-${pad(month)}-${pad(day)}`;
+    });
   }
 
   _date(iso) {
@@ -207,7 +235,8 @@ class GardenJournalCard extends HTMLElement {
    * "Now" holds one row per open job, so a plant that is being pruned and
    * deadheaded at once shows both. "Coming up" is pruning windows only: care is
    * a standing state rather than a date to plan for, the same split the panel
-   * and the calendar make.
+   * and the calendar make. Each pruning window gets its own row, so a plant
+   * can be in "Now" for one window and in "Coming up" for another.
    */
   _lists() {
     const now = [];
@@ -220,14 +249,14 @@ class GardenJournalCard extends HTMLElement {
         const until = plant.care_end ? this._t("until")(this._date(plant.care_end)) : "";
         now.push({ plant, kind: "care", detail: until });
       }
-      if (!plant.prune_now && plant.next) {
-        const days = this._daysUntil(plant.next);
-        if (days >= 0 && days <= this._config.days) {
+      for (const start of this._nextStarts(plant)) {
+        const days = this._daysUntil(start);
+        if (days <= this._config.days) {
           soon.push({
             plant,
             kind: "soon",
             days,
-            detail: `${this._relative(plant.next)}, ${this._date(plant.next)}`,
+            detail: `${this._relative(start)}, ${this._date(start)}`,
           });
         }
       }
