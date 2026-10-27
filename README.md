@@ -66,6 +66,26 @@ anything about you.
 botanical name, then either borrow the timing of a plant that is pruned the same
 way, or enter your own pruning windows.
 
+## The garden at a glance
+
+The panel opens on your garden: a timeline of every plant's pruning periods, then
+what to prune now, which care jobs are running and what comes up soon. The
+timeline starts with today in the middle; slide it sideways to look back or
+ahead. Grey periods are over, green ones are open and blue ones are still to come.
+
+For a dashboard there is a card. Add **Garden Journal** from the card picker, or
+in YAML:
+
+```yaml
+type: custom:garden-journal-card
+days: 30        # how far ahead "Coming up" looks
+title: Garden   # optional
+```
+
+It lists what to prune or care for now and which pruning periods open in the
+next `days` days. Tapping it opens the panel. The integration loads the card
+itself, so there is no resource to add.
+
 ## Reminders on your phone
 
 Notifications are an ordinary automation off `calendar.garden_journal`, so the
